@@ -1,0 +1,29 @@
+Package: baysc
+Type: Package
+Title: Bayesian Survey Clustering
+Version: 1.0
+Date: 2023-10-24
+Author: Stephanie M. Wu
+Maintainer: Stephanie M. Wu <stephwu18@gmail.com>
+Description: More about what it does (maybe more than one line).
+    Use four spaces when indenting paragraphs within the Description.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    dplyr,
+    e1071,
+    fastDummies,
+    gtools,
+    LaplacesDemon,
+    Matrix,
+    matrixStats,
+    plyr,
+    Rcpp,
+    RcppArmadillo,
+    RcppTN,
+    rstan (>= 2.21.8),
+    survey,
+    truncnorm
+    Rcpp (>= 1.0.10)
+LinkingTo: Rcpp
