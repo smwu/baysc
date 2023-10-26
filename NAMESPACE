@@ -1,3 +1,5 @@
 useDynLib(baysc, .registration=TRUE)
+import(Rcpp)import(methods)
 importFrom(Rcpp, evalCpp)
+importFrom(rstan, sampling)
 exportPattern("^[[:alpha:]]+")

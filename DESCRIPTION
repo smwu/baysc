@@ -18,12 +18,29 @@ Imports:
     LaplacesDemon,
     Matrix,
     matrixStats,
+    methods,
     plyr,
-    Rcpp,
+    Rcpp (>= 0.12.0),
+    Rcpp (>= 1.0.11),
     RcppArmadillo,
+    RcppParallel (>= 5.0.1),
     RcppTN,
     rstan (>= 2.21.8),
+    rstantools (>= 2.3.1.1),
+    stats,
     survey,
     truncnorm
-    Rcpp (>= 1.0.10)
-LinkingTo: Rcpp
+LinkingTo: 
+    BH (>= 1.66.0),
+    Rcpp (>= 0.12.0),
+    RcppArmadillo,
+    RcppEigen (>= 0.3.3.3.0),
+    RcppParallel (>= 5.0.1),
+    RcppTN,
+    rstan (>= 2.18.1),
+    StanHeaders (>= 2.18.0)
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 3.4.0)
+Biarch: true
+SystemRequirements: GNU make

@@ -7,10 +7,10 @@ using namespace arma;
 
 // Single draw from Dirichlet
 // [[Rcpp::export]]
-vec rdirichlet_cpp(vec alpha) {
+arma::vec rdirichlet_cpp(arma::vec alpha) {
   int distribution_size = alpha.size();
   // Draw from a Dirichlet
-  vec distribution(distribution_size);
+  arma::vec distribution(distribution_size);
   
   double sum_term = 0;
   // Loop through the distribution and draw Gamma variables
@@ -28,7 +28,7 @@ vec rdirichlet_cpp(vec alpha) {
 
 // Single draw from Categorical distribution
 // [[Rcpp::export]]
-int rcat_cpp(rowvec probs) {
+int rcat_cpp(arma::rowvec probs) {
   int num_categs = probs.size();
   IntegerVector draw(num_categs);
   rmultinom(1, probs.begin(), num_categs, draw.begin());
@@ -38,28 +38,27 @@ int rcat_cpp(rowvec probs) {
 
 // Draw from multivariate Normal distribution
 // [[Rcpp::export]]
-mat mvrnorm_cpp(const int& n, const vec& mu, const mat& sigma) {
+arma::mat mvrnorm_cpp(const int& n, const arma::vec& mu, const arma::mat& sigma) {
   int ncols = sigma.n_cols;
-  mat Y = randn(n, ncols);
+  arma::mat Y = randn(n, ncols);
   return repmat(mu, 1, n).t() + Y * chol(sigma);
 }
 
 // Draw from multivariate Normal distribution
 // [[Rcpp::export]]
-mat mvrnorm_cpp2(const int& n, const vec& mu, const mat& sigma) {
+arma::mat mvrnorm_cpp2(const int& n, const arma::vec& mu, const arma::mat& sigma) {
   int ncols = sigma.n_cols;
-  mat z = randn(n, ncols) * chol(sigma);
+  arma::mat z = randn(n, ncols) * chol(sigma);
   return mu.t() + z;
 }
 
 // Draw from multivariate Normal distribution
 // [[Rcpp::export]]
-mat mvrnorm_cpp3(const int& n, const rowvec& mu, const mat& sigma) {
+arma::mat mvrnorm_cpp3(const int& n, const arma::rowvec& mu, const arma::mat& sigma) {
   Environment pkg = Environment::namespace_env("LaplacesDemon");
   Function f("rmvn");
-  int ncols = sigma.n_cols;
   // NumericMatrix temp = f(_["n"] = 1, _["mu"] = mu, _["Sigma"] = sigma);
-  mat temp = as<arma::mat>(f(1, _["mu"] = mu, _["Sigma"] = sigma));
+  arma::mat temp = as<arma::mat>(f(1, _["mu"] = mu, _["Sigma"] = sigma));
   return temp;
 }
 
@@ -93,11 +92,11 @@ double logSumExp_cpp(const arma::rowvec& x) {
 
 // Update pi
 // [[Rcpp::export]]
-void update_pi(vec& pi, const vec& w_all, const vec& c_all, const int& K, 
-               const vec& alpha) {
+void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all, const int& K, 
+               const arma::vec& alpha) {
   NumericVector w_all_copy = as<NumericVector>(wrap(w_all));
   // Posterior parameters for pi
-  vec alpha_post(K);  
+  arma::vec alpha_post(K);  
   for (int k = 0; k < K; k++) {
     // Add sum of normalized weights for those assigned to class k, equiv. to
     // weighted number of individuals assigned to each class
@@ -108,7 +107,7 @@ void update_pi(vec& pi, const vec& w_all, const vec& c_all, const int& K,
   }
   // Rcout <<"alpha_post: " << alpha_post;  // Print out posterior alpha
   // Draw pi from posterior
-  vec out = rdirichlet_cpp(alpha_post);
+  arma::vec out = rdirichlet_cpp(alpha_post);
   // Rcout << "rdir " << out;
   pi = out;
   // return pi;
@@ -116,11 +115,11 @@ void update_pi(vec& pi, const vec& w_all, const vec& c_all, const int& K,
 
 // Update c
 // [[Rcpp::export]]
-void update_c(vec& c_all, const int& n, const int& K, const int& p,
-              const cube& theta, const mat& x_mat, const vec& pi,
-              const vec& z_all, const mat& V, const mat& xi, const vec& y_all) {
-  mat log_cond_c(n, K);        // Individual log-likelihood for each class
-  mat pred_class_probs(n, K);  // Posterior class membership probabilities
+void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
+              const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
+              const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
+  arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
+  arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
 
   // Calculate posterior class membership, p(c_i=k|-), for each class k and
   // update class assignments
@@ -157,10 +156,10 @@ void update_c(vec& c_all, const int& n, const int& K, const int& p,
 
 // Update c for WOLCA
 // [[Rcpp::export]]
-void update_c_WOLCA(vec& c_all, const int& n, const int& K, const int& p, 
-                  const cube& theta, const mat& x_mat, const vec& pi) {
-  mat log_cond_c(n, K);        // Individual log-likelihood for each class
-  mat pred_class_probs(n, K);  // Posterior class membership probabilities
+void update_c_WOLCA(arma::vec& c_all, const int& n, const int& K, const int& p, 
+                  const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi) {
+  arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
+  arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
   
   // Calculate posterior class membership, p(c_i=k|-), for each class k and
   // update class assignments
@@ -186,8 +185,8 @@ void update_c_WOLCA(vec& c_all, const int& n, const int& K, const int& p,
 
 // Update theta
 // [[Rcpp::export]]
-void update_theta(cube& theta, const int& p, const int& K, const int& d, 
-                  const vec& eta, const vec& w_all, const vec& c_all, mat x_mat) {
+void update_theta(arma::cube& theta, const int& p, const int& K, const int& d, 
+                  const arma::vec& eta, const arma::vec& w_all, const arma::vec& c_all, arma::mat x_mat) {
   NumericVector w_all_copy = as<NumericVector>(wrap(w_all));
   // Posterior parameters for theta
   NumericVector eta_post(d);  
@@ -211,8 +210,8 @@ void update_theta(cube& theta, const int& p, const int& K, const int& d,
 
 // Update xi
 // [[Rcpp::export]]
-mat update_xi(mat& xi, const int& n, const int& K, const vec& w_all, 
-               const vec& c_all, const vec& z_all, const mat& V, 
+arma::mat update_xi(arma::mat& xi, const int& n, const int& K, const arma::vec& w_all, 
+               const arma::vec& c_all, const arma::vec& z_all, const arma::mat& V, 
                const List& mu0, const List& Sig0) {
   // Sparse diagonal normalized weight matrix
   sp_mat W_tilde(n, n);
@@ -227,11 +226,11 @@ mat update_xi(mat& xi, const int& n, const int& K, const vec& w_all,
     C_k.diag() = as<arma::vec>(wrap(indiv_k));
     
     // Draw xi from conditional posterior distribution
-    mat Sig0_k = as<arma::mat>(Sig0[k]);
-    mat Sig_post = inv(Sig0_k) + mat(V.t() * C_k * W_tilde * V);
-    vec mu_right = inv(Sig0_k) * as<arma::vec>(wrap(mu0[k])) + 
-      mat(V.t() * C_k * W_tilde * z_all);
-    vec mu_post = inv(Sig_post) * mu_right;
+    arma::mat Sig0_k = as<arma::mat>(Sig0[k]);
+    arma::mat Sig_post = inv(Sig0_k) + arma::mat(V.t() * C_k * W_tilde * V);
+    arma::vec mu_right = inv(Sig0_k) * as<arma::vec>(wrap(mu0[k])) + 
+      arma::mat(V.t() * C_k * W_tilde * z_all);
+    arma::vec mu_post = inv(Sig_post) * mu_right;
     // Rcout <<"mu_post: " << mu_post << "\n";
     
     // Update xi
@@ -244,10 +243,10 @@ mat update_xi(mat& xi, const int& n, const int& K, const vec& w_all,
 
 // Update z
 // [[Rcpp::export]]
-vec update_z(vec& z_all, const int& n, const mat& V, const mat& xi, 
-              const vec& c_all, const vec& y_all) {
+arma::vec update_z(arma::vec& z_all, const int& n, const arma::mat& V, const arma::mat& xi, 
+              const arma::vec& c_all, const arma::vec& y_all) {
   // Linear predictor using covariate values and class assignment for each individual
-  vec lin_pred(n);
+  arma::vec lin_pred(n);
   for (int i = 0; i < n; i++) {
     // Be careful of 0-based indexing
     lin_pred(i) = (V.row(i) * xi.row(c_all(i) - 1).t()).eval()(0,0);
@@ -274,9 +273,9 @@ vec update_z(vec& z_all, const int& n, const mat& V, const mat& xi,
 
 // Update individual log-likelihood
 // [[Rcpp::export]]
-void update_loglik(vec& loglik, const int& n, const int& p, const vec& c_all, 
-                   const cube& theta, const mat& x_mat, const vec& pi, 
-                   const vec& z_all, const mat& V, const mat& xi, const vec& y_all) {
+void update_loglik(arma::vec& loglik, const int& n, const int& p, const arma::vec& c_all, 
+                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, 
+                   const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
   for (int i = 0; i < n; i++) {
     int c_i = c_all(i);
     // Calculate theta component of individual log-likelihood
@@ -296,11 +295,11 @@ void update_loglik(vec& loglik, const int& n, const int& p, const vec& c_all,
 
 // Update c test
 // [[Rcpp::export]]
-void update_c_test(vec& c_all, const int& n, const int& K, const int& p,
-                   const cube& theta, const mat& x_mat, const vec& pi,
-                   const vec& z_all, const mat& V, const mat& xi, const vec& y_all) {
-  mat log_cond_c(n, K);        // Individual log-likelihood for each class
-  mat pred_class_probs(n, K);  // Posterior class membership probabilities
+void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& p,
+                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
+                   const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
+  arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
+  arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
   
   // Calculate posterior class membership, p(c_i=k|-), for each class k and
   // update class assignments
