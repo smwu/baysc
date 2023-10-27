@@ -29,6 +29,10 @@ var_adjust(
 
 \item{K}{Number of classes}
 
+\item{p}{Number of exposure items}
+
+\item{d}{Number of exposure categories}
+
 \item{n}{Number of individuals}
 
 \item{q}{Number of regression covariates excluding class assignment}

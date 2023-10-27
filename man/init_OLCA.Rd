@@ -32,9 +32,10 @@ Returns list `OLCA_params` containing:
 analysis (OLCA) given hyperparameters.
 }
 \examples{
-K <- 30; n <- 400; p <- 30; d <- 4
+K <- 30; n <- 4000; p <- 30; d <- 4
 alpha <- rep(1, K) / K
 eta <- rep(1, d)
-init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+# OLCA_params
 
 }

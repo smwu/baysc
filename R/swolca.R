@@ -55,6 +55,9 @@
 #'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
 #' }
 #'
+#' @importFrom RcppTN rtn
+#' @importFrom LaplacesDemon rinvgamma
+#' @importFrom stats rnorm median
 #' @export
 #'
 #' @examples
@@ -64,20 +67,20 @@
 #' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
+#' stratum_id <- data_vars$true_Si
 #' sampling_wt <- data_vars$sample_wt
-#' # Probit model includes C and S: C + S + C:S
-#' stratum_id <- data_vars[[covs]]  # Stratifying variable, nx1
-#' # Regression design matrix without class assignment, nxq
-#' V_data <- data.frame(s = as.factor(stratum_id))
-#' V <- model.matrix(~ s, V_data)
-#' q <- ncol(V)  # Number of regression covariates excluding class assignment
+#' n <- dim(x_mat)[1]        # Number of individuals
+#' 
+#' # Probit model only includes latent class
+#' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 #'
 #' # Stan model
 #' mod_stan <- stanmodels$WSOLCA_main
+#' 
 #' # Run swolca
 #' swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
 #'        cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
-#'        n_runs = 200, burn = 100, thin = 5, mod_stan = mod_stan, save_res = FALSE)
+#'        n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
 #'
 swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
                    K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
@@ -100,7 +103,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
   p <- dim(x_mat)[2]        # Number of exposure items
   d <- max(apply(x_mat, 2,  # Number of exposure categories
                  function(x) length(unique(x))))  # CHANGE TO ADAPT TO ITEM
-  q <- ncol(V)
+  q <- ncol(V)              # Number of regression covariates excluding class assignment
 
   # Obtain normalized weights
   kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
@@ -132,7 +135,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
       mu0_adapt <- vector("list", K_max)
       for (k in 1:K_max) {
         # MVN(0,1) hyperprior for prior mean of xi
-        mu0_adapt[[k]] <- rnorm(n = q)
+        mu0_adapt[[k]] <- stats::rnorm(n = q)
       }
     }
     if (is.null(Sig0_adapt)) {
@@ -140,7 +143,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
       for (k in 1:K_max) {
         # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
         # components and mean variance 2.5 for a weakly informative prior on xi
-        Sig0_adapt[[k]] <- diag(rinvgamma(n = q, shape = 3.5, scale = 6.25),
+        Sig0_adapt[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25),
                                 nrow = q, ncol = q)
       }
     }
@@ -170,7 +173,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
     # Get median number of classes with >= 5% of individuals, over all iterations
     M <- dim(MCMC_out$pi_MCMC)[1]  # Number of stored MCMC iterations
     K_MCMC <- rowSums(MCMC_out$pi_MCMC >= class_cutoff)
-    K_med <- round(median(K_MCMC))
+    K_med <- round(stats::median(K_MCMC))
     # Get number of unique classes for fixed sampler
     K_fixed <- K_med
     print(paste0("K_fixed: ", K_fixed))
@@ -204,7 +207,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
     mu0_fixed <- vector("list", K_fixed)
     for (k in 1:K_fixed) {
       # MVN(0,1) hyperprior for prior mean of xi
-      mu0_fixed[[k]] <- rnorm(n = q)
+      mu0_fixed[[k]] <- stats::rnorm(n = q)
     }
   }
   if (is.null(Sig0_fixed)) {
@@ -212,7 +215,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
     for (k in 1:K_fixed) {
       # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
       # components and mean variance 2.5 for a weakly informative prior on xi
-      Sig0_fixed[[k]] <- diag(rinvgamma(n = q, shape = 3.5, scale = 6.25),
+      Sig0_fixed[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25),
                               nrow = q, ncol = q)
     }
   }

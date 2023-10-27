@@ -92,16 +92,19 @@ double logSumExp_cpp(const arma::rowvec& x) {
 
 // Update pi
 // [[Rcpp::export]]
-void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all, const int& K, 
-               const arma::vec& alpha) {
+void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all, 
+               const int& K, const arma::vec& alpha) {
   NumericVector w_all_copy = as<NumericVector>(wrap(w_all));
   // Posterior parameters for pi
   arma::vec alpha_post(K);  
   for (int k = 0; k < K; k++) {
+    // Rcout << "k = " << k;
     // Add sum of normalized weights for those assigned to class k, equiv. to
     // weighted number of individuals assigned to each class
     // Careful with 0-based indexing
     LogicalVector indiv_k = (as<IntegerVector>(wrap(c_all)) == (k + 1));
+    // Rcout << "length of w_all_copy: " << w_all_copy.size();
+    // Rcout << "length indiv_k: " << indiv_k.size();
     NumericVector weights_k = w_all_copy[(indiv_k)];
     alpha_post[k] = alpha[k] + sum(weights_k);
   }
@@ -117,7 +120,8 @@ void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all, co
 // [[Rcpp::export]]
 void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
               const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
-              const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
+              const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, 
+              const arma::vec& y_all) {
   arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
   arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
 
@@ -138,6 +142,13 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
         log_probit_comp_k = log(1e-16);
       }
       log_probit_comp_k += log((y_all(i) * (z_all(i) > 0)) + ((1 - y_all(i)) * (z_all(i) <= 0)));
+      // if (i == 1 | i == 2) {
+      //   Rcout << "k: " << k << "\n";
+      //   Rcout << "log_theta_comp_k: " << log_theta_comp_k << "\n";
+      //   Rcout << "log_probit_comp_k:" << log_probit_comp_k << "\n";
+      //   Rcout << "dnorm(z_all(i)):" << R::dnorm(z_all(i), 
+      //                           (V.row(i) * xi.row(k).t()).eval()(0,0), 1.0, false) << "\n";
+      // }
       // Individual log-likelihood for class k
       log_cond_c(i, k) = log(pi(k)) + log_theta_comp_k + log_probit_comp_k;
       // log_cond_c(i, k) = log(pi(k)) + log_theta_comp_k + 
@@ -146,6 +157,11 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
     }
     // Calculate p(c_i=k|-) = p(x,y,c_i=k) / p(x,y)
     pred_class_probs.row(i) = exp(log_cond_c.row(i) - logSumExp_cpp(log_cond_c.row(i)));
+    // if (i == 1000 | i == 2000) {
+    //   Rcout << "log_cond_c: " << log_cond_c(i);
+    //   Rcout << "i: " << i;
+    //   Rcout << "pred_class_probs: " << pred_class_probs.row(i);
+    // }
     // Update class assignment using the posterior probabilities
     // Be careful of 0-based indexing
     c_all(i) = rcat_cpp(pred_class_probs.row(i)) + 1;
@@ -277,7 +293,9 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p, const arma::ve
                    const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, 
                    const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
   for (int i = 0; i < n; i++) {
+    // Rcout << "i: " << i;
     int c_i = c_all(i);
+    // Rcout << "c_i: " << c_i;
     // Calculate theta component of individual log-likelihood
     // Calculate theta component of individual log-likelihood for class k
     double log_theta_comp = 0.0;

@@ -119,19 +119,19 @@ data_vars <- sim_data
 x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
 y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
+stratum_id <- data_vars$true_Si
 sampling_wt <- data_vars$sample_wt
-# Probit model includes C and S: C + S + C:S
-stratum_id <- data_vars[[covs]]  # Stratifying variable, nx1
-# Regression design matrix without class assignment, nxq
-V_data <- data.frame(s = as.factor(stratum_id))
-V <- model.matrix(~ s, V_data)
-q <- ncol(V)  # Number of regression covariates excluding class assignment
+n <- dim(x_mat)[1]        # Number of individuals
+
+# Probit model only includes latent class
+V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 
 # Stan model
 mod_stan <- stanmodels$WSOLCA_main
+
 # Run swolca
 swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
        cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
-       n_runs = 200, burn = 100, thin = 5, mod_stan = mod_stan, save_res = FALSE)
+       n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
 
 }

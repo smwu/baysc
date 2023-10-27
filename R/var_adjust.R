@@ -9,11 +9,12 @@
 #' @param xi: MCMC matrix output for xi; MxKxS
 #' 
 #' @return Outputs vector of unconstrained parameters
+#' @importFrom rstan unconstrain_pars
 #' @noRd
 unconstrain <- function(i, K, stan_model, pi, theta, xi) {
   # Be careful with dimension of xi when latent class is only covariate, as R
   # will automatically drop dimensions of size 1
-  u_pars <- unconstrain_pars(stan_model, 
+  u_pars <- rstan::unconstrain_pars(stan_model, 
                              list("pi" = pi[i,], "theta" = theta[i,,,], 
                                   "xi" = as.matrix(xi[i,,])))
   return(u_pars)
@@ -43,13 +44,14 @@ DEadj <- function(par, par_hat, R2R1) {
 #' @param par_stan Parameters with respect to which gradient should be computed
 #' @param u_pars Unconstrained parameters estimates for evaluating gradient
 #' 
+#' @importFrom rstan sampling grad_log_prob
 #' @return Outputs `gradpar` gradient evaluated at `u_pars` using replicate weights
 #' @noRd
 grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
   stan_data$weights <- pwts
-  out_stan <- sampling(object = stan_mod, data = stan_data, pars = par_stan,
+  out_stan <- rstan::sampling(object = stan_mod, data = stan_data, pars = par_stan,
                        chains = 0, iter = 0, refresh = 0)
-  gradpar <- grad_log_prob(out_stan, u_pars)
+  gradpar <- rstan::grad_log_prob(out_stan, u_pars)
   return(gradpar)
 }
 
@@ -82,6 +84,11 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods from `get_estimates()`. nx1} 
 #' }
 #'
+#' @importFrom stats rnorm pnorm optimHess vcov
+#' @importFrom LaplacesDemon rinvgamma
+#' @importFrom rstan sampling unconstrain_pars grad_log_prob constrain_pars
+#' @importFrom survey svydesign as.svyrepdesign withReplicates
+#' @importFrom Matrix nearPD
 #' @export
 #'
 #' #examples
@@ -94,8 +101,9 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   eta <- rep(1, d)                  # Hyperparameter for prior for theta
   mu0 <- Sig0 <- vector("list", K)  # Hyperparameters for xi
   for (k in 1:K) {
-    mu0[[k]] <- rnorm(n = q)
-    Sig0[[k]] <- diag(rinvgamma(n = q, shape = 3.5, scale = 6.25), nrow = q, ncol = q)
+    mu0[[k]] <- stats::rnorm(n = q)
+    Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
+                      nrow = q, ncol = q)
   }
   data_stan <- list(K = K, p = p, d = d, n = n, q = q, X = x_mat, y = y_all, 
                     V = V, weights = w_all, alpha = alpha, eta = eta, mu0 = mu0, 
@@ -107,12 +115,12 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   # Run Stan model
   # Stan will pass warnings from calling 0 chains, but will still create an 
   # out_stan object for the 'grad_log_prob()' method
-  out_stan <- sampling(object = mod_stan, data = data_stan, pars = par_stan,
+  out_stan <- rstan::sampling(object = mod_stan, data = data_stan, pars = par_stan,
                        chains = 0, iter = 0, refresh = 0)
   
   #=============== Convert to unconstrained parameters =========================
   # Convert params from constrained space to unconstrained space
-  unc_par_hat <- unconstrain_pars(out_stan, list("pi" = estimates$pi_med,
+  unc_par_hat <- rstan::unconstrain_pars(out_stan, list("pi" = estimates$pi_med,
                                                  "theta" = estimates$theta_med,
                                                  "xi" = estimates$xi_med))
   # Get posterior MCMC samples in unconstrained space for all parameters
@@ -124,7 +132,8 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   
   #=============== Post-processing adjustment in unconstrained space ===========
   # Estimate Hessian
-  H_hat <- -1*optimHess(unc_par_hat, gr = function(x){grad_log_prob(out_stan, x)})
+  H_hat <- -1*stats::optimHess(unc_par_hat, 
+                               gr = function(x){rstan::grad_log_prob(out_stan, x)})
   
   # Create survey design
   if (!is.null(stratum_id)) {  # Include stratifying variable
@@ -133,23 +142,24 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
                            y = y_all, 
                            wts = w_all,
                            clus = cluster_id)
-    svydes <- svydesign(ids = ~clus, strata = ~s, weights = ~wts, data = svy_data)
+    svydes <- survey::svydesign(ids = ~clus, strata = ~s, weights = ~wts, 
+                                data = svy_data)
   } else {  # No stratifying variable
     svy_data <- data.frame(x = x_mat,
                            y = y_all, 
                            wts = w_all,
                            clus = cluster_id)
-    svydes <- svydesign(ids = ~clus, weights = ~wts, data = svy_data)
+    svydes <- survey::svydesign(ids = ~clus, weights = ~wts, data = svy_data)
   }
   
   # Create svrepdesign
-  svyrep <- as.svrepdesign(design = svydes, type = "mrbbootstrap", 
+  svyrep <- survey::as.svrepdesign(design = svydes, type = "mrbbootstrap", 
                            replicates = 100)
   
-  rep_temp <- withReplicates(design = svyrep, theta = grad_par, 
+  rep_temp <- survey::withReplicates(design = svyrep, theta = grad_par, 
                              stan_mod = mod_stan, stan_data = data_stan, 
                              par_stan = par_stan, u_pars = unc_par_hat)
-  J_hat <- vcov(rep_temp)
+  J_hat <- stats::vcov(rep_temp)
   
   # Compute adjustment
   H_inv <- solve(H_hat)
@@ -165,7 +175,7 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   # If matrices are not p.d. due to rounding issues, convert to nearest p.d. 
   # matrix using method proposed in Higham (2002)
   if (min(Re(eigen(V1)$values)) < 0) { 
-    V1_pd <- nearPD(V1)
+    V1_pd <- Matrix::nearPD(V1)
     R1 <- chol(V1_pd$mat)
     print(paste0("V1: absolute eigenvalue difference to nearest p.d. matrix: ", 
                  sum(abs(eigen(V1)$values - eigen(V1_pd$mat)$values))))
@@ -173,7 +183,7 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
     R1 <- chol(V1)
   }
   if (min(Re(eigen(H_inv)$values)) < 0) {
-    H_inv_pd <- nearPD(H_inv)
+    H_inv_pd <- Matrix::nearPD(H_inv)
     R2_inv <- chol(H_inv_pd$mat)
     print(paste0("H_inv: absolute eigenvalue difference to nearest p.d. matrix: ", 
                  sum(abs(eigen(H_inv)$values - eigen(H_inv_pd$mat)$values))))
@@ -195,7 +205,7 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   theta_red_adj <- array(NA, dim=c(M, p, K, d))
   xi_red_adj <- array(NA, dim=c(M, K, q))
   for (i in 1:M) {
-    constr_pars <- constrain_pars(out_stan, par_adj[i,])
+    constr_pars <- rstan::constrain_pars(out_stan, par_adj[i,])
     pi_red_adj[i, ] <- constr_pars$pi
     theta_red_adj[i,,,] <- constr_pars$theta
     xi_red_adj[i,,] <- constr_pars$xi
@@ -208,7 +218,7 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   
   # Update Phi_med using adjusted xi estimate
   c_all <- estimates$c_all
-  Phi_med_all_c <- pnorm(V %*% t(xi_med_adj))  # Outcome probabilities for all classes
+  Phi_med_all_c <- stats::pnorm(V %*% t(xi_med_adj))  # Outcome probabilities for all classes
   Phi_med_adj <- numeric(n)                    # Initialize individual outcome probabilities
   # Calculate posterior class membership, p(c_i=k|-), for each class k
   for (i in 1:n) {

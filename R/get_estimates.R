@@ -25,9 +25,67 @@
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1} 
 #' }
 #'
+#' @importFrom plyr aaply
+#' @importFrom matrixStats logSumExp
+#' @importFrom LaplacesDemon rcat
+#' @importFrom stats dnorm
 #' @export
 #'
-#' # examples
+#' @examples
+#' # Load data and obtain relevant variables
+#' data("sim_data")
+#' data_vars <- sim_data
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
+#' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
+#' sampling_wt <- data_vars$sample_wt
+#' 
+#' # Obtain dimensions
+#' n <- dim(x_mat)[1]        # Number of individuals
+#' p <- dim(x_mat)[2]        # Number of exposure items
+#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' function(x) length(unique(x))))  
+#' # Obtain normalized weights
+#' kappa <- sum(sampling_wt) / n   # Weights norm. constant
+#' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
+#' 
+#' # Probit model only includes latent class
+#' V <- matrix(1, nrow = n)  
+#' q <- ncol(V)   # Number of regression covariates excluding class assignment
+#' 
+#' # Set hyperparameters for fixed sampler
+#' K <- 3
+#' alpha <- rep(1, K) / K
+#' eta <- rep(1, d)
+#' mu0 <- Sig0 <- vector("list", K)
+#' for (k in 1:K) {
+#'   # MVN(0,1) hyperprior for prior mean of xi
+#'   mu0[[k]] <- stats::rnorm(n = q)
+#'   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
+#'   # components and mean variance 2.5 for a weakly informative prior on xi
+#'   Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
+#'   nrow = q, ncol = q)
+#' }
+#' 
+#' # First initialize OLCA params
+#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' 
+#' # Then initialize probit params 
+#' probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
+#' Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
+#' 
+#' # Then run MCMC sampling
+#' MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
+#' probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
+#' K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+#' y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
+#' 
+#' # Then run post-process relabeling
+#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, p = p, d = d, q = q)
+#'
+#' # Then obtain posterior estimates
+#' estimates <- get_estimates(MCMC_out = MCMC_out, post_MCMC_out = post_MCMC_out,
+#'                            n = n, p = p, V = V, y_all = y_all, x_mat = x_mat)
 #' 
 get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
   
@@ -59,14 +117,14 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
   
   # Get posterior parameter samples for unique classes for theta and xi
   theta_red <- post_MCMC_out$theta[, , unique_classes, ]
-  theta_red <- aaply(theta_red, c(1, 2, 3), function(x) x / sum(x)) # Re-normalize
+  theta_red <- plyr::aaply(theta_red, c(1, 2, 3), function(x) x / sum(x)) # Re-normalize
   xi_red <- post_MCMC_out$xi[, unique_classes, , drop = FALSE]
   
   #============== Posterior median estimates ===================================
   pi_med <- apply(pi_red, 2, median, na.rm = TRUE)
   pi_med <- pi_med / sum(pi_med)  # Re-normalize
   theta_med <- apply(theta_red, c(2, 3, 4), median, na.rm = TRUE)
-  theta_med <- aaply(theta_med, c(1, 2), function(x) x / sum(x))  # Re-normalize
+  theta_med <- plyr::aaply(theta_med, c(1, 2), function(x) x / sum(x))  # Re-normalize
   xi_med <- apply(xi_red, c(2, 3), median, na.rm = TRUE)
   
   #============== Update c using unique classes and posterior estimates ========
@@ -95,9 +153,9 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
       log_cond_c[i, k] <- log(pi_med[k]) + log_theta_comp_k + log_probit_comp_k
     }
     # Calculate p(c_i=k|-) = p(x,y,c_i=k) / p(x,y)
-    pred_class_probs[i, ] <- exp(log_cond_c[i, ] - logSumExp(log_cond_c[i, ]))
+    pred_class_probs[i, ] <- exp(log_cond_c[i, ] - matrixStats::logSumExp(log_cond_c[i, ]))
     # Update class assignment using the posterior probabilities
-    c_all[i] <- rcat(n = 1, p = pred_class_probs[i, ])
+    c_all[i] <- LaplacesDemon::rcat(n = 1, p = pred_class_probs[i, ])
     # Calculate outcome probabilities P(Y=1|-) using updated class assignment
     Phi_med[i] <- Phi_med_all_c[i, c_all[i]]
   }
@@ -113,7 +171,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
     }
     # Calculate individual log-likelihood using median estimates
     loglik_med[i] <- log(pi_med[c_i]) + log_theta_comp +
-      log(dnorm(z_all[i], mean = V[i, ] %*% xi_med[c_i, ])) + 
+      log(stats::dnorm(z_all[i], mean = V[i, ] %*% xi_med[c_i, ])) + 
       log(y_all[i]*(z_all[i] > 0) + (1 - y_all[i])*(z_all[i] <= 0))
   }
   
