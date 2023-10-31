@@ -28,7 +28,7 @@
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
 #' @importFrom LaplacesDemon rcat
-#' @importFrom stats dnorm
+#' @importFrom stats dnorm median pnorm
 #' @export
 #'
 #' @examples
@@ -91,7 +91,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
   
   #============== Identify unique classes using modal exposure categories ======
   # Posterior median estimate for theta across iterations
-  theta_med_temp <- apply(post_MCMC_out$theta, c(2, 3, 4), median)
+  theta_med_temp <- apply(post_MCMC_out$theta, c(2, 3, 4), stats::median)
   # Posterior modal exposure categories for each exposure item and reduced class
   theta_modes <- apply(theta_med_temp, c(1, 2), which.max)
   # Identify unique classes
@@ -121,18 +121,18 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
   xi_red <- post_MCMC_out$xi[, unique_classes, , drop = FALSE]
   
   #============== Posterior median estimates ===================================
-  pi_med <- apply(pi_red, 2, median, na.rm = TRUE)
+  pi_med <- apply(pi_red, 2, stats::median, na.rm = TRUE)
   pi_med <- pi_med / sum(pi_med)  # Re-normalize
-  theta_med <- apply(theta_red, c(2, 3, 4), median, na.rm = TRUE)
+  theta_med <- apply(theta_red, c(2, 3, 4), stats::median, na.rm = TRUE)
   theta_med <- plyr::aaply(theta_med, c(1, 2), function(x) x / sum(x))  # Re-normalize
-  xi_med <- apply(xi_red, c(2, 3), median, na.rm = TRUE)
+  xi_med <- apply(xi_red, c(2, 3), stats::median, na.rm = TRUE)
   
   #============== Update c using unique classes and posterior estimates ========
   z_all <- MCMC_out$z_all_MCMC[M, ]
   c_all <- MCMC_out$c_all_MCMC[M, ]                      # Final class assignments
   pred_class_probs <- matrix(NA, nrow = n, ncol = K_red) # Posterior class membership probabilities
   log_cond_c <- matrix(NA, nrow = n, ncol = K_red)       # Individual log-likelihood for each class
-  Phi_med_all_c <- pnorm(V %*% t(xi_med))  # Outcome probabilities for all classes
+  Phi_med_all_c <- stats::pnorm(V %*% t(xi_med))  # Outcome probabilities for all classes
   Phi_med <- numeric(n)                    # Initialize individual outcome probabilities
   # Calculate posterior class membership, p(c_i=k|-), for each class k
   for (i in 1:n) {
@@ -143,7 +143,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
         log_theta_comp_k <- log_theta_comp_k + log(theta_med[j, k, x_mat[i, j]])
       }
       # Calculate and control extremes for probit component
-      log_probit_part <- log(dnorm(z_all[i], mean = V[i, ] %*% xi_med[k, ])) 
+      log_probit_part <- log(stats::dnorm(z_all[i], mean = V[i, ] %*% xi_med[k, ])) 
       if (log_probit_part == -Inf) {
         log_probit_part <- log(1e-16)
       }

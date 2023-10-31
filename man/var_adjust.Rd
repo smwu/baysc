@@ -17,7 +17,8 @@ var_adjust(
   V,
   w_all,
   stratum_id,
-  cluster_id
+  cluster_id,
+  num_reps = 100
 )
 }
 \arguments{
@@ -48,6 +49,9 @@ var_adjust(
 \item{stratum_id}{Vector of stratifying variable for individuals. nx1}
 
 \item{cluster_id}{Vector of cluster indicators. nx1}
+
+\item{num_reps}{Number of bootstrap replicates to use for the variance 
+estimate. Default is 100.}
 }
 \value{
 Returns list `estimates_adj` containing:
@@ -67,4 +71,69 @@ Returns list `estimates_adj` containing:
 }
 \description{
 `var_adj` applies applies the post-processing variance adjustment
+}
+\examples{
+# Load data and obtain relevant variables
+data("sim_data")
+data_vars <- sim_data
+x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
+cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
+stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
+sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
+
+# Obtain dimensions
+n <- dim(x_mat)[1]        # Number of individuals
+p <- dim(x_mat)[2]        # Number of exposure items
+d <- max(apply(x_mat, 2,  # Number of exposure categories
+function(x) length(unique(x))))  
+# Obtain normalized weights
+kappa <- sum(sampling_wt) / n   # Weights norm. constant
+w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
+
+# Probit model only includes latent class
+V <- matrix(1, nrow = n)  
+q <- ncol(V)   # Number of regression covariates excluding class assignment
+
+# Set hyperparameters for fixed sampler
+K <- 3
+alpha <- rep(1, K) / K
+eta <- rep(1, d)
+mu0 <- Sig0 <- vector("list", K)
+for (k in 1:K) {
+  # MVN(0,1) hyperprior for prior mean of xi
+  mu0[[k]] <- stats::rnorm(n = q)
+  # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
+  # components and mean variance 2.5 for a weakly informative prior on xi
+  Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
+  nrow = q, ncol = q)
+}
+
+# First initialize OLCA params
+OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+
+# Then initialize probit params 
+probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
+Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
+
+# Then run MCMC sampling
+MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
+probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
+K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
+
+# Then run post-process relabeling
+post_MCMC_out <- post_process(MCMC_out = MCMC_out, p = p, d = d, q = q)
+
+# Then obtain posterior estimates
+estimates <- get_estimates(MCMC_out = MCMC_out, post_MCMC_out = post_MCMC_out,
+                           n = n, p = p, V = V, y_all = y_all, x_mat = x_mat)
+
+# Finally apply variance adjustment to posterior estimates
+adj_estimates <- var_adjust(mod_stan = stanmodels$SWOLCA_main, 
+                            estimates = estimates, K = K, p = p,
+                            d = d, n = n, q = q, x_mat = x_mat, y_all = y_all,
+                            V = V, w_all = w_all, stratum_id = stratum_id, 
+                            cluster_id = cluster_id, num_reps = 100)                        
+
 }

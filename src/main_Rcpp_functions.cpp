@@ -5,7 +5,13 @@ using namespace arma;
 // [[Rcpp::depends(RcppArmadillo)]]
 // [[Rcpp::depends(RcppTN)]]
 
-// Single draw from Dirichlet
+//' Draw from a Dirichlet distribution
+//' 
+//' @param alpha Vector of positive concentration parameters. Length determines
+//' the number of dimensions for the Dirichlet distribution.
+//' @return Vector result of a single draw from the specified Dirichlet distribution
+//' @importFrom stats rgamma
+//' @keywords internal
 // [[Rcpp::export]]
 arma::vec rdirichlet_cpp(arma::vec alpha) {
   int distribution_size = alpha.size();
@@ -26,43 +32,67 @@ arma::vec rdirichlet_cpp(arma::vec alpha) {
   return distribution;
 }
 
-// Single draw from Categorical distribution
+//' Draw from a Categorical distribution
+//' 
+//' @param probs Row vector of category event probabilities. Length determines
+//' the number of categories for the Categorical distribution.
+//' @return Integer specifying the category (1-based indexing) of a single draw 
+//' from the specified Categorical distribution
+//' @importFrom stats rmultinom
+//' @keywords internal
 // [[Rcpp::export]]
 int rcat_cpp(arma::rowvec probs) {
   int num_categs = probs.size();
   IntegerVector draw(num_categs);
-  rmultinom(1, probs.begin(), num_categs, draw.begin());
+  R::rmultinom(1, probs.begin(), num_categs, draw.begin());
   int categ = which_max(draw);
   return categ; 
 }
 
-// Draw from multivariate Normal distribution
+//' Draw from a Multivariate Normal distribution
+//' 
+//' @param n Number of draws
+//' @param mu Vector of means with length equal to number of dimensions
+//' @param sigma Positive-definite symmetric covariance matrix 
+//' @return Matrix result of draws from the specified Multivariate Normal 
+//' distribution, with rows corresponding to draws and columns corresponding to 
+//' dimensions.
+//' @keywords internal
 // [[Rcpp::export]]
 arma::mat mvrnorm_cpp(const int& n, const arma::vec& mu, const arma::mat& sigma) {
   int ncols = sigma.n_cols;
-  arma::mat Y = randn(n, ncols);
-  return repmat(mu, 1, n).t() + Y * chol(sigma);
+  arma::mat Y = arma::randn(n, ncols);
+  return arma::repmat(mu, 1, n).t() + Y * arma::chol(sigma);
 }
 
-// Draw from multivariate Normal distribution
-// [[Rcpp::export]]
-arma::mat mvrnorm_cpp2(const int& n, const arma::vec& mu, const arma::mat& sigma) {
-  int ncols = sigma.n_cols;
-  arma::mat z = randn(n, ncols) * chol(sigma);
-  return mu.t() + z;
-}
+// // Draw from multivariate Normal distribution
+// // [[Rcpp::export]]
+// arma::mat mvrnorm_cpp2(const int& n, const arma::vec& mu, const arma::mat& sigma) {
+//   int ncols = sigma.n_cols;
+//   arma::mat z = randn(n, ncols) * chol(sigma);
+//   return mu.t() + z;
+// }
 
-// Draw from multivariate Normal distribution
-// [[Rcpp::export]]
-arma::mat mvrnorm_cpp3(const int& n, const arma::rowvec& mu, const arma::mat& sigma) {
-  Environment pkg = Environment::namespace_env("LaplacesDemon");
-  Function f("rmvn");
-  // NumericMatrix temp = f(_["n"] = 1, _["mu"] = mu, _["Sigma"] = sigma);
-  arma::mat temp = as<arma::mat>(f(1, _["mu"] = mu, _["Sigma"] = sigma));
-  return temp;
-}
+// // Draw from multivariate Normal distribution
+// // [[Rcpp::export]]
+// arma::mat mvrnorm_cpp3(const int& n, const arma::rowvec& mu, const arma::mat& sigma) {
+//   Environment pkg = Environment::namespace_env("LaplacesDemon");
+//   Function f("rmvn");
+//   // NumericMatrix temp = f(_["n"] = 1, _["mu"] = mu, _["Sigma"] = sigma);
+//   arma::mat temp = as<arma::mat>(f(1, _["mu"] = mu, _["Sigma"] = sigma));
+//   return temp;
+// }
 
-// Draw from truncated Normal distribution
+//' Draw from a truncated Normal distribution
+//'
+//' @param n Number of draws
+//' @param a Lower bound
+//' @param b Upper bound
+//' @param mean Mean
+//' @param sd Standard deviation
+//' @return Result of a single draw from the specified truncated Normal distribution
+//' @importFrom truncnorm rtruncnorm
+//' @keywords internal
 // [[Rcpp::export]]
 double rtruncnorm_cpp(const int& n, const double& a, const double& b,
                       const double& mean, const double& sd) {
@@ -73,7 +103,16 @@ double rtruncnorm_cpp(const int& n, const double& a, const double& b,
   return rtn;
 }
 
-// log-sum-exp trick from https://github.com/helske/seqHMM/blob/main/src/logSumExp.cpp
+//' Apply log-sum-exp trick 
+//' 
+//' @description
+//' `logSumExp_cpp` computes the logarithm of the sum of exponentials, adapted from 
+//' https://github.com/helske/seqHMM/blob/main/src/logSumExp.cpp.
+//'
+//' @param x Row vector of input values
+//' @return Result of computing the logarithm of the sum of exponentials of the
+//' input values.
+//' @keywords internal
 // [[Rcpp::export]]
 double logSumExp_cpp(const arma::rowvec& x) {
   int maxi = x.index_max();
@@ -90,7 +129,16 @@ double logSumExp_cpp(const arma::rowvec& x) {
   return maxv + log1p(cumsum);
 }
 
-// Update pi
+//' Update pi
+//' 
+//' `update_pi` updates the vector parameter of class membership probabilities, pi, by 
+//' drawing from its posterior.
+//' 
+//' @inheritParams run_MCMC_Rcpp
+//' @param pi Vector parameter of class membership probabilities. Kx1
+//' 
+//' @return Updated `pi` vector after drawing from its posterior distribution
+//' @keywords internal
 // [[Rcpp::export]]
 void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all, 
                const int& K, const arma::vec& alpha) {
@@ -116,7 +164,20 @@ void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all,
   // return pi;
 }
 
-// Update c
+//' Update c
+//' 
+//' `update_c` updates the vector of individual class assignments, c, by drawing 
+//' from a Categorical distribution with updated category event probabilities.
+//' 
+//' @inheritParams run_MCMC_Rcpp
+//' @param pi Vector parameter of class membership probabilities. Kx1
+//' @param theta Array parameter of item level probabilities. JxKxR
+//' @param z_all Vector of latent variables in the probit model. nx1
+//' @param xi Matrix parameter xi for probit regression coefficients. Kxq
+//' 
+//' @return Updated `c_all` vector after drawing from a Categorical distribution
+//' with updated category event probabilities.
+//' @keywords internal
 // [[Rcpp::export]]
 void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
               const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
@@ -170,7 +231,16 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
 }
 
 
-// Update c for WOLCA
+//' Update c for WOLCA
+//' 
+//' Updates the vector of individual class assignments, c, for the unsupervised
+//' model.
+//' 
+//' @inheritParams update_c
+//' 
+//' @return Updated `c_all` vector after drawing from a Categorical distribution
+//' with updated category event probabilities for the unsupervised model.
+//' @keywords internal
 // [[Rcpp::export]]
 void update_c_WOLCA(arma::vec& c_all, const int& n, const int& K, const int& p, 
                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi) {
@@ -199,10 +269,19 @@ void update_c_WOLCA(arma::vec& c_all, const int& n, const int& K, const int& p,
   // return c_all;
 }
 
-// Update theta
+//' Update theta
+//' 
+//' `update_theta` updates the array of item level probabilities, theta, by
+//' drawing from its posterior.
+//' 
+//' @inheritParams update_c
+//' 
+//' @return Updated `theta` array after drawing from its posterior distribution.
+//' @keywords internal
 // [[Rcpp::export]]
 void update_theta(arma::cube& theta, const int& p, const int& K, const int& d, 
-                  const arma::vec& eta, const arma::vec& w_all, const arma::vec& c_all, arma::mat x_mat) {
+                  const arma::vec& eta, const arma::vec& w_all, 
+                  const arma::vec& c_all, arma::mat x_mat) {
   NumericVector w_all_copy = as<NumericVector>(wrap(w_all));
   // Posterior parameters for theta
   NumericVector eta_post(d);  
@@ -224,20 +303,28 @@ void update_theta(arma::cube& theta, const int& p, const int& K, const int& d,
   // return theta;
 }
 
-// Update xi
+//' Update xi
+//' 
+//' `update_xi` updates the matrix of outcome regression coefficients, xi, by
+//' drawing from its posterior.
+//' 
+//' @inheritParams update_c
+//' 
+//' @return Updated `xi` matrix after drawing from its posterior distribution.
+//' @keywords internal
 // [[Rcpp::export]]
 arma::mat update_xi(arma::mat& xi, const int& n, const int& K, const arma::vec& w_all, 
                const arma::vec& c_all, const arma::vec& z_all, const arma::mat& V, 
                const List& mu0, const List& Sig0) {
   // Sparse diagonal normalized weight matrix
-  sp_mat W_tilde(n, n);
+  arma::sp_mat W_tilde(n, n);
   W_tilde.diag() = w_all;
   // Sparse design matrix without class assignments
-  sp_mat V_sparse = sp_mat(V);
+  arma::sp_mat V_sparse = sp_mat(V);
   
   for (int k = 0; k < K; k++) {
     // Sparse diagonal matrix subsetting to obs in class k
-    sp_mat C_k(n, n);
+    arma::sp_mat C_k(n, n);
     LogicalVector indiv_k = (as<IntegerVector>(wrap(c_all)) == (k + 1));
     C_k.diag() = as<arma::vec>(wrap(indiv_k));
     
@@ -246,7 +333,7 @@ arma::mat update_xi(arma::mat& xi, const int& n, const int& K, const arma::vec& 
     arma::mat Sig_post = inv(Sig0_k) + arma::mat(V.t() * C_k * W_tilde * V);
     arma::vec mu_right = inv(Sig0_k) * as<arma::vec>(wrap(mu0[k])) + 
       arma::mat(V.t() * C_k * W_tilde * z_all);
-    arma::vec mu_post = inv(Sig_post) * mu_right;
+    arma::vec mu_post = arma::inv(Sig_post) * mu_right;
     // Rcout <<"mu_post: " << mu_post << "\n";
     
     // Update xi
@@ -257,7 +344,16 @@ arma::mat update_xi(arma::mat& xi, const int& n, const int& K, const arma::vec& 
   return xi;
 }
 
-// Update z
+//' Update z
+//' 
+//' `update_z` updates the vector of latent probit variables, z, by drawing 
+//' from a Truncated Normal distribution with updated mean.
+//' 
+//' @inheritParams update_c
+//' 
+//' @return Updated `z_all` vector after drawing from a Truncated Normal 
+//' distribution with updated mean.
+//' @keywords internal
 // [[Rcpp::export]]
 arma::vec update_z(arma::vec& z_all, const int& n, const arma::mat& V, const arma::mat& xi, 
               const arma::vec& c_all, const arma::vec& y_all) {
@@ -287,11 +383,22 @@ arma::vec update_z(arma::vec& z_all, const int& n, const arma::mat& V, const arm
   return z_all;
 }
 
-// Update individual log-likelihood
+//' Update individual log-likelihood
+//' 
+//' `update_loglik` updates the vector of individual log-likelihoods using the
+//' updated parameters and latent variables.
+//' 
+//' @inheritParams update_c
+//' 
+//' @return Updated `loglik` vector after using the updated parameters and 
+//' latent variables.
+//' @keywords internal
 // [[Rcpp::export]]
-void update_loglik(arma::vec& loglik, const int& n, const int& p, const arma::vec& c_all, 
-                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, 
-                   const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
+void update_loglik(arma::vec& loglik, const int& n, const int& p, 
+                   const arma::vec& c_all, const arma::cube& theta, 
+                   const arma::mat& x_mat, const arma::vec& pi, 
+                   const arma::vec& z_all, const arma::mat& V, 
+                   const arma::mat& xi, const arma::vec& y_all) {
   for (int i = 0; i < n; i++) {
     // Rcout << "i: " << i;
     int c_i = c_all(i);
@@ -311,39 +418,39 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p, const arma::ve
   // return loglik;
 }
 
-// Update c test
-// [[Rcpp::export]]
-void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& p,
-                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
-                   const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
-  arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
-  arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
-  
-  // Calculate posterior class membership, p(c_i=k|-), for each class k and
-  // update class assignments
-  for (int i = 0; i < n; i++) {
-    for (int k = 0; k < K; k++) {
-      // Calculate theta component of individual log-likelihood for class k
-      double log_theta_comp_k = 0.0;
-      for (int j = 0; j < p; j++) {
-        // Subtract 1 from exposure value due to 0-based indexing
-        log_theta_comp_k += log(theta(j, k, x_mat(i, j) - 1));
-      }
-      // Individual log-likelihood for class k
-      log_cond_c(i, k) = log(pi(k)) + log_theta_comp_k +
-        log(R::dnorm(z_all(i), (V.row(i) * xi.row(k).t()).eval()(0,0), 1.0, false)) +
-        log((y_all(i) * (z_all(i) > 0)) + ((1 - y_all(i)) * (z_all(i) <= 0)));
-    }
-    // Calculate p(c_i=k|-) = p(x,y,c_i=k) / p(x,y)
-    double denom = sum(exp(log_cond_c.row(i)));
-    pred_class_probs.row(i) = exp(log_cond_c.row(i)) / denom;
-    // pred_class_probs.row(i) = exp(log_cond_c.row(i) - logSumExp_cpp(log_cond_c.row(i)));
-    // Update class assignment using the posterior probabilities
-    // Be careful of 0-based indexing
-    c_all(i) = rcat_cpp(pred_class_probs.row(i)) + 1;
-  }
-  // return c_all;
-}
+// // Update c test
+// // [[Rcpp::export]]
+// void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& p,
+//                    const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
+//                    const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
+//   arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
+//   arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
+//   
+//   // Calculate posterior class membership, p(c_i=k|-), for each class k and
+//   // update class assignments
+//   for (int i = 0; i < n; i++) {
+//     for (int k = 0; k < K; k++) {
+//       // Calculate theta component of individual log-likelihood for class k
+//       double log_theta_comp_k = 0.0;
+//       for (int j = 0; j < p; j++) {
+//         // Subtract 1 from exposure value due to 0-based indexing
+//         log_theta_comp_k += log(theta(j, k, x_mat(i, j) - 1));
+//       }
+//       // Individual log-likelihood for class k
+//       log_cond_c(i, k) = log(pi(k)) + log_theta_comp_k +
+//         log(R::dnorm(z_all(i), (V.row(i) * xi.row(k).t()).eval()(0,0), 1.0, false)) +
+//         log((y_all(i) * (z_all(i) > 0)) + ((1 - y_all(i)) * (z_all(i) <= 0)));
+//     }
+//     // Calculate p(c_i=k|-) = p(x,y,c_i=k) / p(x,y)
+//     double denom = sum(exp(log_cond_c.row(i)));
+//     pred_class_probs.row(i) = exp(log_cond_c.row(i)) / denom;
+//     // pred_class_probs.row(i) = exp(log_cond_c.row(i) - logSumExp_cpp(log_cond_c.row(i)));
+//     // Update class assignment using the posterior probabilities
+//     // Be careful of 0-based indexing
+//     c_all(i) = rcat_cpp(pred_class_probs.row(i)) + 1;
+//   }
+//   // return c_all;
+// }
 
 
 // You can include R code blocks in C++ files processed with sourceCpp

@@ -2,12 +2,12 @@
 
 #include <Rcpp.h>
 using namespace Rcpp ;
-#include "stanExports_WSOLCA_main.h"
+#include "stanExports_SWOLCA_main.h"
 
-RCPP_MODULE(stan_fit4WSOLCA_main_mod) {
+RCPP_MODULE(stan_fit4SWOLCA_main_mod) {
 
 
-    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("rstantools_model_WSOLCA_main")
+    class_<rstan::stan_fit<stan_model, boost::random::ecuyer1988> >("rstantools_model_SWOLCA_main")
 
     .constructor<SEXP,SEXP,SEXP>()
 

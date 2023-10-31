@@ -22,7 +22,6 @@ Imports:
     plyr,
     Rcpp (>= 1.0.11),
     RcppArmadillo,
-    RcppParallel (>= 5.0.1),
     RcppTN,
     rstan (>= 2.21.8),
     rstantools (>= 2.3.1.1),

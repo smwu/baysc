@@ -1,5 +1,6 @@
 useDynLib(baysc, .registration=TRUE)
 import(Rcpp)import(methods)
+import(RcppArmadillo)
 importFrom(Rcpp, evalCpp)
 importFrom(rstan, sampling)
 importFrom(RcppTN, rtn)

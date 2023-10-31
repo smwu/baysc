@@ -23,7 +23,8 @@
 #' @param mu0_fixed List of K qx1 vectors of fixed sampler mean hyperparameters for xi. Default is `NULL`.
 #' @param Sig0_fixed List of K qxq matrices of fixed sampler variance hyperparameters for xi. Default is `NULL`.
 #' @param K_true True number of classes, if known. If `NULL` (default),
-#' adaptive sampler is run. Otherwise, model uses fixed sampler directly.
+#' adaptive sampler is run. To skip the adaptive sampler and run the fixed 
+#' sampler directly, specify a value here.
 #' @param fixed_seed Numeric seed for fixed sampler. Default is `NULL`.
 #' @param n_runs Number of MCMC iterations. Default is 20000.
 #' @param burn Number of MCMC iterations to drop as a burn-in period. Default is 10000.
@@ -37,23 +38,26 @@
 #' used. 
 #'
 #' @return
-#' Saves and returns list `res` containing:
+#' Returns list `res` containing:
 #' \describe{
 #'   \item{\code{estimates_adj}}{List of adjusted posterior model results}
 #'   \item{\code{runtime}}{Total runtime for model}
 #'   \item{\code{data_vars}}{List of data variables used}
 #'   \item{\code{MCMC_out}}{List of full MCMC output}
 #'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
-#'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
+#'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
 #' }
 #'
-#' Also saves list `adapt_MCMC` containing:
+#' If `save_res = TRUE` (default), also saves `res` as `[save_path]_results.RData`
+#' and, if `K_true = NULL` so that the adaptive sampler is run, list `adapt_MCMC`
+#' is saved as  `[save_path]_adapt.RData`. List `adapt_MCMC` contains:
 #' \describe{
 #'   \item{\code{MCMC_out}}{List of full MCMC output}
-#'   \item{\code{K_fixed}}{Number of classes to use for fixed sampler; output
-#'   from adaptive sampler}
+#'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler, 
+#' obtained from the adaptive sampler}
 #'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
 #' }
+#' 
 #'
 #' @importFrom RcppTN rtn
 #' @importFrom LaplacesDemon rinvgamma
@@ -66,16 +70,16 @@
 #' data_vars <- sim_data
 #' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
-#' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
-#' stratum_id <- data_vars$true_Si
-#' sampling_wt <- data_vars$sample_wt
+#' cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
+#' stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
+#' sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' 
 #' # Probit model only includes latent class
 #' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 #'
 #' # Stan model
-#' mod_stan <- stanmodels$WSOLCA_main
+#' mod_stan <- stanmodels$SWOLCA_main
 #' 
 #' # Run swolca
 #' swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
@@ -180,7 +184,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
     # Save adaptive output
     adapt_MCMC <- list(MCMC_out = MCMC_out, K_fixed = K_fixed, K_MCMC = K_MCMC)
     if (save_res) {
-      save(adapt_MCMC, file = paste0(save_path, "adapt.RData"))
+      save(adapt_MCMC, file = paste0(save_path, "_adapt.RData"))
     }
     # Reduce memory burden
     rm(OLCA_params, probit_params, MCMC_out)
@@ -253,7 +257,6 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
 
   #================= VARIANCE ADJUSTMENT =======================================
   print("Variance adjustment")
-  # Create Stan model
 
   # Apply variance adjustment for correct coverage
   # Obtain pi_red_adj, theta_red_adj, xi_red_adj, pi_med_adj, theta_med_adj,
@@ -275,12 +278,12 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, V,
   # Create output list
   res <- list(estimates_adj = estimates_adj, runtime = runtime,
               data_vars = data_vars, V = V, MCMC_out = MCMC_out,
-              post_MCMC_out = post_MCMC_out, K_MCMC = adapt_MCMC$K_MCMC)
+              post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
   if (save_res) {
-    save(res, file = paste0(save_path, "results.RData"))
+    save(res, file = paste0(save_path, "_results.RData"))
   }
 
-  return(list(res = res, adapt_MCMC = adapt_MCMC))
+  return(res)
 }
 
 

@@ -47,32 +47,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// mvrnorm_cpp2
-arma::mat mvrnorm_cpp2(const int& n, const arma::vec& mu, const arma::mat& sigma);
-RcppExport SEXP _baysc_mvrnorm_cpp2(SEXP nSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(mvrnorm_cpp2(n, mu, sigma));
-    return rcpp_result_gen;
-END_RCPP
-}
-// mvrnorm_cpp3
-arma::mat mvrnorm_cpp3(const int& n, const arma::rowvec& mu, const arma::mat& sigma);
-RcppExport SEXP _baysc_mvrnorm_cpp3(SEXP nSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
-    Rcpp::traits::input_parameter< const arma::rowvec& >::type mu(muSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type sigma(sigmaSEXP);
-    rcpp_result_gen = Rcpp::wrap(mvrnorm_cpp3(n, mu, sigma));
-    return rcpp_result_gen;
-END_RCPP
-}
 // rtruncnorm_cpp
 double rtruncnorm_cpp(const int& n, const double& a, const double& b, const double& mean, const double& sd);
 RcppExport SEXP _baysc_rtruncnorm_cpp(SEXP nSEXP, SEXP aSEXP, SEXP bSEXP, SEXP meanSEXP, SEXP sdSEXP) {
@@ -221,35 +195,13 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// update_c_test
-void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& p, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all);
-RcppExport SEXP _baysc_update_c_test(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP pSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP, SEXP z_allSEXP, SEXP VSEXP, SEXP xiSEXP, SEXP y_allSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec& >::type c_all(c_allSEXP);
-    Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
-    Rcpp::traits::input_parameter< const int& >::type K(KSEXP);
-    Rcpp::traits::input_parameter< const int& >::type p(pSEXP);
-    Rcpp::traits::input_parameter< const arma::cube& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type x_mat(x_matSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type pi(piSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type z_all(z_allSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type V(VSEXP);
-    Rcpp::traits::input_parameter< const arma::mat& >::type xi(xiSEXP);
-    Rcpp::traits::input_parameter< const arma::vec& >::type y_all(y_allSEXP);
-    update_c_test(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all);
-    return R_NilValue;
-END_RCPP
-}
 
-RcppExport SEXP _rcpp_module_boot_stan_fit4WSOLCA_main_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4SWOLCA_main_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_baysc_rdirichlet_cpp", (DL_FUNC) &_baysc_rdirichlet_cpp, 1},
     {"_baysc_rcat_cpp", (DL_FUNC) &_baysc_rcat_cpp, 1},
     {"_baysc_mvrnorm_cpp", (DL_FUNC) &_baysc_mvrnorm_cpp, 3},
-    {"_baysc_mvrnorm_cpp2", (DL_FUNC) &_baysc_mvrnorm_cpp2, 3},
-    {"_baysc_mvrnorm_cpp3", (DL_FUNC) &_baysc_mvrnorm_cpp3, 3},
     {"_baysc_rtruncnorm_cpp", (DL_FUNC) &_baysc_rtruncnorm_cpp, 5},
     {"_baysc_logSumExp_cpp", (DL_FUNC) &_baysc_logSumExp_cpp, 1},
     {"_baysc_update_pi", (DL_FUNC) &_baysc_update_pi, 5},
@@ -259,8 +211,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_baysc_update_xi", (DL_FUNC) &_baysc_update_xi, 9},
     {"_baysc_update_z", (DL_FUNC) &_baysc_update_z, 6},
     {"_baysc_update_loglik", (DL_FUNC) &_baysc_update_loglik, 11},
-    {"_baysc_update_c_test", (DL_FUNC) &_baysc_update_c_test, 11},
-    {"_rcpp_module_boot_stan_fit4WSOLCA_main_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4WSOLCA_main_mod, 0},
+    {"_rcpp_module_boot_stan_fit4SWOLCA_main_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4SWOLCA_main_mod, 0},
     {NULL, NULL, 0}
 };
 

@@ -69,7 +69,8 @@ classes in adaptive sampler. Default is 0.05.}
 \item{Sig0_fixed}{List of K qxq matrices of fixed sampler variance hyperparameters for xi. Default is `NULL`.}
 
 \item{K_true}{True number of classes, if known. If `NULL` (default),
-adaptive sampler is run. Otherwise, model uses fixed sampler directly.}
+adaptive sampler is run. To skip the adaptive sampler and run the fixed 
+sampler directly, specify a value here.}
 
 \item{fixed_seed}{Numeric seed for fixed sampler. Default is `NULL`.}
 
@@ -86,21 +87,23 @@ adaptive sampler is run. Otherwise, model uses fixed sampler directly.}
 \item{save_path}{String specifying directory and file name to save results. Default is `NULL`.}
 }
 \value{
-Saves and returns list `res` containing:
+Returns list `res` containing:
 \describe{
   \item{\code{estimates_adj}}{List of adjusted posterior model results}
   \item{\code{runtime}}{Total runtime for model}
   \item{\code{data_vars}}{List of data variables used}
   \item{\code{MCMC_out}}{List of full MCMC output}
   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
-  \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
+  \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
 }
 
-Also saves list `adapt_MCMC` containing:
+If `save_res = TRUE` (default), also saves `res` as `[save_path]_results.RData`
+and, if `K_true = NULL` so that the adaptive sampler is run, list `adapt_MCMC`
+is saved as  `[save_path]_adapt.RData`. List `adapt_MCMC` contains:
 \describe{
   \item{\code{MCMC_out}}{List of full MCMC output}
-  \item{\code{K_fixed}}{Number of classes to use for fixed sampler; output
-  from adaptive sampler}
+  \item{\code{K_fixed}}{Number of classes used for the fixed sampler, 
+obtained from the adaptive sampler}
   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
 }
 }
@@ -118,16 +121,16 @@ data("sim_data")
 data_vars <- sim_data
 x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
 y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
-cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
-stratum_id <- data_vars$true_Si
-sampling_wt <- data_vars$sample_wt
+cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
+stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
+sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]        # Number of individuals
 
 # Probit model only includes latent class
 V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 
 # Stan model
-mod_stan <- stanmodels$WSOLCA_main
+mod_stan <- stanmodels$SWOLCA_main
 
 # Run swolca
 swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
