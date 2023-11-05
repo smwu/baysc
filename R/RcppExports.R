@@ -107,8 +107,8 @@ update_c <- function(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all) {
 #' @return Updated `c_all` vector after drawing from a Categorical distribution
 #' with updated category event probabilities for the unsupervised model.
 #' @keywords internal
-update_c_WOLCA <- function(c_all, n, K, p, theta, x_mat, pi) {
-    invisible(.Call(`_baysc_update_c_WOLCA`, c_all, n, K, p, theta, x_mat, pi))
+update_c_wolca <- function(c_all, n, K, p, theta, x_mat, pi) {
+    invisible(.Call(`_baysc_update_c_wolca`, c_all, n, K, p, theta, x_mat, pi))
 }
 
 #' Update theta

@@ -1,17 +1,13 @@
 #' Get SWOLCA_main stan model
 #' 
 #' Get stan model used in the `swolca()` function for the variance adjustment.
-#' @param stan_name Name of stan model file without file extension
-#' @return Returns `mod_stan` containing the specified stan model
+#' @return Returns the specified stan model
 #' @name rstantools_model_SWOLCA_main
+#' @keywords internal
 #' @export
 #' 
-rstantools_model_SWOLCA_main <- function(stan_name) {
-  mod_stan <- NULL
-  if (stan_name == "SWOLCA_main") {
-    mod_stan <- stanmodels$SWOLCA_main
-  }
-  return(mod_stan)
+rstantools_model_SWOLCA_main <- function() {
+  stanmodels$SWOLCA_main
 }
 
 #' Get all stan models
@@ -19,6 +15,7 @@ rstantools_model_SWOLCA_main <- function(stan_name) {
 #' Get all stan models available in the package.
 #' @return Returns `stanmodels` object
 #' @name stanmodels
+#' @keywords internal
 #' @export
 #' 
 get_stanmodels <- function() {
@@ -29,6 +26,7 @@ get_stanmodels <- function() {
 #' 
 #' S4 class for SWOLCA_main stan model inheriting `stanfit` class
 #' @name Rcpp_rstantools_model_SWOLCA_main-class
+#' @keywords internal
 #' @exportClass Rcpp_rstantools_model_SWOLCA_main
 Rcpp_rstantools_model_SWOLCA_main <- setClass("Rcpp_rstantools_model_SWOLCA_main")
 

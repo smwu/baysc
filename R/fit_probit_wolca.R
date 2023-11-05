@@ -1,0 +1,156 @@
+#' Fit probit model for WOLCA
+#'
+#' @description
+#' `fit_probit_wolca` uses `svyglm` to fit a survey-weight probit model in a 
+#' two-step model where the first step derived latent classes using an 
+#' unsupervised WOLCA 
+#'
+#' @inheritParams wolca
+#' @param estimates Output from `get_estimates_wolca()` containing `K_red`, 
+#' `pi_red`, `theta_red`, `pi_med`, `theta_med`, `c_all`, `pred_class_probs`
+#' @param glm_form String specifying formula to use for probit regression. For 
+#' example, `"y_all ~ c_all"` for the model with only latent class as a covariate.
+#' Must be congruous with `V`.
+#' @param w_all Weights normalized to sum to n. nx1
+#' @param ci_level Confidence interval level. Default is `0.95`.
+#' @param q Number of regression covariates excluding class assignment
+#' @return
+#' Returns updated list `estimates` containing the following additional objects:
+#' \describe{
+#'   \item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xq}
+#'   \item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xq}
+#'   \item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xq}
+#'   \item{\code{fit}}{`svyglm` class object with output from the `svyglm` regression model}
+#' }
+#'
+#' @importFrom survey svydesign svyglm degf
+#' @importFrom stats confint as.formula quasibinomial
+#' @export
+#'
+#' @examples
+#' # Load data and obtain relevant variables
+#' data("sim_data")
+#' data_vars <- sim_data
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
+#' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
+#' stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
+#' sampling_wt <- data_vars$sample_wt
+#' 
+#' # Obtain dimensions
+#' n <- dim(x_mat)[1]        # Number of individuals
+#' p <- dim(x_mat)[2]        # Number of exposure items
+#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' function(x) length(unique(x))))  
+#' # Obtain normalized weights
+#' kappa <- sum(sampling_wt) / n   # Weights norm. constant
+#' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
+#' 
+#' # Set hyperparameters for fixed sampler
+#' K <- 3
+#' alpha <- rep(1, K) / K
+#' eta <- rep(1, d)
+#' 
+#' # First initialize OLCA params
+#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' 
+#' # Then run MCMC sampling
+#' MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
+#' burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+#' alpha = alpha, eta = eta)
+#' 
+#' # Then run post-process relabeling
+#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, p = p, d = d)
+#'
+#' # Then obtain posterior estimates for WOLCA
+#' estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
+#' post_MCMC_out = post_MCMC_out, n = n, p = p, x_mat = x_mat)
+#' 
+#' # Define probit model data and variables
+#' # Probit model only includes latent class
+#' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+#' q <- ncol(V)             # Number of regression covariates excluding class assignment
+#' # Survey-weighted regression formula
+#' glm_form <- "y_all ~ c_all"
+#' 
+#' # Finally run weighted probit regression model
+#' estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 
+#' stratum_id = stratum_id, cluster_id = cluster_id, x_mat = x_mat, 
+#' y_all = y_all, w_all = w_all, V = V, q = q)
+#' 
+fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id, 
+                             x_mat, y_all, w_all, ci_level = 0.95, V, q) {
+  
+  # Create survey design
+  if (!is.null(stratum_id)) {  # Include stratifying variable
+    # Survey data frame for specifying survey design
+    svy_data <- data.frame(stratum_id = stratum_id, cluster_id = cluster_id,
+                           x_mat = x_mat, y_all = y_all, w_all = w_all)
+    # Add latent class assignment variable to survey data
+    svy_data$c_all <- factor(estimates$c_all)
+    # Add additional covariates
+    svy_data <- cbind(svy_data, V[, -1])
+    # Specify survey design
+    svydes <- survey::svydesign(ids = ~cluster_id, strata = ~factor(stratum_id), 
+                                weights = ~w_all, data = svy_data)
+  } else { # No stratifying variable
+    # Survey data frame for specifying survey design
+    svy_data <- data.frame(cluster_id = cluster_id, x_mat = x_mat, 
+                           y_all = y_all, w_all = w_all)
+    # Add latent class assignment variable to survey data
+    svy_data$c_all <- factor(estimates$c_all)
+    # Add additional covariates
+    svy_data <- cbind(svy_data, V[, -1])
+    # Specify survey design
+    svydes <- survey::svydesign(ids = ~cluster_id, weights = ~w_all, 
+                                data = svy_data)    
+  }
+
+  # Fit probit model according to specified formula
+  fit <- survey::svyglm(formula = stats::as.formula(glm_form), design = svydes, 
+                        family = stats::quasibinomial(link = "probit"))
+  # Obtain coefficients and confidence interval
+  coefs <- fit$coefficients
+  ci <- stats::confint(fit)
+  # If zero/negative residual df, manually calculate the Wald confidence interval 
+  # using a t-distribution with degrees of freedom from the survey design. 
+  # Best if no cluster-level covariates in the regression model
+  if (all(is.na(ci))) {
+    ci <- manual_CI(model_object = fit, svy_df = survey::degf(svydes), 
+                    ci = ci_level)[, -1]
+  }
+  
+  # Convert format to match WSOLCA and SOLCA
+  xi_est <- xi_est_lb <- xi_est_ub <- matrix(NA, nrow = estimates$K_red, ncol = q)
+  # Position of interaction terms
+  if (q == 1) {
+    # If only latent class as a covariate (no interactions)
+    est_int_k1 <- NULL   # baseline class
+    est_int_koth <- NULL # additional classes
+  } else if (q > 1) {
+    est_int_k1 <- estimates$K_red + 1:(q-1)       # baseline class
+    est_int_koth <- (estimates$K_red-1)*(1:(q-1)) # additional classes
+  }
+  
+  # Get estimates for first class level, including all interactions
+  xi_est[1, ] <- coefs[c(1, est_int_k1)]
+  xi_est_lb[1, ] <- ci[c(1, est_int_k1), 1]
+  xi_est_ub[1, ] <- ci[c(1, est_int_k1), 2]
+  # Get estimates for additional class levels, including all interactions
+  for (k in 2:estimates$K_red) {
+    xi_est[k, ] <- coefs[c(k, (k + (q-1)) + est_int_koth)] + 
+      xi_est[1, ]
+    xi_est_lb[k, ] <- ci[c(k, (k + (q-1)) + est_int_koth), 1] + 
+      xi_est_lb[1, ]
+    xi_est_ub[k, ] <- ci[c(k, (k + (q-1)) + est_int_koth), 2] + 
+      xi_est_ub[1, ]
+  }
+  
+  # Return output with probit regression estimates
+  estimates$xi_est <- xi_est
+  estimates$xi_est_lb <- xi_est_lb
+  estimates$xi_est_ub <- xi_est_ub
+  estimates$fit <- fit
+  
+  return(estimates)
+}

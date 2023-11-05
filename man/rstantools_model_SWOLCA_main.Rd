@@ -10,11 +10,8 @@ An object of class \code{C++Class} of length 1.
 \usage{
 rstantools_model_SWOLCA_main
 }
-\arguments{
-\item{stan_name}{Name of stan model file without file extension}
-}
 \value{
-Returns `mod_stan` containing the specified stan model
+Returns the specified stan model
 }
 \description{
 Get stan model used in the `swolca()` function for the variance adjustment.

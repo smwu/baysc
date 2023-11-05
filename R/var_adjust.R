@@ -212,31 +212,31 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   
   # Create survey design
   if (!is.null(stratum_id)) {  # Include stratifying variable
-    svy_data <- data.frame(s = stratum_id, 
-                           x = x_mat,
-                           y = y_all, 
-                           wts = w_all,
-                           clus = cluster_id)
-    svydes <- survey::svydesign(ids = ~clus, strata = ~s, weights = ~wts, 
-                                data = svy_data)
-  } else {  # No stratifying variable
-    svy_data <- data.frame(x = x_mat,
-                           y = y_all, 
-                           wts = w_all,
-                           clus = cluster_id)
-    svydes <- survey::svydesign(ids = ~clus, weights = ~wts, data = svy_data)
+    # Survey data frame for specifying survey design
+    svy_data <- data.frame(stratum_id = stratum_id, cluster_id = cluster_id,
+                           x_mat = x_mat, y_all = y_all, w_all = w_all)
+    # Specify survey design
+    svydes <- survey::svydesign(ids = ~cluster_id, strata = ~factor(stratum_id), 
+                                weights = ~w_all, data = svy_data)
+  } else { # No stratifying variable
+    # Survey data frame for specifying survey design
+    svy_data <- data.frame(cluster_id = cluster_id, x_mat = x_mat, 
+                           y_all = y_all, w_all = w_all)
+    # Specify survey design
+    svydes <- survey::svydesign(ids = ~cluster_id, weights = ~w_all, 
+                                data = svy_data)    
   }
-  
+
   # Create svrepdesign
   svyrep <- survey::as.svrepdesign(design = svydes, type = "mrbbootstrap", 
                            replicates = num_reps)
-  
+  # Get survey replicates
   rep_temp <- survey::withReplicates(design = svyrep, theta = grad_par, 
                              stan_mod = mod_stan, stan_data = data_stan, 
                              par_stan = par_stan, u_pars = unc_par_hat)
-  J_hat <- stats::vcov(rep_temp)
   
   # Compute adjustment
+  J_hat <- stats::vcov(rep_temp)
   H_inv <- solve(H_hat)
   V1 <- H_inv %*% J_hat %*% H_inv
   

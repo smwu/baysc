@@ -107,9 +107,9 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// update_c_WOLCA
-void update_c_WOLCA(arma::vec& c_all, const int& n, const int& K, const int& p, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi);
-RcppExport SEXP _baysc_update_c_WOLCA(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP pSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP) {
+// update_c_wolca
+void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& p, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi);
+RcppExport SEXP _baysc_update_c_wolca(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP pSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec& >::type c_all(c_allSEXP);
@@ -119,7 +119,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::cube& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type x_mat(x_matSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type pi(piSEXP);
-    update_c_WOLCA(c_all, n, K, p, theta, x_mat, pi);
+    update_c_wolca(c_all, n, K, p, theta, x_mat, pi);
     return R_NilValue;
 END_RCPP
 }
@@ -206,7 +206,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_baysc_logSumExp_cpp", (DL_FUNC) &_baysc_logSumExp_cpp, 1},
     {"_baysc_update_pi", (DL_FUNC) &_baysc_update_pi, 5},
     {"_baysc_update_c", (DL_FUNC) &_baysc_update_c, 11},
-    {"_baysc_update_c_WOLCA", (DL_FUNC) &_baysc_update_c_WOLCA, 7},
+    {"_baysc_update_c_wolca", (DL_FUNC) &_baysc_update_c_wolca, 7},
     {"_baysc_update_theta", (DL_FUNC) &_baysc_update_theta, 8},
     {"_baysc_update_xi", (DL_FUNC) &_baysc_update_xi, 9},
     {"_baysc_update_z", (DL_FUNC) &_baysc_update_z, 6},

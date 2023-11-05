@@ -242,7 +242,7 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
 //' with updated category event probabilities for the unsupervised model.
 //' @keywords internal
 // [[Rcpp::export]]
-void update_c_WOLCA(arma::vec& c_all, const int& n, const int& K, const int& p, 
+void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& p, 
                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi) {
   arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
   arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
