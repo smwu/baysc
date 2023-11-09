@@ -4,14 +4,14 @@
 \alias{update_c_wolca}
 \title{Update c for WOLCA}
 \usage{
-update_c_wolca(c_all, n, K, p, theta, x_mat, pi)
+update_c_wolca(c_all, n, K, J, theta, x_mat, pi)
 }
 \arguments{
 \item{n}{Number of individuals}
 
 \item{K}{Number of classes}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
 \item{theta}{Array parameter of item level probabilities. JxKxR}
 
@@ -20,7 +20,7 @@ update_c_wolca(c_all, n, K, p, theta, x_mat, pi)
 \item{pi}{Vector parameter of class membership probabilities. Kx1}
 }
 \value{
-Updated `c_all` vector after drawing from a Categorical distribution
+Updated \code{c_all} vector after drawing from a Categorical distribution
 with updated category event probabilities for the unsupervised model.
 }
 \description{

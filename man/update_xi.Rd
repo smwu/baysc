@@ -18,10 +18,10 @@ update_xi(xi, n, K, w_all, c_all, z_all, V, mu0, Sig0)
 \item{V}{Regression design matrix without class assignment. nxq}
 }
 \value{
-Updated `xi` matrix after drawing from its posterior distribution.
+Updated \code{xi} matrix after drawing from its posterior distribution.
 }
 \description{
-`update_xi` updates the matrix of outcome regression coefficients, xi, by
+\code{update_xi} updates the matrix of outcome regression coefficients, xi, by
 drawing from its posterior.
 }
 \keyword{internal}

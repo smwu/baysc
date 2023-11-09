@@ -165,8 +165,8 @@ static const std::vector<string> locations_array__ = {" (found before start of p
 class model_SWOLCA_main final : public model_base_crtp<model_SWOLCA_main> {
 private:
   int K;
-  int p;
-  int d;
+  int J;
+  int R;
   int n;
   int q;
   std::vector<std::vector<int>> X;
@@ -215,25 +215,25 @@ public:
       current_statement__ = 48;
       check_greater_or_equal(function__, "K", K, 1);
       current_statement__ = 49;
-      context__.validate_dims("data initialization","p","int",
+      context__.validate_dims("data initialization","J","int",
           context__.to_vec());
-      p = std::numeric_limits<int>::min();
+      J = std::numeric_limits<int>::min();
       
       current_statement__ = 49;
-      p = context__.vals_i("p")[(1 - 1)];
+      J = context__.vals_i("J")[(1 - 1)];
       current_statement__ = 49;
       current_statement__ = 49;
-      check_greater_or_equal(function__, "p", p, 1);
+      check_greater_or_equal(function__, "J", J, 1);
       current_statement__ = 50;
-      context__.validate_dims("data initialization","d","int",
+      context__.validate_dims("data initialization","R","int",
           context__.to_vec());
-      d = std::numeric_limits<int>::min();
+      R = std::numeric_limits<int>::min();
       
       current_statement__ = 50;
-      d = context__.vals_i("d")[(1 - 1)];
+      R = context__.vals_i("R")[(1 - 1)];
       current_statement__ = 50;
       current_statement__ = 50;
-      check_greater_or_equal(function__, "d", d, 1);
+      check_greater_or_equal(function__, "R", R, 1);
       current_statement__ = 51;
       context__.validate_dims("data initialization","n","int",
           context__.to_vec());
@@ -257,11 +257,11 @@ public:
       current_statement__ = 53;
       validate_non_negative_index("X", "n", n);
       current_statement__ = 54;
-      validate_non_negative_index("X", "p", p);
+      validate_non_negative_index("X", "J", J);
       current_statement__ = 55;
       context__.validate_dims("data initialization","X","int",
-          context__.to_vec(n, p));
-      X = std::vector<std::vector<int>>(n, std::vector<int>(p, std::numeric_limits<int>::min()));
+          context__.to_vec(n, J));
+      X = std::vector<std::vector<int>>(n, std::vector<int>(J, std::numeric_limits<int>::min()));
       
       {
         std::vector<int> X_flat__;
@@ -271,7 +271,7 @@ public:
         current_statement__ = 55;
         pos__ = 1;
         current_statement__ = 55;
-        for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+        for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
           current_statement__ = 55;
           for (int sym2__ = 1; sym2__ <= n; ++sym2__) {
             current_statement__ = 55;
@@ -383,11 +383,11 @@ public:
           pos__ = (pos__ + 1);}
       }
       current_statement__ = 65;
-      validate_non_negative_index("eta", "d", d);
+      validate_non_negative_index("eta", "R", R);
       current_statement__ = 66;
       context__.validate_dims("data initialization","eta","double",
-          context__.to_vec(d));
-      eta = Eigen::Matrix<double, -1, 1>(d);
+          context__.to_vec(R));
+      eta = Eigen::Matrix<double, -1, 1>(R);
       stan::math::fill(eta, std::numeric_limits<double>::quiet_NaN());
       
       {
@@ -398,7 +398,7 @@ public:
         current_statement__ = 66;
         pos__ = 1;
         current_statement__ = 66;
-        for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
+        for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
           current_statement__ = 66;
           assign(eta, cons_list(index_uni(sym1__), nil_index_list()),
             eta_flat__[(pos__ - 1)], "assigning variable eta");
@@ -476,19 +476,19 @@ public:
       current_statement__ = 73;
       validate_positive_index("pi", "K", K);
       current_statement__ = 74;
-      validate_non_negative_index("theta", "p", p);
+      validate_non_negative_index("theta", "J", J);
       current_statement__ = 75;
       validate_non_negative_index("theta", "K", K);
       current_statement__ = 76;
-      validate_positive_index("theta", "d", d);
+      validate_positive_index("theta", "R", R);
       current_statement__ = 77;
       validate_non_negative_index("xi", "K", K);
       current_statement__ = 78;
       validate_non_negative_index("xi", "q", q);
       current_statement__ = 79;
-      validate_non_negative_index("theta_prod", "p", p);
+      validate_non_negative_index("theta_prod", "J", J);
       current_statement__ = 80;
-      validate_non_negative_index("theta_prod", "d", d);
+      validate_non_negative_index("theta_prod", "R", R);
       current_statement__ = 81;
       validate_non_negative_index("xi_prod", "q", q);
       current_statement__ = 82;
@@ -510,7 +510,7 @@ public:
     
     try {
       num_params_r__ += (K - 1);
-      num_params_r__ += p * K * (d - 1);
+      num_params_r__ += J * K * (R - 1);
       num_params_r__ += K * q;
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -555,25 +555,25 @@ public:
           "assigning variable pi");
       }
       std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>> theta;
-      theta = std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>>(p, std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>(K, Eigen::Matrix<local_scalar_t__, -1, 1>(d)));
+      theta = std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>>(J, std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>(K, Eigen::Matrix<local_scalar_t__, -1, 1>(R)));
       stan::math::fill(theta, DUMMY_VAR__);
       
       std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>> theta_in__;
-      theta_in__ = std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>>(p, std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>(K, Eigen::Matrix<local_scalar_t__, -1, 1>(
-        (d - 1))));
+      theta_in__ = std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>>(J, std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>(K, Eigen::Matrix<local_scalar_t__, -1, 1>(
+        (R - 1))));
       stan::math::fill(theta_in__, DUMMY_VAR__);
       
       current_statement__ = 2;
-      for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
         current_statement__ = 2;
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           current_statement__ = 2;
           assign(theta_in__,
             cons_list(index_uni(sym1__),
               cons_list(index_uni(sym2__), nil_index_list())),
-            in__.vector((d - 1)), "assigning variable theta_in__");}}
+            in__.vector((R - 1)), "assigning variable theta_in__");}}
       current_statement__ = 2;
-      for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
         current_statement__ = 2;
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           current_statement__ = 2;
@@ -604,7 +604,7 @@ public:
         assign(xi, cons_list(index_uni(sym1__), nil_index_list()),
           in__.vector(q), "assigning variable xi");}
       Eigen::Matrix<local_scalar_t__, -1, -1> theta_prod;
-      theta_prod = Eigen::Matrix<local_scalar_t__, -1, -1>(p, d);
+      theta_prod = Eigen::Matrix<local_scalar_t__, -1, -1>(J, R);
       stan::math::fill(theta_prod, DUMMY_VAR__);
       
       Eigen::Matrix<local_scalar_t__, -1, 1> xi_prod;
@@ -612,9 +612,9 @@ public:
       stan::math::fill(xi_prod, DUMMY_VAR__);
       
       current_statement__ = 10;
-      for (int j = 1; j <= p; ++j) {
+      for (int j = 1; j <= J; ++j) {
         current_statement__ = 8;
-        for (int r = 1; r <= d; ++r) {
+        for (int r = 1; r <= R; ++r) {
           current_statement__ = 6;
           assign(theta_prod,
             cons_list(index_uni(j),
@@ -646,7 +646,7 @@ public:
         current_statement__ = 30;
         lp_accum__.add(dirichlet_lpdf<propto__>(pi, alpha));
         current_statement__ = 35;
-        for (int j = 1; j <= p; ++j) {
+        for (int j = 1; j <= J; ++j) {
           current_statement__ = 33;
           for (int k = 1; k <= K; ++k) {
             current_statement__ = 31;
@@ -676,7 +676,7 @@ public:
                             cons_list(index_omni(), nil_index_list())), "V")),
                       xi[(k - 1)])))), "assigning variable log_cond_c");
             current_statement__ = 42;
-            for (int j = 1; j <= p; ++j) {
+            for (int j = 1; j <= J; ++j) {
               current_statement__ = 40;
               assign(log_cond_c,
                 cons_list(index_uni(i),
@@ -734,25 +734,25 @@ public:
       assign(pi, nil_index_list(), stan::math::simplex_constrain(pi_in__),
         "assigning variable pi");
       std::vector<std::vector<Eigen::Matrix<double, -1, 1>>> theta;
-      theta = std::vector<std::vector<Eigen::Matrix<double, -1, 1>>>(p, std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(d)));
+      theta = std::vector<std::vector<Eigen::Matrix<double, -1, 1>>>(J, std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(R)));
       stan::math::fill(theta, std::numeric_limits<double>::quiet_NaN());
       
       std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>> theta_in__;
-      theta_in__ = std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>>(p, std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>(K, Eigen::Matrix<local_scalar_t__, -1, 1>(
-        (d - 1))));
+      theta_in__ = std::vector<std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>>(J, std::vector<Eigen::Matrix<local_scalar_t__, -1, 1>>(K, Eigen::Matrix<local_scalar_t__, -1, 1>(
+        (R - 1))));
       stan::math::fill(theta_in__, DUMMY_VAR__);
       
       current_statement__ = 2;
-      for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
         current_statement__ = 2;
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           current_statement__ = 2;
           assign(theta_in__,
             cons_list(index_uni(sym1__),
               cons_list(index_uni(sym2__), nil_index_list())),
-            in__.vector((d - 1)), "assigning variable theta_in__");}}
+            in__.vector((R - 1)), "assigning variable theta_in__");}}
       current_statement__ = 2;
-      for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
         current_statement__ = 2;
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           current_statement__ = 2;
@@ -772,7 +772,7 @@ public:
         assign(xi, cons_list(index_uni(sym1__), nil_index_list()),
           in__.vector(q), "assigning variable xi");}
       Eigen::Matrix<double, -1, -1> theta_prod;
-      theta_prod = Eigen::Matrix<double, -1, -1>(p, d);
+      theta_prod = Eigen::Matrix<double, -1, -1>(J, R);
       stan::math::fill(theta_prod, std::numeric_limits<double>::quiet_NaN());
       
       Eigen::Matrix<double, -1, 1> xi_prod;
@@ -781,9 +781,9 @@ public:
       
       for (int sym1__ = 1; sym1__ <= K; ++sym1__) {
         vars__.emplace_back(pi[(sym1__ - 1)]);}
-      for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
-          for (int sym3__ = 1; sym3__ <= p; ++sym3__) {
+          for (int sym3__ = 1; sym3__ <= J; ++sym3__) {
             vars__.emplace_back(
               theta[(sym3__ - 1)][(sym2__ - 1)][(sym1__ - 1)]);}}}
       for (int sym1__ = 1; sym1__ <= q; ++sym1__) {
@@ -794,9 +794,9 @@ public:
         return ;
       } 
       current_statement__ = 10;
-      for (int j = 1; j <= p; ++j) {
+      for (int j = 1; j <= J; ++j) {
         current_statement__ = 8;
-        for (int r = 1; r <= d; ++r) {
+        for (int r = 1; r <= R; ++r) {
           current_statement__ = 6;
           assign(theta_prod,
             cons_list(index_uni(j),
@@ -817,8 +817,8 @@ public:
                 cons_list(index_uni(v), nil_index_list())), "xi")),
           "assigning variable xi_prod");}
       if (emit_transformed_parameters__) {
-        for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
-          for (int sym2__ = 1; sym2__ <= p; ++sym2__) {
+        for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
+          for (int sym2__ = 1; sym2__ <= J; ++sym2__) {
             vars__.emplace_back(
               rvalue(theta_prod,
                 cons_list(index_uni(sym2__),
@@ -859,7 +859,7 @@ public:
                           cons_list(index_omni(), nil_index_list())), "V")),
                     xi[(k - 1)])))), "assigning variable log_cond_c");
           current_statement__ = 20;
-          for (int j = 1; j <= p; ++j) {
+          for (int j = 1; j <= J; ++j) {
             current_statement__ = 18;
             assign(log_cond_c,
               cons_list(index_uni(i),
@@ -957,7 +957,7 @@ public:
       assign(pi_free__, nil_index_list(), stan::math::simplex_free(pi),
         "assigning variable pi_free__");
       std::vector<std::vector<Eigen::Matrix<double, -1, 1>>> theta;
-      theta = std::vector<std::vector<Eigen::Matrix<double, -1, 1>>>(p, std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(d)));
+      theta = std::vector<std::vector<Eigen::Matrix<double, -1, 1>>>(J, std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(R)));
       stan::math::fill(theta, std::numeric_limits<double>::quiet_NaN());
       
       {
@@ -968,11 +968,11 @@ public:
         current_statement__ = 2;
         pos__ = 1;
         current_statement__ = 2;
-        for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
+        for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
           current_statement__ = 2;
           for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
             current_statement__ = 2;
-            for (int sym3__ = 1; sym3__ <= p; ++sym3__) {
+            for (int sym3__ = 1; sym3__ <= J; ++sym3__) {
               current_statement__ = 2;
               assign(theta,
                 cons_list(index_uni(sym3__),
@@ -983,12 +983,12 @@ public:
               pos__ = (pos__ + 1);}}}
       }
       std::vector<std::vector<Eigen::Matrix<double, -1, 1>>> theta_free__;
-      theta_free__ = std::vector<std::vector<Eigen::Matrix<double, -1, 1>>>(p, std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(
-        (d - 1))));
+      theta_free__ = std::vector<std::vector<Eigen::Matrix<double, -1, 1>>>(J, std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(
+        (R - 1))));
       stan::math::fill(theta_free__, std::numeric_limits<double>::quiet_NaN());
       
       current_statement__ = 2;
-      for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
         current_statement__ = 2;
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           current_statement__ = 2;
@@ -1022,9 +1022,9 @@ public:
       }
       for (int sym1__ = 1; sym1__ <= (K - 1); ++sym1__) {
         vars__.emplace_back(pi_free__[(sym1__ - 1)]);}
-      for (int sym1__ = 1; sym1__ <= p; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= J; ++sym1__) {
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
-          for (int sym3__ = 1; sym3__ <= (d - 1); ++sym3__) {
+          for (int sym3__ = 1; sym3__ <= (R - 1); ++sym3__) {
             vars__.emplace_back(
               theta_free__[(sym1__ - 1)][(sym2__ - 1)][(sym3__ - 1)]);}}}
       for (int sym1__ = 1; sym1__ <= K; ++sym1__) {
@@ -1054,15 +1054,15 @@ public:
     dimss__.clear();
     dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(K)});
     
-    dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(p),
+    dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(J),
                                              static_cast<size_t>(K),
-                                             static_cast<size_t>(d)});
+                                             static_cast<size_t>(R)});
     
     dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(K),
                                              static_cast<size_t>(q)});
     
-    dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(p),
-                                             static_cast<size_t>(d)});
+    dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(J),
+                                             static_cast<size_t>(R)});
     
     dimss__.emplace_back(std::vector<size_t>{static_cast<size_t>(q)});
     
@@ -1086,11 +1086,11 @@ public:
       {
         param_names__.emplace_back(std::string() + "pi" + '.' + std::to_string(sym1__));
       }}
-    for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
+    for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
       {
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           {
-            for (int sym3__ = 1; sym3__ <= p; ++sym3__) {
+            for (int sym3__ = 1; sym3__ <= J; ++sym3__) {
               {
                 param_names__.emplace_back(std::string() + "theta" + '.' + std::to_string(sym3__) + '.' + std::to_string(sym2__) + '.' + std::to_string(sym1__));
               }}
@@ -1104,9 +1104,9 @@ public:
           }}
       }}
     if (emit_transformed_parameters__) {
-      for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
         {
-          for (int sym2__ = 1; sym2__ <= p; ++sym2__) {
+          for (int sym2__ = 1; sym2__ <= J; ++sym2__) {
             {
               param_names__.emplace_back(std::string() + "theta_prod" + '.' + std::to_string(sym2__) + '.' + std::to_string(sym1__));
             }}
@@ -1150,11 +1150,11 @@ public:
       {
         param_names__.emplace_back(std::string() + "pi" + '.' + std::to_string(sym1__));
       }}
-    for (int sym1__ = 1; sym1__ <= (d - 1); ++sym1__) {
+    for (int sym1__ = 1; sym1__ <= (R - 1); ++sym1__) {
       {
         for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
           {
-            for (int sym3__ = 1; sym3__ <= p; ++sym3__) {
+            for (int sym3__ = 1; sym3__ <= J; ++sym3__) {
               {
                 param_names__.emplace_back(std::string() + "theta" + '.' + std::to_string(sym3__) + '.' + std::to_string(sym2__) + '.' + std::to_string(sym1__));
               }}
@@ -1168,9 +1168,9 @@ public:
           }}
       }}
     if (emit_transformed_parameters__) {
-      for (int sym1__ = 1; sym1__ <= d; ++sym1__) {
+      for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
         {
-          for (int sym2__ = 1; sym2__ <= p; ++sym2__) {
+          for (int sym2__ = 1; sym2__ <= J; ++sym2__) {
             {
               param_names__.emplace_back(std::string() + "theta_prod" + '.' + std::to_string(sym2__) + '.' + std::to_string(sym1__));
             }}
@@ -1206,13 +1206,13 @@ public:
     
   inline std::string get_constrained_sizedtypes() const {
     stringstream s__;
-    s__ << "[{\"name\":\"pi\",\"type\":{\"name\":\"vector\",\"length\":" << K << "},\"block\":\"parameters\"},{\"name\":\"theta\",\"type\":{\"name\":\"array\",\"length\":" << p << ",\"element_type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << d << "}}},\"block\":\"parameters\"},{\"name\":\"xi\",\"type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << q << "}},\"block\":\"parameters\"},{\"name\":\"theta_prod\",\"type\":{\"name\":\"matrix\",\"rows\":" << p << ",\"cols\":" << d << "},\"block\":\"transformed_parameters\"},{\"name\":\"xi_prod\",\"type\":{\"name\":\"vector\",\"length\":" << q << "},\"block\":\"transformed_parameters\"},{\"name\":\"pred_class_probs\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << K << "}},\"block\":\"generated_quantities\"},{\"name\":\"pred_class\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"int\"}},\"block\":\"generated_quantities\"},{\"name\":\"log_cond_c\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << K << "}},\"block\":\"generated_quantities\"}]";
+    s__ << "[{\"name\":\"pi\",\"type\":{\"name\":\"vector\",\"length\":" << K << "},\"block\":\"parameters\"},{\"name\":\"theta\",\"type\":{\"name\":\"array\",\"length\":" << J << ",\"element_type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << R << "}}},\"block\":\"parameters\"},{\"name\":\"xi\",\"type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << q << "}},\"block\":\"parameters\"},{\"name\":\"theta_prod\",\"type\":{\"name\":\"matrix\",\"rows\":" << J << ",\"cols\":" << R << "},\"block\":\"transformed_parameters\"},{\"name\":\"xi_prod\",\"type\":{\"name\":\"vector\",\"length\":" << q << "},\"block\":\"transformed_parameters\"},{\"name\":\"pred_class_probs\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << K << "}},\"block\":\"generated_quantities\"},{\"name\":\"pred_class\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"int\"}},\"block\":\"generated_quantities\"},{\"name\":\"log_cond_c\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << K << "}},\"block\":\"generated_quantities\"}]";
     return s__.str();
     } // get_constrained_sizedtypes() 
     
   inline std::string get_unconstrained_sizedtypes() const {
     stringstream s__;
-    s__ << "[{\"name\":\"pi\",\"type\":{\"name\":\"vector\",\"length\":" << (K - 1) << "},\"block\":\"parameters\"},{\"name\":\"theta\",\"type\":{\"name\":\"array\",\"length\":" << p << ",\"element_type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << (d - 1) << "}}},\"block\":\"parameters\"},{\"name\":\"xi\",\"type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << q << "}},\"block\":\"parameters\"},{\"name\":\"theta_prod\",\"type\":{\"name\":\"matrix\",\"rows\":" << p << ",\"cols\":" << d << "},\"block\":\"transformed_parameters\"},{\"name\":\"xi_prod\",\"type\":{\"name\":\"vector\",\"length\":" << q << "},\"block\":\"transformed_parameters\"},{\"name\":\"pred_class_probs\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << (K - 1) << "}},\"block\":\"generated_quantities\"},{\"name\":\"pred_class\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"int\"}},\"block\":\"generated_quantities\"},{\"name\":\"log_cond_c\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << K << "}},\"block\":\"generated_quantities\"}]";
+    s__ << "[{\"name\":\"pi\",\"type\":{\"name\":\"vector\",\"length\":" << (K - 1) << "},\"block\":\"parameters\"},{\"name\":\"theta\",\"type\":{\"name\":\"array\",\"length\":" << J << ",\"element_type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << (R - 1) << "}}},\"block\":\"parameters\"},{\"name\":\"xi\",\"type\":{\"name\":\"array\",\"length\":" << K << ",\"element_type\":{\"name\":\"vector\",\"length\":" << q << "}},\"block\":\"parameters\"},{\"name\":\"theta_prod\",\"type\":{\"name\":\"matrix\",\"rows\":" << J << ",\"cols\":" << R << "},\"block\":\"transformed_parameters\"},{\"name\":\"xi_prod\",\"type\":{\"name\":\"vector\",\"length\":" << q << "},\"block\":\"transformed_parameters\"},{\"name\":\"pred_class_probs\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << (K - 1) << "}},\"block\":\"generated_quantities\"},{\"name\":\"pred_class\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"int\"}},\"block\":\"generated_quantities\"},{\"name\":\"log_cond_c\",\"type\":{\"name\":\"array\",\"length\":" << n << ",\"element_type\":{\"name\":\"vector\",\"length\":" << K << "}},\"block\":\"generated_quantities\"}]";
     return s__.str();
     } // get_unconstrained_sizedtypes() 
     

@@ -23,7 +23,7 @@ unconstrain(i, K, stan_model, pi, theta, xi)
 Outputs vector of unconstrained parameters
 }
 \description{
-`unconstrain` is a helper function that converts each row of an input array 
+\code{unconstrain} is a helper function that converts each row of an input array
 of MCMC parameter output from constrained space to unconstrained space in Stan
 }
 \keyword{internal}

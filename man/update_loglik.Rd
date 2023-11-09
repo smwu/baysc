@@ -4,12 +4,12 @@
 \alias{update_loglik}
 \title{Update individual log-likelihood}
 \usage{
-update_loglik(loglik, n, p, c_all, theta, x_mat, pi, z_all, V, xi, y_all)
+update_loglik(loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all)
 }
 \arguments{
 \item{n}{Number of individuals}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
 \item{theta}{Array parameter of item level probabilities. JxKxR}
 
@@ -26,11 +26,11 @@ update_loglik(loglik, n, p, c_all, theta, x_mat, pi, z_all, V, xi, y_all)
 \item{y_all}{Vector of outcomes. nx1}
 }
 \value{
-Updated `loglik` vector after using the updated parameters and 
+Updated \code{loglik} vector after using the updated parameters and
 latent variables.
 }
 \description{
-`update_loglik` updates the vector of individual log-likelihoods using the
+\code{update_loglik} updates the vector of individual log-likelihoods using the
 updated parameters and latent variables.
 }
 \keyword{internal}

@@ -6,8 +6,18 @@
 #' to the reduced number of classes for the unsupervised WOLCA model.
 #'
 #' @inheritParams run_MCMC_Rcpp_wolca
+#' @inheritParams wolca
 #' @param MCMC_out Output from `run_MCMC_Rcpp_wolca` containing `pi_MCMC`, 
-#' `theta_MCMC`, and `c_all_MCMC`, 
+#' `theta_MCMC`, and `c_all_MCMC`
+#' 
+#' @details
+#' First, `K_med`, the median number of classes with at least the `class_cutoff` 
+#' proportion of individuals is obtained over all MCMC iterations. Then, label 
+#' switching is addressed through a relabeling procedure, where agglomerative 
+#' clustering with Hamming distance is used to group individuals into `K_med` 
+#' clusters and labels are re-assigned based on these clusters. Finally, 
+#' parameter estimates are reordered using the relabeled classes so that 
+#' posterior output can be averaged across MCMC iterations.
 #' 
 #' @return
 #' Returns list `post_MCMC_out` containing:
@@ -18,6 +28,8 @@
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
 #' }
 #' 
+#' @seealso [post_process()] [run_MCMC_Rcpp_wolca()] [get_estimates_wolca()] 
+#' [fit_probit_wolca()] [wolca()] 
 #' @importFrom stats median as.dist hclust cutree
 #' @importFrom e1071 hamming.distance
 #' @export
@@ -32,8 +44,8 @@
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -42,25 +54,26 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-#' burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+#' burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 #' alpha = alpha, eta = eta)
 #' 
 #' # Then run post-process relabeling
-#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, p = p, d = d)
+#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, J = J, R = R,
+#' class_cutoff = 0.05)
 #' # post_MCMC_out
 #' # plot(post_MCMC_out$dendrogram)
 #' 
-post_process_wolca <- function(MCMC_out, p, d) {
-  # Get median number of classes with >= 5% of individuals, over all iterations
+post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
+  # Get median number of classes with >= cutoff% of individuals, over all iterations
   M <- dim(MCMC_out$pi_MCMC)[1]  # Number of stored MCMC iterations
-  K_med <- round(stats::median(rowSums(MCMC_out$pi_MCMC >= 0.05)))
+  K_med <- round(stats::median(rowSums(MCMC_out$pi_MCMC >= class_cutoff)))
   
   # Cluster individuals into reduced number of classes using agglomerative clustering
   # Calculate pairwise distance matrix using Hamming distance: proportion of
@@ -79,7 +92,7 @@ post_process_wolca <- function(MCMC_out, p, d) {
   
   # Reduce and reorder parameter estimates using new classes
   pi <- matrix(NA, nrow = M, ncol = K_med)
-  theta <- array(NA, dim = c(M, p, K_med, d))
+  theta <- array(NA, dim = c(M, J, K_med, R))
   for (m in 1:M) {
     iter_order <- relabel_red_classes[m, ]
     pi_temp <- MCMC_out$pi_MCMC[m, iter_order]

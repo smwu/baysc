@@ -7,9 +7,9 @@
 grad_par(pwts, svydata, stan_mod, stan_data, par_stan, u_pars)
 }
 \arguments{
-\item{pwts}{Replicate weights from `svyrepdesign` object}
+\item{pwts}{Replicate weights from \code{svyrepdesign} object}
 
-\item{svydata}{Data frame containing all variables from `svyrepdesign` object}
+\item{svydata}{Data frame containing all variables from \code{svyrepdesign} object}
 
 \item{stan_mod}{Stan model object}
 
@@ -20,10 +20,10 @@ grad_par(pwts, svydata, stan_mod, stan_data, par_stan, u_pars)
 \item{u_pars}{Unconstrained parameters estimates for evaluating gradient}
 }
 \value{
-Outputs `gradpar` gradient evaluated at `u_pars` using replicate weights
+Outputs \code{gradpar} gradient evaluated at \code{u_pars} using replicate weights
 }
 \description{
-`grad_par` is a helper function nested in `withReplicates()` to obtain the 
+\code{grad_par} is a helper function nested in \code{withReplicates()} to obtain the
 gradient with the replicate weights
 }
 \keyword{internal}

@@ -11,7 +11,7 @@ rcat_cpp(probs)
 the number of categories for the Categorical distribution.}
 }
 \value{
-Integer specifying the category (1-based indexing) of a single draw 
+Integer specifying the category (1-based indexing) of a single draw
 from the specified Categorical distribution
 }
 \description{

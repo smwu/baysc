@@ -17,6 +17,6 @@ DEadj(par, par_hat, R2R1)
 Outputs adjusted parameter estimates
 }
 \description{
-`DEadj` is a helper function to apply the matrix rotation
+\code{DEadj} is a helper function to apply the matrix rotation
 }
 \keyword{internal}

@@ -18,11 +18,11 @@ update_z(z_all, n, V, xi, c_all, y_all)
 \item{y_all}{Vector of outcomes. nx1}
 }
 \value{
-Updated `z_all` vector after drawing from a Truncated Normal 
+Updated \code{z_all} vector after drawing from a Truncated Normal
 distribution with updated mean.
 }
 \description{
-`update_z` updates the vector of latent probit variables, z, by drawing 
+\code{update_z} updates the vector of latent probit variables, z, by drawing
 from a Truncated Normal distribution with updated mean.
 }
 \keyword{internal}

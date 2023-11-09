@@ -49,8 +49,18 @@
 #' mod_stan <- stanmodels$SWOLCA_main
 #' 
 #' # Run swolca
-#' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-#'        cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
-#'        n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
+#' res_swolca <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
+#' cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
+#' n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
+#' 
+#' # Run solca
+#' res_solca <- solca(x_mat = x_mat, y_all = y_all, V = V, adapt_seed = 1, 
+#' n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+#' 
+#' # Run wolca
+#' res_wolca <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
+#' cluster_id = cluster_id, stratum_id = stratum_id, V = V, glm_form = glm_form, 
+#' adapt_seed = 1, n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, 
+#' save_res = FALSE)
 #' }
 NULL

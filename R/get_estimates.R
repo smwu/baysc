@@ -9,6 +9,15 @@
 #' `theta_MCMC`, `xi_MCMC`, `c_all_MCMC`, `z_all_MCMC`, and `loglik_MCMC`
 #' @param post_MCMC_out output from `post_process` containing `K_med`, `pi`, 
 #' `theta`, `xi`
+#' 
+#' @details
+#' First, duplicate classes that have the same modal exposure categories
+#' for all items are combined to obtain the number of unique classes, `K_red`. 
+#' Parameters are then renormalized for the unique classes and posterior median 
+#' estimates are computed across MCMC iterations. Using these median estimates,
+#' class assignments `c_all`, the regression mean, and the individual 
+#' log-likelihood are derived. 
+#' 
 #' @return
 #' Returns list `estimates` containing:
 #' \describe{
@@ -25,11 +34,17 @@
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1} 
 #' }
 #'
+#' @seealso [run_MCMC_Rcpp()] [post_process()] [var_adjust()] [swolca()] [solca()]
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
 #' @importFrom LaplacesDemon rcat
 #' @importFrom stats dnorm median pnorm
 #' @export
+#' 
+#' @references 
+#' Williams, M. R. and Savitsky, T. D. (2021). Uncertainty estimation for 
+#' pseudo-bayesian inference under complex sampling. International Statistical 
+#' Review 89, 72–107.
 #'
 #' @examples
 #' # Load data and obtain relevant variables
@@ -42,8 +57,8 @@
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -56,7 +71,7 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi
@@ -68,7 +83,7 @@
 #' }
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then initialize probit params 
 #' probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
@@ -77,17 +92,18 @@
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
 #' probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
-#' K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+#' K = K, J = J, R = R, n = n, q = q, w_all = w_all, x_mat = x_mat, 
 #' y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 #' 
 #' # Then run post-process relabeling
-#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, p = p, d = d, q = q)
+#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, J = J, R = R, q = q,
+#' class_cutoff = 0.05)
 #'
 #' # Then obtain posterior estimates
 #' estimates <- get_estimates(MCMC_out = MCMC_out, post_MCMC_out = post_MCMC_out,
-#'                            n = n, p = p, V = V, y_all = y_all, x_mat = x_mat)
+#'                            n = n, J = J, V = V, y_all = y_all, x_mat = x_mat)
 #' 
-get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
+get_estimates <- function(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat) {
   
   #============== Identify unique classes using modal exposure categories ======
   # Posterior median estimate for theta across iterations
@@ -139,7 +155,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
     for (k in 1:K_red) {
       # Calculate theta component of individual log-likelihood assuming class k
       log_theta_comp_k <- 0
-      for (j in 1:p) {
+      for (j in 1:J) {
         log_theta_comp_k <- log_theta_comp_k + log(theta_med[j, k, x_mat[i, j]])
       }
       # Calculate and control extremes for probit component
@@ -166,7 +182,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, p, V, y_all, x_mat) {
     c_i <- c_all[i]
     # Calculate theta component of individual log-likelihood
     log_theta_comp <- 0
-    for (j in 1:p) {
+    for (j in 1:J) {
       log_theta_comp <- log_theta_comp + log(theta_med[j, c_i, x_mat[i, j]])
     }
     # Calculate individual log-likelihood using median estimates

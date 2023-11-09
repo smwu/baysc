@@ -72,14 +72,27 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' `var_adj` applies applies the post-processing variance adjustment
 #' 
 #' @inheritParams run_MCMC_Rcpp
+#' @inheritParams swolca
 #' @param mod_stan Stan model
 #' @param estimates Output from `get_estimates()` containing `K_red`, `pi_red`, 
 #' `theta_red`, `xi_red`, `pi_med`, `theta_med`, `xi_med`, `Phi_med`, `c_all`, 
 #' `pred_class_probs`, `loglik_med`
-#' @param stratum_id Vector of stratifying variable for individuals. nx1
-#' @param cluster_id Vector of cluster indicators. nx1 
 #' @param num_reps Number of bootstrap replicates to use for the variance 
 #' estimate. Default is 100.
+#' 
+#' @details
+#' `var_adjust` applies a post-processing variance adjustment that rescales the
+#' variance to obtain correct coverage of posterior intervals, adapted from 
+#' Williams and Savitsky (2021). To obtain the rescaling, a sandwich-type 
+#' variance is estimated. To estimate the Hessian that composes the "bread" of 
+#' the sandwich, the mixture model is specified in Stan and the parameters are 
+#' converted to the unconstrained space. Bootstrap replicates are used to 
+#' estimate the covariance matrix that composes the "meat" of the sandwich. 
+#' If there are any rounding issues, the resulting matrices are mapped to the 
+#' nearest positive definite matrix. Next, the rescaling adjustment is derived
+#' and applied to the parameters for all MCMC iterations. Finally, the adjusted
+#' parameters are converted back to the constrained space and the posterior 
+#' median parameter estimates are recomputed, now with proper variance estimation. 
 #' 
 #' @return 
 #' Returns list `estimates_adj` containing:
@@ -97,6 +110,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods from `get_estimates()`. nx1} 
 #' }
 #'
+#' @seealso [run_MCMC_Rcpp()] [post_process()] [get_estimates()] [swolca()]
 #' @importFrom stats rnorm pnorm optimHess vcov median
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom rstan sampling unconstrain_pars grad_log_prob constrain_pars
@@ -116,8 +130,8 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -130,7 +144,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi
@@ -142,7 +156,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' }
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then initialize probit params 
 #' probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
@@ -151,36 +165,37 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
 #' probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
-#' K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+#' K = K, J = J, R = R, n = n, q = q, w_all = w_all, x_mat = x_mat, 
 #' y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 #' 
 #' # Then run post-process relabeling
-#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, p = p, d = d, q = q)
+#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, J = J, R = R, q = q,
+#' class_cutoff = 0.05)
 #'
 #' # Then obtain posterior estimates
 #' estimates <- get_estimates(MCMC_out = MCMC_out, post_MCMC_out = post_MCMC_out,
-#'                            n = n, p = p, V = V, y_all = y_all, x_mat = x_mat)
+#'                            n = n, J = J, V = V, y_all = y_all, x_mat = x_mat)
 #'
 #' # Finally apply variance adjustment to posterior estimates
 #' adj_estimates <- var_adjust(mod_stan = stanmodels$SWOLCA_main, 
-#'                             estimates = estimates, K = K, p = p,
-#'                             d = d, n = n, q = q, x_mat = x_mat, y_all = y_all,
+#'                             estimates = estimates, K = K, J = J,
+#'                             R = R, n = n, q = q, x_mat = x_mat, y_all = y_all,
 #'                             V = V, w_all = w_all, stratum_id = stratum_id, 
 #'                             cluster_id = cluster_id, num_reps = 100)                        
 #' 
-var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_all, 
+var_adjust <- function(mod_stan, estimates, K, J, R, n, q, x_mat, y_all, V, w_all, 
                        stratum_id, cluster_id, num_reps = 100) {
   #=============== Run Stan model ==============================================
   # Define data for Stan model
   alpha <- rep(1, K) / K            # Hyperparameter for prior for pi
-  eta <- rep(1, d)                  # Hyperparameter for prior for theta
+  eta <- rep(1, R)                  # Hyperparameter for prior for theta
   mu0 <- Sig0 <- vector("list", K)  # Hyperparameters for xi
   for (k in 1:K) {
     mu0[[k]] <- stats::rnorm(n = q)
     Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
                       nrow = q, ncol = q)
   }
-  data_stan <- list(K = K, p = p, d = d, n = n, q = q, X = x_mat, y = y_all, 
+  data_stan <- list(K = K, J = J, R = R, n = n, q = q, X = x_mat, y = y_all, 
                     V = V, weights = w_all, alpha = alpha, eta = eta, mu0 = mu0, 
                     Sig0 = Sig0)
   
@@ -277,7 +292,7 @@ var_adjust <- function(mod_stan, estimates, K, p, d, n, q, x_mat, y_all, V, w_al
   #=============== Convert adjusted to constrained space =======================
   # Constrained adjusted parameters for all MCMC samples
   pi_red_adj <- matrix(NA, nrow=M, ncol=K)
-  theta_red_adj <- array(NA, dim=c(M, p, K, d))
+  theta_red_adj <- array(NA, dim=c(M, J, K, R))
   xi_red_adj <- array(NA, dim=c(M, K, q))
   for (i in 1:M) {
     constr_pars <- rstan::constrain_pars(out_stan, par_adj[i,])

@@ -11,8 +11,8 @@ run_MCMC_Rcpp(
   burn,
   thin,
   K,
-  p,
-  d,
+  J,
+  R,
   n,
   q,
   w_all,
@@ -26,22 +26,22 @@ run_MCMC_Rcpp(
 )
 }
 \arguments{
-\item{OLCA_params}{Output list from `init_OLCA()` containing `pi`, `c_all`, 
-and `theta`}
+\item{OLCA_params}{Output list from \code{init_OLCA()} containing \code{pi}, \code{c_all},
+and \code{theta}}
 
-\item{probit_params}{Output list from `init_probit()` containing `xi` and `z_all`}
+\item{probit_params}{Output list from \code{init_probit()} containing \code{xi} and \code{z_all}}
 
-\item{n_runs}{Number of MCMC iterations}
+\item{n_runs}{Number of MCMC iterations. Default is 20000.}
 
-\item{burn}{Burn-in period}
+\item{burn}{Number of MCMC iterations to drop as a burn-in period. Default is 10000.}
 
-\item{thin}{Thinning factor}
+\item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
 \item{K}{Number of classes}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
-\item{d}{Number of exposure categories}
+\item{R}{Maximum number of exposure categories}
 
 \item{n}{Number of individuals}
 
@@ -55,28 +55,39 @@ and `theta`}
 
 \item{V}{Regression design matrix without class assignment. nxq}
 
-\item{alpha}{Vector of hyperparameters for pi. Kx1}
+\item{alpha}{Kx1 vector of hyperparameters for prior for class membership
+probabilities \eqn{\pi}}
 
-\item{eta}{Vector of hyperparameters for theta. dx1}
+\item{eta}{dx1 vector of hyperparameters for prior for item consumption
+level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
+\eqn{k}}
 
-\item{mu0}{List of vectors of mean hyperparameters for xi. List of K qx1 vectors}
+\item{mu0}{List of K qx1 vectors of mean hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 
-\item{Sig0}{List of matrices of variance hyperparameters for xi. List of K qxq matrices}
+\item{Sig0}{List of K qxq matrices of variance hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 }
 \value{
-Returns list `MCMC_out` containing:
+Returns list \code{MCMC_out} containing:
 \describe{
-  \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
-  \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xpxKxd}
-  \item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
-  \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
-  \item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
-  \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
+\item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+\item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xpxKxd}
+\item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
+\item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+\item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
+\item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 }
 }
 \description{
-`run_MCMC_Rcpp` runs the Gibbs sampler MCMC algorithm using Rcpp to obtain 
+\code{run_MCMC_Rcpp} runs the Gibbs sampler MCMC algorithm using Rcpp to obtain
 posterior samples.
+}
+\details{
+A Gibbs sampler updates the parameters and variables in the following order:
+\eqn{\pi}, \code{c_all}, \eqn{\theta}, \eqn{\xi}, \code{z_all}. Class assignments
+are permuted every 10 iterations to encourage mixing, according to a random
+permutation sampler (Fruhwirth-Schnatter, 2001).
 }
 \examples{
 
@@ -90,8 +101,8 @@ sampling_wt <- data_vars$sample_wt
 
 # Obtain dimensions
 n <- dim(x_mat)[1]        # Number of individuals
-p <- dim(x_mat)[2]        # Number of exposure items
-d <- max(apply(x_mat, 2,  # Number of exposure categories
+J <- dim(x_mat)[2]        # Number of exposure items
+R <- max(apply(x_mat, 2,  # Number of exposure categories
 function(x) length(unique(x))))  
 # Obtain normalized weights
 kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -104,7 +115,7 @@ q <- ncol(V)   # Number of regression covariates excluding class assignment
 # Set hyperparameters
 K <- 30
 alpha <- rep(1, K) / K
-eta <- rep(1, d)
+eta <- rep(1, R)
 mu0 <- Sig0 <- vector("list", K)
 for (k in 1:K) {
   # MVN(0,1) hyperprior for prior mean of xi
@@ -116,7 +127,7 @@ for (k in 1:K) {
 }
 
 # First initialize OLCA params
-OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Then initialize probit params 
 probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
@@ -125,8 +136,17 @@ Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
 # Then run MCMC sampling
 MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
 probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
-K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+K = K, J = J, R = R, n = n, q = q, w_all = w_all, x_mat = x_mat, 
 y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 # MCMC_out
 
+}
+\references{
+Fruhwirth-Schnatter, S. (2001). Markov chain monte carlo estimation of
+classical and dynamic switching and mixture models. Journal of the American
+Statistical Association 96, 194–209.
+}
+\seealso{
+\code{\link[=post_process]{post_process()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=var_adjust]{var_adjust()}} \code{\link[=swolca]{swolca()}}
+\code{\link[=solca]{solca()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}}
 }

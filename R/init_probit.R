@@ -7,10 +7,23 @@
 #' @inheritParams init_OLCA
 #' @param q Number of regression covariates excluding class assignment
 #' @param V Regression design matrix without class assignment. nxq
-#' @param mu0 List of vectors of mean hyperparameters for xi. List of K qx1 vectors
-#' @param Sig0 List of matrices of variance hyperparameters for xi. List of K qxq matrices
+#' @param mu0 List of K qx1 vectors of mean hyperparameters for regression 
+#' coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. 
+#' @param Sig0 List of K qxq matrices of variance hyperparameters for regression 
+#' coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. 
 #' @param y_all Vector of outcomes. nx1
 #' @param c_all Vector of random initial class assignments. nx1
+#' 
+#' @details
+#' First, regression coefficients \eqn{\xi} are initialized by drawing independently
+#' for each latent class from a Multivariate Normal distribution with mean vector 
+#' hyperparameter \eqn{\mu_0} drawn from a Normal(0,1) hyperprior and variance 
+#' matrix hyperparameter \eqn{\Sigma_0} set to be a diagonal matrix with 
+#' diagonal components drawn from InvGamma(shape=5/2, scale=2/5) distributions.
+#' Then, the latent probit variable `z_all` is initialized by drawing from a 
+#' Truncated Normal distribution with mean \eqn{V\xi} and variance 1 and 
+#' truncation boundary 0, where negative values are drawn if the outcome is 0 and
+#' positive values are drawn if the outcome is 1. 
 #'
 #' @return
 #' Returns list `probit_params` containing:
@@ -19,6 +32,8 @@
 #'   \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
 #' }
 #'
+#' @seealso [init_OLCA()] [swolca()] [solca()]
+#' 
 #' @importFrom LaplacesDemon rmvn rinvgamma
 #' @importFrom truncnorm rtruncnorm
 #' @importFrom stats qnorm rnorm
@@ -31,8 +46,8 @@
 #' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' 
 #' # Probit model covariates only include latent class 
@@ -42,7 +57,7 @@
 #' # Set hyperparameters
 #' K <- 30
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi
@@ -54,7 +69,7 @@
 #' }
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Initialize probit model
 #' probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 

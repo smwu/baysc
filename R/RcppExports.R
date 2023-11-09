@@ -93,8 +93,8 @@ update_pi <- function(pi, w_all, c_all, K, alpha) {
 #' @return Updated `c_all` vector after drawing from a Categorical distribution
 #' with updated category event probabilities.
 #' @keywords internal
-update_c <- function(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all) {
-    invisible(.Call(`_baysc_update_c`, c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all))
+update_c <- function(c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all) {
+    invisible(.Call(`_baysc_update_c`, c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all))
 }
 
 #' Update c for WOLCA
@@ -107,8 +107,8 @@ update_c <- function(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all) {
 #' @return Updated `c_all` vector after drawing from a Categorical distribution
 #' with updated category event probabilities for the unsupervised model.
 #' @keywords internal
-update_c_wolca <- function(c_all, n, K, p, theta, x_mat, pi) {
-    invisible(.Call(`_baysc_update_c_wolca`, c_all, n, K, p, theta, x_mat, pi))
+update_c_wolca <- function(c_all, n, K, J, theta, x_mat, pi) {
+    invisible(.Call(`_baysc_update_c_wolca`, c_all, n, K, J, theta, x_mat, pi))
 }
 
 #' Update theta
@@ -120,8 +120,8 @@ update_c_wolca <- function(c_all, n, K, p, theta, x_mat, pi) {
 #' 
 #' @return Updated `theta` array after drawing from its posterior distribution.
 #' @keywords internal
-update_theta <- function(theta, p, K, d, eta, w_all, c_all, x_mat) {
-    invisible(.Call(`_baysc_update_theta`, theta, p, K, d, eta, w_all, c_all, x_mat))
+update_theta <- function(theta, J, K, R, eta, w_all, c_all, x_mat) {
+    invisible(.Call(`_baysc_update_theta`, theta, J, K, R, eta, w_all, c_all, x_mat))
 }
 
 #' Update xi
@@ -161,7 +161,7 @@ update_z <- function(z_all, n, V, xi, c_all, y_all) {
 #' @return Updated `loglik` vector after using the updated parameters and 
 #' latent variables.
 #' @keywords internal
-update_loglik <- function(loglik, n, p, c_all, theta, x_mat, pi, z_all, V, xi, y_all) {
-    invisible(.Call(`_baysc_update_loglik`, loglik, n, p, c_all, theta, x_mat, pi, z_all, V, xi, y_all))
+update_loglik <- function(loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all) {
+    invisible(.Call(`_baysc_update_loglik`, loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all))
 }
 

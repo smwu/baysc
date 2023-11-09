@@ -4,38 +4,53 @@
 \alias{init_OLCA}
 \title{Initialize OLCA model}
 \usage{
-init_OLCA(K, n, p, d, alpha, eta)
+init_OLCA(K, n, J, R, alpha, eta)
 }
 \arguments{
 \item{K}{Number of classes}
 
 \item{n}{Number of individuals}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
-\item{d}{Number of exposure categories}
+\item{R}{Maximum number of exposure categories}
 
-\item{alpha}{Vector of hyperparameters for pi. Kx1}
+\item{alpha}{Kx1 vector of hyperparameters for prior for class membership
+probabilities \eqn{\pi}}
 
-\item{eta}{Vector of hyperparameters for theta. dx1}
+\item{eta}{dx1 vector of hyperparameters for prior for item consumption
+level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
+\eqn{k}}
 }
 \value{
-Returns list `OLCA_params` containing:
+Returns list \code{OLCA_params} containing:
 \describe{
-  \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
-  \item{\code{theta}}{Array parameter theta for item category probabilities. pxKxd}
-  \item{\code{c_all}}{Vector of random initial class assignments. nx1}
+\item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
+\item{\code{theta}}{Array parameter theta for item category probabilities. pxKxd}
+\item{\code{c_all}}{Vector of random initial class assignments. nx1}
 }
 }
 \description{
-`init_OLCA` initializes priors and variables for an overfitted latent class
+\code{init_OLCA} initializes priors and variables for an overfitted latent class
 analysis (OLCA) given hyperparameters.
 }
+\details{
+First, class membership probabilities \eqn{\pi} are initialized by drawing
+from a Dirichlet distribution with hyperparameter \eqn{\alpha = 1/K} for each
+of the K components. Then, class assignments \code{c_all} are initialized for each
+individual by drawing from a Categorical distribution with parameter \eqn{\pi}.
+Finally, item consumption level probabilities \eqn{\theta} are initialized by
+drawing from a Dirichlet distribution with hyperparameter \eqn{\eta = 1} for
+each of the R components, independently for each exposure item and latent class.
+}
 \examples{
-K <- 30; n <- 4000; p <- 30; d <- 4
+K <- 30; n <- 4000; J <- 30; R <- 4
 alpha <- rep(1, K) / K
-eta <- rep(1, d)
-OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+eta <- rep(1, R)
+OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 # OLCA_params
 
+}
+\seealso{
+\code{\link[=init_probit]{init_probit()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
 }

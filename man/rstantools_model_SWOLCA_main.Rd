@@ -14,6 +14,6 @@ rstantools_model_SWOLCA_main
 Returns the specified stan model
 }
 \description{
-Get stan model used in the `swolca()` function for the variance adjustment.
+Get stan model used in the \code{swolca()} function for the variance adjustment.
 }
-\keyword{datasets}
+\keyword{internal}

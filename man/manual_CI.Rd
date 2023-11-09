@@ -17,10 +17,10 @@ manual_CI(model_object, svy_df, ci = 0.95)
 Outputs dataframe of confidence interval for all coefficients
 }
 \description{
-`manual_CI` manually calculates a Wald confidence interval using a t-dist
-with df from the survey design. Used for WOLCA in the situation where svyglm 
-produces negative residual df, calculated as design df plus one, minus the 
-number of parameters estimated. Best if no cluster-level covariates in the 
+\code{manual_CI} manually calculates a Wald confidence interval using a t-dist
+with df from the survey design. Used for WOLCA in the situation where svyglm
+produces negative residual df, calculated as design df plus one, minus the
+number of parameters estimated. Best if no cluster-level covariates in the
 regression model
 }
 \keyword{internal}

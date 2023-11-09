@@ -10,10 +10,10 @@ get_mode(v)
 \item{v}{Input vector}
 }
 \value{
-Outputs most common value found in input vector `v`
+Outputs most common value found in input vector \code{v}
 }
 \description{
-`get_mode` is a helper function that obtains the modal value given an input 
+\code{get_mode} is a helper function that obtains the modal value given an input
 vector.
 }
 \keyword{internal}

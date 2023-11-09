@@ -10,8 +10,8 @@ run_MCMC_Rcpp_wolca(
   burn,
   thin,
   K,
-  p,
-  d,
+  J,
+  R,
   n,
   w_all,
   x_mat,
@@ -20,20 +20,20 @@ run_MCMC_Rcpp_wolca(
 )
 }
 \arguments{
-\item{OLCA_params}{Output list from `init_OLCA()` containing `pi`, `c_all`, 
-and `theta`}
+\item{OLCA_params}{Output list from \code{init_OLCA()} containing \code{pi}, \code{c_all},
+and \code{theta}}
 
-\item{n_runs}{Number of MCMC iterations}
+\item{n_runs}{Number of MCMC iterations. Default is 20000.}
 
-\item{burn}{Burn-in period}
+\item{burn}{Number of MCMC iterations to drop as a burn-in period. Default is 10000.}
 
-\item{thin}{Thinning factor}
+\item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
 \item{K}{Number of classes}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
-\item{d}{Number of exposure categories}
+\item{R}{Maximum number of exposure categories}
 
 \item{n}{Number of individuals}
 
@@ -41,21 +41,29 @@ and `theta`}
 
 \item{x_mat}{Categorical exposure matrix. nxp}
 
-\item{alpha}{Vector of hyperparameters for pi. Kx1}
+\item{alpha}{Kx1 vector of hyperparameters for prior for class membership
+probabilities \eqn{\pi}}
 
-\item{eta}{Vector of hyperparameters for theta. dx1}
+\item{eta}{dx1 vector of hyperparameters for prior for item consumption
+level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
+\eqn{k}}
 }
 \value{
-Returns list `MCMC_out` containing:
+Returns list \code{MCMC_out} containing:
 \describe{
-  \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
-  \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xpxKxd}
-  \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+\item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+\item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xpxKxd}
+\item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
 }
 }
 \description{
-`run_MCMC_Rcpp_wolca` runs the Gibbs sampler MCMC algorithm using Rcpp to 
-obtain posterior samples for the two-step unsupervised WOLCA model
+\code{run_MCMC_Rcpp_wolca} runs the Gibbs sampler MCMC algorithm using Rcpp to
+obtain posterior samples for the two-step unsupervised WOLCA model.
+}
+\details{
+A Gibbs sampler updates the parameters and variables in the following order:
+\eqn{\pi}, \code{c_all}, \eqn{\theta}. Class assignments are permuted every 10
+iterations to encourage mixing, according to a random permutation sampler.
 }
 \examples{
 # Load data and obtain relevant variables
@@ -67,8 +75,8 @@ sampling_wt <- data_vars$sample_wt
 
 # Obtain dimensions
 n <- dim(x_mat)[1]        # Number of individuals
-p <- dim(x_mat)[2]        # Number of exposure items
-d <- max(apply(x_mat, 2,  # Number of exposure categories
+J <- dim(x_mat)[2]        # Number of exposure items
+R <- max(apply(x_mat, 2,  # Number of exposure categories
 function(x) length(unique(x))))  
 # Obtain normalized weights
 kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -77,18 +85,19 @@ w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 # Set hyperparameters
 K <- 30
 alpha <- rep(1, K) / K
-eta <- rep(1, d)
+eta <- rep(1, R)
 
 # First initialize OLCA params
-OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Then run MCMC sampling
 MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 alpha = alpha, eta = eta)
 # MCMC_out
 
 }
 \seealso{
-[run_MCMC_Rcpp()]
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process_wolca]{post_process_wolca()}} \code{\link[=get_estimates_wolca]{get_estimates_wolca()}}
+\code{\link[=fit_probit_wolca]{fit_probit_wolca()}} \code{\link[=wolca]{wolca()}}
 }

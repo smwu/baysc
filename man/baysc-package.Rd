@@ -6,21 +6,21 @@
 \alias{baysc}
 \title{BAYesian Survey Clustering}
 \description{
-`baysc` is an R package for running Bayesian clustering methods on survey data.
+\code{baysc} is an R package for running Bayesian clustering methods on survey data.
 }
 \details{
-Use the `swolca()` function to run a supervised weighted overfitted latent 
-class analysis (SWOLCA), proposed in Wu et al. (2023). 
+Use the \code{swolca()} function to run a supervised weighted overfitted latent
+class analysis (SWOLCA), proposed in Wu et al. (2023).
 
-Use the `solca()` function to run an unweighted supervised overfitted latent 
+Use the \code{solca()} function to run an unweighted supervised overfitted latent
 class analysis (SOLCA) that does not account for survey design.
 
-Use the `wolca()` function to run a two-step analysis where the first step is
-an unsupervised weighted overfitted latent class analysis (WOLCA) and the 
-second step is a frequentist survey-weighted probit regression model using 
-the `survey` package.
+Use the \code{wolca()} function to run a two-step analysis where the first step is
+an unsupervised weighted overfitted latent class analysis (WOLCA) and the
+second step is a frequentist survey-weighted probit regression model using
+the \code{survey} package.
 
-A simulated dataset named `sim_data` is also provided to help with 
+A simulated dataset named \code{sim_data} is also provided to help with
 familiarization of the package.
 }
 \examples{
@@ -42,15 +42,25 @@ V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 mod_stan <- stanmodels$SWOLCA_main
 
 # Run swolca
-res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-       cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
-       n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
+res_swolca <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
+cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
+n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
+
+# Run solca
+res_solca <- solca(x_mat = x_mat, y_all = y_all, V = V, adapt_seed = 1, 
+n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+
+# Run wolca
+res_wolca <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
+cluster_id = cluster_id, stratum_id = stratum_id, V = V, glm_form = glm_form, 
+adapt_seed = 1, n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, 
+save_res = FALSE)
 }
 }
 \references{
-Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
-(2023). Derivation of outcome-dependent dietary patterns for low-income women 
-obtained from survey data using a Supervised Weighted Overfitted Latent Class 
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
+(2023). Derivation of outcome-dependent dietary patterns for low-income women
+obtained from survey data using a Supervised Weighted Overfitted Latent Class
 Analysis. arXiv preprint arXiv:2310.01575.
 }
 \keyword{package}

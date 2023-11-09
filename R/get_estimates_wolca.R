@@ -9,6 +9,14 @@
 #' `theta_MCMC`, and `c_all_MCMC`
 #' @param post_MCMC_out output from `post_process_wolca` containing `K_med`, `pi`, 
 #' and `theta`
+#' 
+#' @details
+#' First, duplicate classes that have the same modal exposure categories
+#' for all items are combined to obtain the number of unique classes, `K_red`. 
+#' Parameters are then renormalized for the unique classes and posterior median 
+#' estimates are computed across MCMC iterations. Using these median estimates,
+#' class assignments `c_all` are derived. 
+#' 
 #' @return
 #' Returns list `estimates` containing:
 #' \describe{
@@ -21,6 +29,8 @@
 #'   \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
 #' }
 #'
+#' @seealso [get_estimates()] [run_MCMC_Rcpp_wolca()] [post_process_wolca()] 
+#' [fit_probit_wolca()] [wolca()] 
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
 #' @importFrom LaplacesDemon rcat
@@ -37,8 +47,8 @@
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -47,24 +57,25 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-#' burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+#' burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 #' alpha = alpha, eta = eta)
 #' 
 #' # Then run post-process relabeling
-#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, p = p, d = d)
+#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, J = J, R = R,
+#' class_cutoff = 0.05)
 #'
 #' # Then obtain posterior estimates
 #' estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
-#' post_MCMC_out = post_MCMC_out, n = n, p = p, x_mat = x_mat)
+#' post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 #' 
-get_estimates_wolca <- function(MCMC_out, post_MCMC_out, n, p, x_mat) {
+get_estimates_wolca <- function(MCMC_out, post_MCMC_out, n, J, x_mat) {
   
   #============== Identify unique classes using modal exposure categories ======
   # Posterior median estimate for theta across iterations
@@ -111,7 +122,7 @@ get_estimates_wolca <- function(MCMC_out, post_MCMC_out, n, p, x_mat) {
     for (k in 1:K_red) {
       # Calculate theta component of individual log-likelihood assuming class k
       log_theta_comp_k <- 0
-      for (j in 1:p) {
+      for (j in 1:J) {
         log_theta_comp_k <- log_theta_comp_k + log(theta_med[j, k, x_mat[i, j]])
       }
       # Individual log-likelihood for class k

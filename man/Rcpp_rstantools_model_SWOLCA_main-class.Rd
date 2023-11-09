@@ -6,5 +6,6 @@
 \alias{Rcpp_rstantools_model_SWOLCA_main}
 \title{S4 class for SWOLCA_main stan model}
 \description{
-S4 class for SWOLCA_main stan model inheriting `stanfit` class
+S4 class for SWOLCA_main stan model inheriting \code{stanfit} class
 }
+\keyword{internal}

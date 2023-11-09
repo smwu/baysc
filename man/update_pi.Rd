@@ -13,13 +13,14 @@ update_pi(pi, w_all, c_all, K, alpha)
 
 \item{K}{Number of classes}
 
-\item{alpha}{Vector of hyperparameters for pi. Kx1}
+\item{alpha}{Kx1 vector of hyperparameters for prior for class membership
+probabilities \eqn{\pi}}
 }
 \value{
-Updated `pi` vector after drawing from its posterior distribution
+Updated \code{pi} vector after drawing from its posterior distribution
 }
 \description{
-`update_pi` updates the vector parameter of class membership probabilities, pi, by 
+\code{update_pi} updates the vector parameter of class membership probabilities, pi, by
 drawing from its posterior.
 }
 \keyword{internal}

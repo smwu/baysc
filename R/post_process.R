@@ -6,8 +6,18 @@
 #' to the reduced number of classes.
 #'
 #' @inheritParams run_MCMC_Rcpp
+#' @inheritParams swolca
 #' @param MCMC_out Output from `run_MCMC_Rcpp` containing `pi_MCMC`, 
 #' `theta_MCMC`, `xi_MCMC`, `c_all_MCMC`, `z_all_MCMC`, and `loglik_MCMC`
+#' 
+#' @details
+#' First, `K_med`, the median number of classes with at least the `class_cutoff` 
+#' proportion of individuals is obtained over all MCMC iterations. Then, label 
+#' switching is addressed through a relabeling procedure, where agglomerative 
+#' clustering with Hamming distance is used to group individuals into `K_med` 
+#' clusters and labels are re-assigned based on these clusters. Finally, 
+#' parameter estimates are reordered using the relabeled classes so that 
+#' posterior output can be averaged across MCMC iterations.
 #' 
 #' @return
 #' Returns list `post_MCMC_out` containing:
@@ -19,6 +29,7 @@
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
 #' }
 #' 
+#' @seealso [run_MCMC_Rcpp()] [get_estimates()] [var_adjust()] [swolca()] [solca()]
 #' @importFrom stats median as.dist hclust cutree
 #' @importFrom e1071 hamming.distance
 #' @export
@@ -34,8 +45,8 @@
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -48,7 +59,7 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi
@@ -60,7 +71,7 @@
 #' }
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then initialize probit params 
 #' probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
@@ -69,18 +80,19 @@
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
 #' probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
-#' K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+#' K = K, J = J, R = R, n = n, q = q, w_all = w_all, x_mat = x_mat, 
 #' y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 #' 
 #' # Then run post-process relabeling
-#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, p = p, d = d, q = q)
+#' post_MCMC_out <- post_process(MCMC_out = MCMC_out, J = J, R = R, q = q,
+#' class_cutoff = 0.05)
 #' # post_MCMC_out
 #' # plot(post_MCMC_out$dendrogram)
 #' 
-post_process <- function(MCMC_out, p, d, q) {
-  # Get median number of classes with >= 5% of individuals, over all iterations
+post_process <- function(MCMC_out, J, R, q, class_cutoff) {
+  # Get median number of classes with >= cutoff% of individuals, over all iterations
   M <- dim(MCMC_out$pi_MCMC)[1]  # Number of stored MCMC iterations
-  K_med <- round(stats::median(rowSums(MCMC_out$pi_MCMC >= 0.05)))
+  K_med <- round(stats::median(rowSums(MCMC_out$pi_MCMC >= class_cutoff)))
   
   # Cluster individuals into reduced number of classes using agglomerative clustering
   # Calculate pairwise distance matrix using Hamming distance: proportion of 
@@ -99,7 +111,7 @@ post_process <- function(MCMC_out, p, d, q) {
   
   # Reduce and reorder parameter estimates using new classes
   pi <- matrix(NA, nrow = M, ncol = K_med)
-  theta <- array(NA, dim = c(M, p, K_med, d))
+  theta <- array(NA, dim = c(M, J, K_med, R))
   xi <- array(NA, dim = c(M, K_med, q))
   for (m in 1:M) {
     iter_order <- relabel_red_classes[m, ]

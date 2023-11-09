@@ -179,7 +179,7 @@ void update_pi(arma::vec& pi, const arma::vec& w_all, const arma::vec& c_all,
 //' with updated category event probabilities.
 //' @keywords internal
 // [[Rcpp::export]]
-void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
+void update_c(arma::vec& c_all, const int& n, const int& K, const int& J,
               const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
               const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, 
               const arma::vec& y_all) {
@@ -193,7 +193,7 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
       // Calculate theta component of individual log-likelihood for class k
       double log_theta_comp_k = 0.0;
       double log_probit_comp_k = 0.0;
-      for (int j = 0; j < p; j++) {
+      for (int j = 0; j < J; j++) {
         // Subtract 1 from exposure value due to 0-based indexing
         log_theta_comp_k += log(theta(j, k, x_mat(i, j) - 1));
       }
@@ -242,7 +242,7 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& p,
 //' with updated category event probabilities for the unsupervised model.
 //' @keywords internal
 // [[Rcpp::export]]
-void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& p, 
+void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& J, 
                   const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi) {
   arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
   arma::mat pred_class_probs(n, K);  // Posterior class membership probabilities
@@ -253,7 +253,7 @@ void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& p,
     for (int k = 0; k < K; k++) {
       // Calculate theta component of individual log-likelihood for class k
       double log_theta_comp_k = 0.0;
-      for (int j = 0; j < p; j++) {
+      for (int j = 0; j < J; j++) {
         // Subtract 1 from exposure value due to 0-based indexing
         log_theta_comp_k += log(theta(j, k, x_mat(i, j) - 1));
       }
@@ -279,15 +279,15 @@ void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& p,
 //' @return Updated `theta` array after drawing from its posterior distribution.
 //' @keywords internal
 // [[Rcpp::export]]
-void update_theta(arma::cube& theta, const int& p, const int& K, const int& d, 
+void update_theta(arma::cube& theta, const int& J, const int& K, const int& R, 
                   const arma::vec& eta, const arma::vec& w_all, 
                   const arma::vec& c_all, arma::mat x_mat) {
   NumericVector w_all_copy = as<NumericVector>(wrap(w_all));
   // Posterior parameters for theta
-  NumericVector eta_post(d);  
-  for (int j = 0; j < p; j++) {
+  NumericVector eta_post(R);  
+  for (int j = 0; j < J; j++) {
     for (int k = 0; k < K; k++) {
-      for (int r = 0; r < d; r++) {
+      for (int r = 0; r < R; r++) {
         // Add sum of normalized weights for those assigned to class k with x_ij = r
         // Careful with 0-based indexing
         LogicalVector indiv_r = (as<NumericVector>(wrap(x_mat.col(j))) == (r + 1));
@@ -394,7 +394,7 @@ arma::vec update_z(arma::vec& z_all, const int& n, const arma::mat& V, const arm
 //' latent variables.
 //' @keywords internal
 // [[Rcpp::export]]
-void update_loglik(arma::vec& loglik, const int& n, const int& p, 
+void update_loglik(arma::vec& loglik, const int& n, const int& J, 
                    const arma::vec& c_all, const arma::cube& theta, 
                    const arma::mat& x_mat, const arma::vec& pi, 
                    const arma::vec& z_all, const arma::mat& V, 
@@ -406,7 +406,7 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
     // Calculate theta component of individual log-likelihood
     // Calculate theta component of individual log-likelihood for class k
     double log_theta_comp = 0.0;
-    for (int j = 0; j < p; j++) {
+    for (int j = 0; j < J; j++) {
       // Subtract 1 due to 0-based indexing
       log_theta_comp += log(theta(j, c_i - 1, x_mat(i, j) - 1));
     }
@@ -420,7 +420,7 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 
 // // Update c test
 // // [[Rcpp::export]]
-// void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& p,
+// void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& J,
 //                    const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi,
 //                    const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all) {
 //   arma::mat log_cond_c(n, K);        // Individual log-likelihood for each class
@@ -432,7 +432,7 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 //     for (int k = 0; k < K; k++) {
 //       // Calculate theta component of individual log-likelihood for class k
 //       double log_theta_comp_k = 0.0;
-//       for (int j = 0; j < p; j++) {
+//       for (int j = 0; j < J; j++) {
 //         // Subtract 1 from exposure value due to 0-based indexing
 //         log_theta_comp_k += log(theta(j, k, x_mat(i, j) - 1));
 //       }
@@ -477,11 +477,11 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 # 
 # K = 3
 # n = 10
-# p = 5
-# d = 4
+# J = 5
+# R = 4
 # S = 2
 # q = 2
-# x_mat = data_vars$X_data[1:n, 1:p]
+# x_mat = data_vars$X_data[1:n, 1:J]
 # y_all = data_vars$Y_data[1:n]
 # z_all = rnorm(n)
 # z_all = ifelse(y_all == 1, abs(z_all), -abs(z_all))
@@ -493,7 +493,7 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 # c_all = data_vars$true_Ci[1:n]
 # 
 # alpha = rep(1, 3) / 3
-# eta = rep(1, d)
+# eta = rep(1, R)
 # mu0 = Sig0 = vector("list", K)
 # for (k in 1:K) {
 #   mu0[[k]] = rnorm(n = q)
@@ -501,7 +501,7 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 # }
 # 
 # pi = rdirichlet(1, alpha)
-# theta = data_vars$true_global_thetas[1:p, , ]
+# theta = data_vars$true_global_thetas[1:J, , ]
 # xi = matrix(data_vars$true_xi, nrow = K, ncol = q, byrow = FALSE)
 # loglik = numeric(n)
 */
@@ -517,9 +517,9 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 # print(xi)
 # update_pi(pi, w_all, c_all, K, alpha)
 # pi
-# update_c(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all)
+# update_c(c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all)
 # c_all
-# update_theta(theta, p, K, d, eta, w_all, c_all, x_mat)
+# update_theta(theta, J, K, R, eta, w_all, c_all, x_mat)
 # theta
 # update_xi(xi, n, K, w_all, c_all, z_all, V, y_all, mu0, Sig0)
 # xi
@@ -538,6 +538,6 @@ void update_loglik(arma::vec& loglik, const int& n, const int& p,
 # z_all
 # par(mfrow=c(1,1))
 # plot(density(z_all))
-# update_loglik(loglik, n, p, c_all, theta, x_mat, pi, z_all, V, xi, y_all)
+# update_loglik(loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all)
 # loglik
 */

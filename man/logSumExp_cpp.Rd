@@ -14,7 +14,7 @@ Result of computing the logarithm of the sum of exponentials of the
 input values.
 }
 \description{
-`logSumExp_cpp` computes the logarithm of the sum of exponentials, adapted from 
+\code{logSumExp_cpp} computes the logarithm of the sum of exponentials, adapted from
 https://github.com/helske/seqHMM/blob/main/src/logSumExp.cpp.
 }
 \keyword{internal}

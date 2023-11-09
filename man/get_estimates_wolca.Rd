@@ -4,36 +4,43 @@
 \alias{get_estimates_wolca}
 \title{Get posterior estimates for WOLCA}
 \usage{
-get_estimates_wolca(MCMC_out, post_MCMC_out, n, p, x_mat)
+get_estimates_wolca(MCMC_out, post_MCMC_out, n, J, x_mat)
 }
 \arguments{
-\item{MCMC_out}{Output from `run_MCMC_Rcpp_wolca` containing `pi_MCMC`, 
-`theta_MCMC`, and `c_all_MCMC`}
+\item{MCMC_out}{Output from \code{run_MCMC_Rcpp_wolca} containing \code{pi_MCMC},
+\code{theta_MCMC}, and \code{c_all_MCMC}}
 
-\item{post_MCMC_out}{output from `post_process_wolca` containing `K_med`, `pi`, 
-and `theta`}
+\item{post_MCMC_out}{output from \code{post_process_wolca} containing \code{K_med}, \code{pi},
+and \code{theta}}
 
 \item{n}{Number of individuals}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
 \item{x_mat}{Categorical exposure matrix. nxp}
 }
 \value{
-Returns list `estimates` containing:
+Returns list \code{estimates} containing:
 \describe{
-  \item{\code{K_red}}{Number of unique classes}
-  \item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
-  \item{\code{theta_red}}{Array of final posterior samples for theta. Mxpx(K_red)xd}
-  \item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
-  \item{\code{theta_med}}{Array of posterior median estimates for theta. px(K_red)xd}
-  \item{\code{c_all}}{Vector of final individual class assignments. nx1}
-  \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+\item{\code{K_red}}{Number of unique classes}
+\item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+\item{\code{theta_red}}{Array of final posterior samples for theta. Mxpx(K_red)xd}
+\item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
+\item{\code{theta_med}}{Array of posterior median estimates for theta. px(K_red)xd}
+\item{\code{c_all}}{Vector of final individual class assignments. nx1}
+\item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
 }
 }
 \description{
-`get_estimates_wolca` obtains posterior parameter samples and estimates prior 
+\code{get_estimates_wolca} obtains posterior parameter samples and estimates prior
 for the unsupervised WOLCA model
+}
+\details{
+First, duplicate classes that have the same modal exposure categories
+for all items are combined to obtain the number of unique classes, \code{K_red}.
+Parameters are then renormalized for the unique classes and posterior median
+estimates are computed across MCMC iterations. Using these median estimates,
+class assignments \code{c_all} are derived.
 }
 \examples{
 # Load data and obtain relevant variables
@@ -45,8 +52,8 @@ sampling_wt <- data_vars$sample_wt
 
 # Obtain dimensions
 n <- dim(x_mat)[1]        # Number of individuals
-p <- dim(x_mat)[2]        # Number of exposure items
-d <- max(apply(x_mat, 2,  # Number of exposure categories
+J <- dim(x_mat)[2]        # Number of exposure items
+R <- max(apply(x_mat, 2,  # Number of exposure categories
 function(x) length(unique(x))))  
 # Obtain normalized weights
 kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -55,21 +62,26 @@ w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 # Set hyperparameters for fixed sampler
 K <- 3
 alpha <- rep(1, K) / K
-eta <- rep(1, d)
+eta <- rep(1, R)
 
 # First initialize OLCA params
-OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Then run MCMC sampling
 MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 alpha = alpha, eta = eta)
 
 # Then run post-process relabeling
-post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, p = p, d = d)
+post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, J = J, R = R,
+class_cutoff = 0.05)
 
 # Then obtain posterior estimates
 estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
-post_MCMC_out = post_MCMC_out, n = n, p = p, x_mat = x_mat)
+post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 
+}
+\seealso{
+\code{\link[=get_estimates]{get_estimates()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}} \code{\link[=post_process_wolca]{post_process_wolca()}}
+\code{\link[=fit_probit_wolca]{fit_probit_wolca()}} \code{\link[=wolca]{wolca()}}
 }

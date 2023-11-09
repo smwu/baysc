@@ -88,14 +88,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // update_c
-void update_c(arma::vec& c_all, const int& n, const int& K, const int& p, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all);
-RcppExport SEXP _baysc_update_c(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP pSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP, SEXP z_allSEXP, SEXP VSEXP, SEXP xiSEXP, SEXP y_allSEXP) {
+void update_c(arma::vec& c_all, const int& n, const int& K, const int& J, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all);
+RcppExport SEXP _baysc_update_c(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP JSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP, SEXP z_allSEXP, SEXP VSEXP, SEXP xiSEXP, SEXP y_allSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec& >::type c_all(c_allSEXP);
     Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
     Rcpp::traits::input_parameter< const int& >::type K(KSEXP);
-    Rcpp::traits::input_parameter< const int& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type x_mat(x_matSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type pi(piSEXP);
@@ -103,40 +103,40 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type V(VSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type xi(xiSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type y_all(y_allSEXP);
-    update_c(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all);
+    update_c(c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all);
     return R_NilValue;
 END_RCPP
 }
 // update_c_wolca
-void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& p, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi);
-RcppExport SEXP _baysc_update_c_wolca(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP pSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP) {
+void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& J, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi);
+RcppExport SEXP _baysc_update_c_wolca(SEXP c_allSEXP, SEXP nSEXP, SEXP KSEXP, SEXP JSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec& >::type c_all(c_allSEXP);
     Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
     Rcpp::traits::input_parameter< const int& >::type K(KSEXP);
-    Rcpp::traits::input_parameter< const int& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type x_mat(x_matSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type pi(piSEXP);
-    update_c_wolca(c_all, n, K, p, theta, x_mat, pi);
+    update_c_wolca(c_all, n, K, J, theta, x_mat, pi);
     return R_NilValue;
 END_RCPP
 }
 // update_theta
-void update_theta(arma::cube& theta, const int& p, const int& K, const int& d, const arma::vec& eta, const arma::vec& w_all, const arma::vec& c_all, arma::mat x_mat);
-RcppExport SEXP _baysc_update_theta(SEXP thetaSEXP, SEXP pSEXP, SEXP KSEXP, SEXP dSEXP, SEXP etaSEXP, SEXP w_allSEXP, SEXP c_allSEXP, SEXP x_matSEXP) {
+void update_theta(arma::cube& theta, const int& J, const int& K, const int& R, const arma::vec& eta, const arma::vec& w_all, const arma::vec& c_all, arma::mat x_mat);
+RcppExport SEXP _baysc_update_theta(SEXP thetaSEXP, SEXP JSEXP, SEXP KSEXP, SEXP RSEXP, SEXP etaSEXP, SEXP w_allSEXP, SEXP c_allSEXP, SEXP x_matSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::cube& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const int& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const int& >::type K(KSEXP);
-    Rcpp::traits::input_parameter< const int& >::type d(dSEXP);
+    Rcpp::traits::input_parameter< const int& >::type R(RSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type w_all(w_allSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type c_all(c_allSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type x_mat(x_matSEXP);
-    update_theta(theta, p, K, d, eta, w_all, c_all, x_mat);
+    update_theta(theta, J, K, R, eta, w_all, c_all, x_mat);
     return R_NilValue;
 END_RCPP
 }
@@ -176,13 +176,13 @@ BEGIN_RCPP
 END_RCPP
 }
 // update_loglik
-void update_loglik(arma::vec& loglik, const int& n, const int& p, const arma::vec& c_all, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all);
-RcppExport SEXP _baysc_update_loglik(SEXP loglikSEXP, SEXP nSEXP, SEXP pSEXP, SEXP c_allSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP, SEXP z_allSEXP, SEXP VSEXP, SEXP xiSEXP, SEXP y_allSEXP) {
+void update_loglik(arma::vec& loglik, const int& n, const int& J, const arma::vec& c_all, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi, const arma::vec& z_all, const arma::mat& V, const arma::mat& xi, const arma::vec& y_all);
+RcppExport SEXP _baysc_update_loglik(SEXP loglikSEXP, SEXP nSEXP, SEXP JSEXP, SEXP c_allSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP, SEXP z_allSEXP, SEXP VSEXP, SEXP xiSEXP, SEXP y_allSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< arma::vec& >::type loglik(loglikSEXP);
     Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
-    Rcpp::traits::input_parameter< const int& >::type p(pSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type c_all(c_allSEXP);
     Rcpp::traits::input_parameter< const arma::cube& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type x_mat(x_matSEXP);
@@ -191,7 +191,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::mat& >::type V(VSEXP);
     Rcpp::traits::input_parameter< const arma::mat& >::type xi(xiSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type y_all(y_allSEXP);
-    update_loglik(loglik, n, p, c_all, theta, x_mat, pi, z_all, V, xi, y_all);
+    update_loglik(loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all);
     return R_NilValue;
 END_RCPP
 }

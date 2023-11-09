@@ -14,8 +14,8 @@ mvrnorm_cpp(n, mu, sigma)
 \item{sigma}{Positive-definite symmetric covariance matrix}
 }
 \value{
-Matrix result of draws from the specified Multivariate Normal 
-distribution, with rows corresponding to draws and columns corresponding to 
+Matrix result of draws from the specified Multivariate Normal
+distribution, with rows corresponding to draws and columns corresponding to
 dimensions.
 }
 \description{

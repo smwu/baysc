@@ -2,9 +2,14 @@
 #'
 #' @description
 #' `run_MCMC_Rcpp_wolca` runs the Gibbs sampler MCMC algorithm using Rcpp to 
-#' obtain posterior samples for the two-step unsupervised WOLCA model
+#' obtain posterior samples for the two-step unsupervised WOLCA model.
 #'
 #' @inheritParams run_MCMC_Rcpp
+#' 
+#' @details
+#' A Gibbs sampler updates the parameters and variables in the following order:
+#' \eqn{\pi}, `c_all`, \eqn{\theta}. Class assignments are permuted every 10 
+#' iterations to encourage mixing, according to a random permutation sampler.
 #' 
 #' @return
 #' Returns list `MCMC_out` containing:
@@ -14,9 +19,10 @@
 #'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
 #' }
 #'
+#' @seealso [run_MCMC_Rcpp()] [post_process_wolca()] [get_estimates_wolca()] 
+#' [fit_probit_wolca()] [wolca()] 
 #' @importFrom gtools permute
 #' @export
-#' @seealso [run_MCMC_Rcpp()]
 #'
 #' @examples
 #' # Load data and obtain relevant variables
@@ -28,8 +34,8 @@
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -38,25 +44,25 @@
 #' # Set hyperparameters
 #' K <- 30
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-#' burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+#' burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 #' alpha = alpha, eta = eta)
 #' # MCMC_out
 #' 
-run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, p, d, n,
+run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
                                 w_all, x_mat, alpha, eta) {
   # Number of MCMC iterations to store
   n_storage <- ceiling(n_runs / thin)  
   
   # Initialize variables
   pi_MCMC <- matrix(NA, nrow = n_storage, ncol = K)
-  theta_MCMC <- array(NA, dim = c(n_storage, p, K, d))
+  theta_MCMC <- array(NA, dim = c(n_storage, J, K, R))
   c_all_MCMC <- z_all_MCMC <- matrix(NA, nrow = n_storage, ncol = n)
   
   # Initialized values
@@ -67,9 +73,9 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, p, d, n,
   # Update parameters and variables
   for (m in 1:n_runs) {
     update_pi(pi = pi, w_all = w_all, c_all = c_all, K = K, alpha = alpha)
-    update_c_wolca(c_all = c_all, n = n, K = K, p = p, theta = theta,
+    update_c_wolca(c_all = c_all, n = n, K = K, J = J, theta = theta,
                    x_mat = x_mat, pi = pi)
-    update_theta(theta = theta, p = p, K = K, d = d, eta = eta,
+    update_theta(theta = theta, J = J, K = K, R = R, eta = eta,
                  w_all = w_all, c_all = c_all, x_mat = x_mat)
 
     #============== Store posterior values based on thinning  ==================

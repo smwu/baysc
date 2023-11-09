@@ -8,8 +8,8 @@ var_adjust(
   mod_stan,
   estimates,
   K,
-  p,
-  d,
+  J,
+  R,
   n,
   q,
   x_mat,
@@ -24,15 +24,15 @@ var_adjust(
 \arguments{
 \item{mod_stan}{Stan model}
 
-\item{estimates}{Output from `get_estimates()` containing `K_red`, `pi_red`, 
-`theta_red`, `xi_red`, `pi_med`, `theta_med`, `xi_med`, `Phi_med`, `c_all`, 
-`pred_class_probs`, `loglik_med`}
+\item{estimates}{Output from \code{get_estimates()} containing \code{K_red}, \code{pi_red},
+\code{theta_red}, \code{xi_red}, \code{pi_med}, \code{theta_med}, \code{xi_med}, \code{Phi_med}, \code{c_all},
+\code{pred_class_probs}, \code{loglik_med}}
 
 \item{K}{Number of classes}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
-\item{d}{Number of exposure categories}
+\item{R}{Maximum number of exposure categories}
 
 \item{n}{Number of individuals}
 
@@ -46,31 +46,47 @@ var_adjust(
 
 \item{w_all}{Weights normalized to sum to n. nx1}
 
-\item{stratum_id}{Vector of stratifying variable for individuals. nx1}
+\item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
+indicating no stratification.}
 
-\item{cluster_id}{Vector of cluster indicators. nx1}
+\item{cluster_id}{Vector of individual cluster IDs. nx1. Default is \code{NULL},
+indicating each individual is their own cluster.}
 
-\item{num_reps}{Number of bootstrap replicates to use for the variance 
+\item{num_reps}{Number of bootstrap replicates to use for the variance
 estimate. Default is 100.}
 }
 \value{
-Returns list `estimates_adj` containing:
+Returns list \code{estimates_adj} containing:
 
 \describe{
-  \item{\code{pi_red_adj}}{Matrix of adjusted posterior samples for pi. Mx(K_red)}
-  \item{\code{theta_red_adj}}{Array of adjusted posterior samples for theta. Mxpx(K_red)xd}
-  \item{\code{xi_red_adj}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
-  \item{\code{pi_med_adj}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
-  \item{\code{theta_med_adj}}{Array of adjusted posterior median estimates for theta. px(K_red)xd}
-  \item{\code{xi_med_adj}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
-  \item{\code{Phi_med_adj}}{Vector of adjusted individual outcome probabilities. nx1}
-  \item{\code{c_all}}{Vector of final individual class assignments from `get_estimates()`. nx1}
-  \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities from `get_estimates()`. nx(K_red)}
-  \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods from `get_estimates()`. nx1} 
+\item{\code{pi_red_adj}}{Matrix of adjusted posterior samples for pi. Mx(K_red)}
+\item{\code{theta_red_adj}}{Array of adjusted posterior samples for theta. Mxpx(K_red)xd}
+\item{\code{xi_red_adj}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
+\item{\code{pi_med_adj}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
+\item{\code{theta_med_adj}}{Array of adjusted posterior median estimates for theta. px(K_red)xd}
+\item{\code{xi_med_adj}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
+\item{\code{Phi_med_adj}}{Vector of adjusted individual outcome probabilities. nx1}
+\item{\code{c_all}}{Vector of final individual class assignments from \code{get_estimates()}. nx1}
+\item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities from \code{get_estimates()}. nx(K_red)}
+\item{\code{loglik_med}}{Vector of final indiviudal log-likehoods from \code{get_estimates()}. nx1}
 }
 }
 \description{
-`var_adj` applies applies the post-processing variance adjustment
+\code{var_adj} applies applies the post-processing variance adjustment
+}
+\details{
+\code{var_adjust} applies a post-processing variance adjustment that rescales the
+variance to obtain correct coverage of posterior intervals, adapted from
+Williams and Savitsky (2021). To obtain the rescaling, a sandwich-type
+variance is estimated. To estimate the Hessian that composes the "bread" of
+the sandwich, the mixture model is specified in Stan and the parameters are
+converted to the unconstrained space. Bootstrap replicates are used to
+estimate the covariance matrix that composes the "meat" of the sandwich.
+If there are any rounding issues, the resulting matrices are mapped to the
+nearest positive definite matrix. Next, the rescaling adjustment is derived
+and applied to the parameters for all MCMC iterations. Finally, the adjusted
+parameters are converted back to the constrained space and the posterior
+median parameter estimates are recomputed, now with proper variance estimation.
 }
 \examples{
 # Load data and obtain relevant variables
@@ -84,8 +100,8 @@ sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 
 # Obtain dimensions
 n <- dim(x_mat)[1]        # Number of individuals
-p <- dim(x_mat)[2]        # Number of exposure items
-d <- max(apply(x_mat, 2,  # Number of exposure categories
+J <- dim(x_mat)[2]        # Number of exposure items
+R <- max(apply(x_mat, 2,  # Number of exposure categories
 function(x) length(unique(x))))  
 # Obtain normalized weights
 kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -98,7 +114,7 @@ q <- ncol(V)   # Number of regression covariates excluding class assignment
 # Set hyperparameters for fixed sampler
 K <- 3
 alpha <- rep(1, K) / K
-eta <- rep(1, d)
+eta <- rep(1, R)
 mu0 <- Sig0 <- vector("list", K)
 for (k in 1:K) {
   # MVN(0,1) hyperprior for prior mean of xi
@@ -110,7 +126,7 @@ for (k in 1:K) {
 }
 
 # First initialize OLCA params
-OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Then initialize probit params 
 probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
@@ -119,21 +135,25 @@ Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
 # Then run MCMC sampling
 MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
 probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
-K = K, p = p, d = d, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+K = K, J = J, R = R, n = n, q = q, w_all = w_all, x_mat = x_mat, 
 y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 
 # Then run post-process relabeling
-post_MCMC_out <- post_process(MCMC_out = MCMC_out, p = p, d = d, q = q)
+post_MCMC_out <- post_process(MCMC_out = MCMC_out, J = J, R = R, q = q,
+class_cutoff = 0.05)
 
 # Then obtain posterior estimates
 estimates <- get_estimates(MCMC_out = MCMC_out, post_MCMC_out = post_MCMC_out,
-                           n = n, p = p, V = V, y_all = y_all, x_mat = x_mat)
+                           n = n, J = J, V = V, y_all = y_all, x_mat = x_mat)
 
 # Finally apply variance adjustment to posterior estimates
 adj_estimates <- var_adjust(mod_stan = stanmodels$SWOLCA_main, 
-                            estimates = estimates, K = K, p = p,
-                            d = d, n = n, q = q, x_mat = x_mat, y_all = y_all,
+                            estimates = estimates, K = K, J = J,
+                            R = R, n = n, q = q, x_mat = x_mat, y_all = y_all,
                             V = V, w_all = w_all, stratum_id = stratum_id, 
                             cluster_id = cluster_id, num_reps = 100)                        
 
+}
+\seealso{
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process]{post_process()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=swolca]{swolca()}}
 }

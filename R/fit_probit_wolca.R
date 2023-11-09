@@ -14,6 +14,16 @@
 #' @param w_all Weights normalized to sum to n. nx1
 #' @param ci_level Confidence interval level. Default is `0.95`.
 #' @param q Number of regression covariates excluding class assignment
+#' 
+#' @details
+#' Specifies survey design and fits a survey-weighted probit regression model
+#' according to the formula specified in `glm_form`. Regression coefficients and 
+#' their confidence intervals are obtained from the `svyglm()` output. If the 
+#' residual degrees of freedom is less than 1, a Wald confidence interval is 
+#' manually calculated using a t-distribution with degrees of freedom from the 
+#' survey design. The point and interval estimates are then converted into the 
+#' factor reference coding format to match the output from `swolca()` and `solca()`. 
+#' 
 #' @return
 #' Returns updated list `estimates` containing the following additional objects:
 #' \describe{
@@ -23,6 +33,8 @@
 #'   \item{\code{fit}}{`svyglm` class object with output from the `svyglm` regression model}
 #' }
 #'
+#' @seealso [run_MCMC_Rcpp_wolca()] [post_process_wolca()] 
+#' [get_estimates_wolca()] [wolca()] 
 #' @importFrom survey svydesign svyglm degf
 #' @importFrom stats confint as.formula quasibinomial
 #' @export
@@ -39,8 +51,8 @@
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
-#' p <- dim(x_mat)[2]        # Number of exposure items
-#' d <- max(apply(x_mat, 2,  # Number of exposure categories
+#' J <- dim(x_mat)[2]        # Number of exposure items
+#' R <- max(apply(x_mat, 2,  # Number of exposure categories
 #' function(x) length(unique(x))))  
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -49,22 +61,23 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, d)
+#' eta <- rep(1, R)
 #' 
 #' # First initialize OLCA params
-#' OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+#' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 #' 
 #' # Then run MCMC sampling
 #' MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-#' burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+#' burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 #' alpha = alpha, eta = eta)
 #' 
 #' # Then run post-process relabeling
-#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, p = p, d = d)
+#' post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, J = J, R = R,
+#' class_cutoff = 0.05)
 #'
 #' # Then obtain posterior estimates for WOLCA
 #' estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
-#' post_MCMC_out = post_MCMC_out, n = n, p = p, x_mat = x_mat)
+#' post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 #' 
 #' # Define probit model data and variables
 #' # Probit model only includes latent class
@@ -120,7 +133,7 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
                     ci = ci_level)[, -1]
   }
   
-  # Convert format to match WSOLCA and SOLCA
+  # Convert format to match SWOLCA and SOLCA
   xi_est <- xi_est_lb <- xi_est_ub <- matrix(NA, nrow = estimates$K_red, ncol = q)
   # Position of interaction terms
   if (q == 1) {

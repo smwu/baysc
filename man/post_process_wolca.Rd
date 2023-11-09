@@ -4,29 +4,41 @@
 \alias{post_process_wolca}
 \title{Post-process posterior samples to relabel and reduce classes for WOLCA}
 \usage{
-post_process_wolca(MCMC_out, p, d)
+post_process_wolca(MCMC_out, J, R, class_cutoff)
 }
 \arguments{
-\item{MCMC_out}{Output from `run_MCMC_Rcpp_wolca` containing `pi_MCMC`, 
-`theta_MCMC`, and `c_all_MCMC`,}
+\item{MCMC_out}{Output from \code{run_MCMC_Rcpp_wolca} containing \code{pi_MCMC},
+\code{theta_MCMC}, and \code{c_all_MCMC}}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
-\item{d}{Number of exposure categories}
+\item{R}{Maximum number of exposure categories}
+
+\item{class_cutoff}{Minimum class size proportion when determining number of
+classes in adaptive sampler. Default is 0.05.}
 }
 \value{
-Returns list `post_MCMC_out` containing:
+Returns list \code{post_MCMC_out} containing:
 \describe{
-  \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
-  \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
-  \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xpx(K_med)xd}
-  \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
+\item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+\item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
+\item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xpx(K_med)xd}
+\item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
 }
 }
 \description{
-`post_process_wolca` conducts post-processing to cluster individuals into a 
-reduced number of classes and reorder posterior parameter samples according 
+\code{post_process_wolca} conducts post-processing to cluster individuals into a
+reduced number of classes and reorder posterior parameter samples according
 to the reduced number of classes for the unsupervised WOLCA model.
+}
+\details{
+First, \code{K_med}, the median number of classes with at least the \code{class_cutoff}
+proportion of individuals is obtained over all MCMC iterations. Then, label
+switching is addressed through a relabeling procedure, where agglomerative
+clustering with Hamming distance is used to group individuals into \code{K_med}
+clusters and labels are re-assigned based on these clusters. Finally,
+parameter estimates are reordered using the relabeled classes so that
+posterior output can be averaged across MCMC iterations.
 }
 \examples{
 # Load data and obtain relevant variables
@@ -38,8 +50,8 @@ sampling_wt <- data_vars$sample_wt
 
 # Obtain dimensions
 n <- dim(x_mat)[1]        # Number of individuals
-p <- dim(x_mat)[2]        # Number of exposure items
-d <- max(apply(x_mat, 2,  # Number of exposure categories
+J <- dim(x_mat)[2]        # Number of exposure items
+R <- max(apply(x_mat, 2,  # Number of exposure categories
 function(x) length(unique(x))))  
 # Obtain normalized weights
 kappa <- sum(sampling_wt) / n   # Weights norm. constant
@@ -48,19 +60,24 @@ w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 # Set hyperparameters for fixed sampler
 K <- 3
 alpha <- rep(1, K) / K
-eta <- rep(1, d)
+eta <- rep(1, R)
 
 # First initialize OLCA params
-OLCA_params <- init_OLCA(K = K, n = n, p = p, d = d, alpha = alpha, eta = eta)
+OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Then run MCMC sampling
 MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = 50, 
-burn = 25, thin = 5, K = K, p = p, d = d, n = n, w_all = w_all, x_mat = x_mat, 
+burn = 25, thin = 5, K = K, J = J, R = R, n = n, w_all = w_all, x_mat = x_mat, 
 alpha = alpha, eta = eta)
 
 # Then run post-process relabeling
-post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, p = p, d = d)
+post_MCMC_out <- post_process_wolca(MCMC_out = MCMC_out, J = J, R = R,
+class_cutoff = 0.05)
 # post_MCMC_out
 # plot(post_MCMC_out$dendrogram)
 
+}
+\seealso{
+\code{\link[=post_process]{post_process()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}} \code{\link[=get_estimates_wolca]{get_estimates_wolca()}}
+\code{\link[=fit_probit_wolca]{fit_probit_wolca()}} \code{\link[=wolca]{wolca()}}
 }

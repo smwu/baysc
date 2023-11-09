@@ -10,11 +10,11 @@ convert_ref_to_comb(beta_ref)
 \item{beta_ref}{Matrix of probit coefficients in reference cell coding. (K*q)x1}
 }
 \value{
-Outputs Kxq matrix `beta_comb` of probit coefficients using factor 
+Outputs Kxq matrix \code{beta_comb} of probit coefficients using factor
 variable coding
 }
 \description{
-`convert_ref_to_comb` converts from reference cell coding to a combination of 
+\code{convert_ref_to_comb} converts from reference cell coding to a combination of
 factor variable and reference cell coding, referred to as factor reference coding
 }
 \keyword{internal}

@@ -8,9 +8,10 @@ swolca(
   x_mat,
   y_all,
   sampling_wt,
-  cluster_id,
-  stratum_id,
+  cluster_id = NULL,
+  stratum_id = NULL,
   V,
+  run_sampler = "both",
   K_max = 30,
   adapt_seed = NULL,
   class_cutoff = 0.05,
@@ -18,16 +19,15 @@ swolca(
   eta_adapt = NULL,
   mu0_adapt = NULL,
   Sig0_adapt = NULL,
+  fixed_seed = NULL,
+  K_fixed = NULL,
   alpha_fixed = NULL,
   eta_fixed = NULL,
   mu0_fixed = NULL,
   Sig0_fixed = NULL,
-  K_true = NULL,
-  fixed_seed = NULL,
   n_runs = 20000,
   burn = 10000,
   thin = 5,
-  mod_stan,
   save_res = TRUE,
   save_path = NULL
 )
@@ -37,42 +37,69 @@ swolca(
 
 \item{y_all}{Vector of outcomes. nx1}
 
-\item{sampling_wt}{Vector of survey sampling weights. nx1}
+\item{sampling_wt}{Vector of survey sampling weights. nx1. If no sampling
+weights are available, set this to a vector of ones.}
 
-\item{cluster_id}{Vector of individual cluster IDs. nx1}
+\item{cluster_id}{Vector of individual cluster IDs. nx1. Default is \code{NULL},
+indicating each individual is their own cluster.}
 
-\item{stratum_id}{Vector of individual stratum IDs. nx1}
+\item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
+indicating no stratification.}
 
 \item{V}{Regression design matrix without class assignment. nxq}
 
+\item{run_sampler}{String specifying which sampler(s) should be run. Must be
+one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
+
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
-\item{adapt_seed}{Numeric seed for adaptive sampler. Default is `NULL`.}
+\item{adapt_seed}{Numeric seed for adaptive sampler. Default is \code{NULL}.}
 
 \item{class_cutoff}{Minimum class size proportion when determining number of
 classes in adaptive sampler. Default is 0.05.}
 
-\item{alpha_adapt}{Adaptive sampler hyperparameter for prior for pi. Default is `NULL`.}
+\item{alpha_adapt}{Adaptive sampler hyperparameter for prior for class
+membership probabilities \eqn{\pi}. Default is \code{NULL} and default values are
+used. If specified, must be (\code{K_max})x1.}
 
-\item{eta_adapt}{Adaptive sampler hyperparameter for prior for theta. Default is `NULL`.}
+\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
+level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
+\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
+Rx1, where R is the maximum number of categories for the exposure.}
 
-\item{mu0_adapt}{List of K qx1 vectors of adaptive sampler mean hyperparameters for xi. Default is `NULL`.}
+\item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression coefficients
+\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
+If specified, must be a list of \code{K_max} vectors of dimension qx1, where q is
+the number of regression covariates excluding latent class assignment.}
 
-\item{Sig0_adapt}{List of K qxq matrices of adaptive sampler variance hyperparameters for xi. Default is `NULL`.}
+\item{Sig0_adapt}{Adaptive sampler variance hyperparameters for regression coefficients
+\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
+used. If specified, must be a list of \code{K_max} qxq matrices, where q is the
+number of regression covariates excluding latent class assignment.}
 
-\item{alpha_fixed}{Fixed sampler hyperparameter for prior for pi. Default is `NULL`.}
+\item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
 
-\item{eta_fixed}{Fixed sampler hyperparameter for prior for theta. Default is `NULL`.}
+\item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
+not necessary for the adaptive sampler. If bypassing the adaptive sampler and
+running the fixed sampler directly, need to specify a value here.}
 
-\item{mu0_fixed}{List of K qx1 vectors of fixed sampler mean hyperparameters for xi. Default is `NULL`.}
+\item{alpha_fixed}{Fixed sampler hyperparameter for prior for \eqn{\pi}. Default is
+\code{NULL} and default values are used. If specified, must be (\code{K_fixed})x1.}
 
-\item{Sig0_fixed}{List of K qxq matrices of fixed sampler variance hyperparameters for xi. Default is `NULL`.}
+\item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
+level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
+\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
+Rx1, where R is the maximum number of categories for the exposure.}
 
-\item{K_true}{True number of classes, if known. If `NULL` (default),
-adaptive sampler is run. To skip the adaptive sampler and run the fixed 
-sampler directly, specify a value here.}
+\item{mu0_fixed}{Fixed sampler mean hyperparameters for regression coefficients
+\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
+If specified, must be a list of \code{K_fixed} vectors of dimension qx1, where q is
+the number of regression covariates excluding latent class assignment.}
 
-\item{fixed_seed}{Numeric seed for fixed sampler. Default is `NULL`.}
+\item{Sig0_fixed}{Fixed sampler variance hyperparameters for regression coefficients
+\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
+used. If specified, must be a list of \code{K_fixed} qxq matrices, where q is the
+number of regression covariates excluding latent class assignment.}
 
 \item{n_runs}{Number of MCMC iterations. Default is 20000.}
 
@@ -80,44 +107,82 @@ sampler directly, specify a value here.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
-\item{mod_stan}{Stan model to be used for variance adjustment}
+\item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
-\item{save_res}{Boolean specifying if results should be saved. Default = `TRUE`.}
-
-\item{save_path}{String specifying directory and file name to save results. Default is `NULL`.}
+\item{save_path}{String specifying directory and file name to save results. Default is \code{NULL}.}
 }
 \value{
-Returns list `res` containing:
+If the fixed sampler is run, returns list \code{res} containing:
 \describe{
-  \item{\code{estimates}}{List of adjusted posterior model results}
-  \item{\code{runtime}}{Total runtime for model}
-  \item{\code{data_vars}}{List of data variables used}
-  \item{\code{MCMC_out}}{List of full MCMC output}
-  \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
-  \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-.  \item{\code{estimates_unadj}}{List of unadjusted posterior model results}
-  \item{\code{K_MCMC}}{If `K_true = NULL` and the adaptive sampler is run,
-  output list also contains MCMC output for the number of classes with size
-  greater than `class_cutoff` for each iteration}
+\item{\code{estimates}}{List of adjusted posterior model results}
+\item{\code{runtime}}{Total runtime for model}
+\item{\code{data_vars}}{List of data variables used}
+\item{\code{MCMC_out}}{List of full MCMC output}
+\item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
+\item{\code{K_fixed}}{Number of classes used for the fixed sampler}
+\item{\code{estimates_unadj}}{List of unadjusted posterior model results}
+\item{\code{K_MCMC}}{If \code{K_fixed = NULL} and the adaptive sampler is run,
+output list also contains MCMC output for the number of classes with size
+greater than \code{class_cutoff} for each iteration}
 }
 
-If `save_res = TRUE` (default), also saves `res` as `[save_path]_swolca_results.RData`
-and, if `K_true = NULL` so that the adaptive sampler is run, list `adapt_MCMC`
-is saved as  `[save_path]_swolca_adapt.RData`. List `adapt_MCMC` contains:
+If \code{save_res = TRUE} (default), also saves \code{res} as
+\verb{[save_path]_swolca_results.RData}.
+
+If only the adaptive sampler is run (i.e., \code{run_sampler} = \code{"adapt"}), returns
+list \code{res} containing:
 \describe{
-  \item{\code{MCMC_out}}{List of full MCMC output}
-  \item{\code{K_fixed}}{Number of classes used for the fixed sampler, 
+\item{\code{MCMC_out}}{List of full MCMC output}
+\item{\code{K_fixed}}{Number of classes used for the fixed sampler,
 obtained from the adaptive sampler}
-  \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
+\item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
 }
+
+If \code{save_res = TRUE} (default), also saves \code{res} as
+\verb{[save_path]_swolca_adapt.RData}.
 }
 \description{
-`swolca` runs a supervised weighted overfitted latent class analysis (SWOLCA)
+\code{swolca} runs a supervised weighted overfitted latent class analysis (SWOLCA)
 and saves and returns the results.
 }
 \details{
-If hyperparameters are left as `NULL` (default), the following values are 
-used.
+By default, the function will run both samplers, running the adaptive sampler
+first to determine the number of latent classes, and then using the determined
+number of latent classes to run the fixed sampler for parameter estimation.
+If the number of latent classes is already known and only the fixed sampler
+is to be run, specify \code{"fixed"} for the \code{run_sampler} argument and specify a
+number for \code{K_fixed}. Id only the adaptive sampler is to be run, specify
+\code{"adapt"} for the \code{run_sampler} argument.
+Use \code{adapt_seed} (default is \code{NULL}) to specify a seed
+for the adaptive sampler, and use \code{fixed_seed} (default is \code{NULL}) to specify
+a separate seed for the fixed sampler.
+
+\code{x_mat} is an nxp matrix with each row corresponding to the J-dimensional
+categorical exposure for an individual. If there is no clustering present,
+\code{cluster_id} should be set to the individual IDs. \code{V} is the design matrix for
+the probit regression, including the intercept and all covariates other than
+latent class. \code{K_max} is the maximum number of latent classes allowable, to
+be used for the overfitted latent class model if the adaptive sampler is run.
+\code{class_cutoff} is the minimum size of each class as a proportion of the
+population, used when determining the number of latent classes.
+
+To save results, set \code{save_res = TRUE} (default) and \code{save_path} to a string
+that specifies both the location and the beginning of the file name
+(e.g., "~/Documents/run"). The file name will have "_swolca_adapt.RData" or
+"_swolca_results.RData" appended to it.
+
+If hyperparameters for the adaptive or fixed sampler are left as \code{NULL}
+(default), the following default values are used. Let \eqn{K} refer to
+\code{K_max} for the adaptive sampler and \code{K_fixed} for the fixed sampler.
+For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
+each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
+hyperparameter \eqn{\eta = 1} for each component. For \eqn{\xi_{k\cdot}}, a
+Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0}
+drawn from a Normal(0,1) hyperprior for each component, and variance matrix
+hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn
+from InvGamma(shape=5/2, scale=2/5) distributions. Note that hyperparameters
+for the fixed sampler should probably only be specified if running the
+fixed sampler directly, bypassing the adaptive sampler.
 }
 \examples{
 # Load data and obtain relevant variables
@@ -128,17 +193,18 @@ y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
 sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
-n <- dim(x_mat)[1]        # Number of individuals
+n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
 V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 
-# Stan model
-mod_stan <- stanmodels$SWOLCA_main
-
 # Run swolca
 res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-       cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
-       n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
+       cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
+       run_sampler = "both", adapt_seed = 1,
+       n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 
+}
+\seealso{
+\code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
 }

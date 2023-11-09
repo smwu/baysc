@@ -8,8 +8,9 @@
 get_stanmodels()
 }
 \value{
-Returns `stanmodels` object
+Returns \code{stanmodels} object
 }
 \description{
 Get all stan models available in the package.
 }
+\keyword{internal}

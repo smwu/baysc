@@ -4,14 +4,14 @@
 \alias{update_c}
 \title{Update c}
 \usage{
-update_c(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all)
+update_c(c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all)
 }
 \arguments{
 \item{n}{Number of individuals}
 
 \item{K}{Number of classes}
 
-\item{p}{Number of exposure items}
+\item{J}{Number of exposure items}
 
 \item{theta}{Array parameter of item level probabilities. JxKxR}
 
@@ -28,11 +28,11 @@ update_c(c_all, n, K, p, theta, x_mat, pi, z_all, V, xi, y_all)
 \item{y_all}{Vector of outcomes. nx1}
 }
 \value{
-Updated `c_all` vector after drawing from a Categorical distribution
+Updated \code{c_all} vector after drawing from a Categorical distribution
 with updated category event probabilities.
 }
 \description{
-`update_c` updates the vector of individual class assignments, c, by drawing 
+\code{update_c} updates the vector of individual class assignments, c, by drawing
 from a Categorical distribution with updated category event probabilities.
 }
 \keyword{internal}
