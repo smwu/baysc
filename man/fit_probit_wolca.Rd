@@ -39,7 +39,10 @@ indicating each individual is their own cluster.}
 
 \item{ci_level}{Confidence interval level. Default is \code{0.95}.}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If no additional covariates are to
+be included, specify a column of all ones. All variables in \code{glm_form} must
+be found in \code{V}.}
 
 \item{q}{Number of regression covariates excluding class assignment}
 }
@@ -65,6 +68,9 @@ residual degrees of freedom is less than 1, a Wald confidence interval is
 manually calculated using a t-distribution with degrees of freedom from the
 survey design. The point and interval estimates are then converted into the
 factor reference coding format to match the output from \code{swolca()} and \code{solca()}.
+
+When specifying the regression formula, use variable name \code{c_all} for the
+latent class assignments, \code{y_all} for the outcome, and
 }
 \examples{
 # Load data and obtain relevant variables
@@ -111,7 +117,7 @@ post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 q <- ncol(V)             # Number of regression covariates excluding class assignment
 # Survey-weighted regression formula
-glm_form <- "y_all ~ c_all"
+glm_form <- "~ c_all"
 
 # Finally run weighted probit regression model
 estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 

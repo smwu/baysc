@@ -75,12 +75,15 @@ convert_ref_to_comb <- function(beta_ref) {
 #' variables are not acceptable
 #' @details All parameters are set to `NULL` by default so that error checks 
 #' are only performed on relevant variables.
+#' 
+#' @importFrom stats terms as.formula
 #' @keywords internal
 #' @export
 catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL, 
                          cluster_id = NULL, stratum_id = NULL, V = NULL,
-                         run_sampler = NULL, K_max = NULL, class_cutoff = NULL,
-                         alpha_adapt = NULL, eta_adapt = NULL, mu0_adapt = NULL, 
+                         run_sampler = NULL, glm_form = NULL, K_max = NULL, 
+                         class_cutoff = NULL, alpha_adapt = NULL, 
+                         eta_adapt = NULL, mu0_adapt = NULL, 
                          Sig0_adapt = NULL, K_fixed = NULL, alpha_fixed = NULL, 
                          eta_fixed = NULL, mu0_fixed = NULL, Sig0_fixed = NULL,
                          n_runs = NULL, burn = NULL, thin = NULL, 
@@ -104,6 +107,24 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
         if (is.null(K_fixed)) {
           stop("K_fixed must be specified")
         }
+      }
+    }
+    
+    # Check regression formula
+    if (!is.null(glm_form)) {
+      regr_vars <- labels(terms(as.formula(glm_form)))   
+      if ("c_all" %in% regr_vars) {
+        regr_vars <- regr_vars[regr_vars != "c_all"]
+        if (!(all(regr_vars %in% colnames(V)))) {
+          stop("all variables in glm_form except c_all must exist in V")
+        }
+      } else {
+        if (!(all(regr_vars %in% colnames(V)))) {
+          stop("all variables in glm_form must exist in V")
+        }
+      }
+      if (substring(glm_form, 1, 1) != "~") {
+        stop("glm_form must be a string starting with '~' that specifies a valid formula")
       }
     }
     
@@ -138,6 +159,9 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     if (!is.null(V)) {
       if (n != nrow(V)) {
         stop("number of rows in x_mat must match number of rows in V")
+      }
+      if (class(V)[1] != "data.frame") {
+        stop("V must be a dataframe")
       }
     }
     

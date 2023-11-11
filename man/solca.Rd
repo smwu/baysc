@@ -9,6 +9,7 @@ solca(
   y_all,
   V,
   run_sampler = "both",
+  glm_form = glm_form,
   K_max = 30,
   adapt_seed = NULL,
   class_cutoff = 0.05,
@@ -34,10 +35,17 @@ solca(
 
 \item{y_all}{Vector of outcomes. nx1}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If no additional covariates are to
+be included, specify a column of all ones. All variables in \code{glm_form} must
+be found in \code{V}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
+
+\item{glm_form}{String specifying formula for probit regression, excluding
+outcome and latent class. For example, \code{"~ 1"} for the model with only
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V}.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -180,12 +188,13 @@ y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+glm_form = "~ 1"
 
 # Run solca
 res <- solca(x_mat = x_mat, y_all = y_all, V = V, run_sampler = "both", 
-             adapt_seed = 1, n_runs = 50, burn = 25, thin = 1, 
-             save_res = FALSE)
+             glm_form = glm_form, adapt_seed = 1, n_runs = 50, burn = 25, 
+             thin = 1, save_res = FALSE)
 
 }
 \seealso{

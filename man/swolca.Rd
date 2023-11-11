@@ -12,6 +12,7 @@ swolca(
   stratum_id = NULL,
   V,
   run_sampler = "both",
+  glm_form,
   K_max = 30,
   adapt_seed = NULL,
   class_cutoff = 0.05,
@@ -28,6 +29,7 @@ swolca(
   n_runs = 20000,
   burn = 10000,
   thin = 5,
+  adjust_var = TRUE,
   save_res = TRUE,
   save_path = NULL
 )
@@ -46,10 +48,17 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If no additional covariates are to
+be included, specify a column of all ones. All variables in \code{glm_form} must
+be found in \code{V}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
+
+\item{glm_form}{String specifying formula for probit regression, excluding
+outcome and latent class. For example, \code{"~ 1"} for the model with only
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V}.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -107,6 +116,10 @@ number of regression covariates excluding latent class assignment.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
+\item{adjust_var}{Boolean for the fixed sampler specifying if the
+post-processing variance adjustment for accurate interval coverage should be
+applied. Default = \code{TRUE}.}
+
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results. Default is \code{NULL}.}
@@ -114,16 +127,14 @@ number of regression covariates excluding latent class assignment.}
 \value{
 If the fixed sampler is run, returns list \code{res} containing:
 \describe{
-\item{\code{estimates}}{List of adjusted posterior model results}
+\item{\code{estimates_unadj}}{List of unadjusted posterior model results}
 \item{\code{runtime}}{Total runtime for model}
 \item{\code{data_vars}}{List of data variables used}
 \item{\code{MCMC_out}}{List of full MCMC output}
 \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
 \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-\item{\code{estimates_unadj}}{List of unadjusted posterior model results}
-\item{\code{K_MCMC}}{If \code{K_fixed = NULL} and the adaptive sampler is run,
-output list also contains MCMC output for the number of classes with size
-greater than \code{class_cutoff} for each iteration}
+\item{\code{estimates}}{If \code{adjust_var = TRUE} (default), list of adjusted
+posterior model results with correct uncertainty estimation}
 }
 
 If \code{save_res = TRUE} (default), also saves \code{res} as
@@ -196,12 +207,13 @@ sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+glm_form <- "~ 1"
 
 # Run swolca
 res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
        cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
-       run_sampler = "both", adapt_seed = 1,
+       run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 
 }

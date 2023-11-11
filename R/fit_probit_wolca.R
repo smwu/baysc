@@ -24,6 +24,10 @@
 #' survey design. The point and interval estimates are then converted into the 
 #' factor reference coding format to match the output from `swolca()` and `solca()`. 
 #' 
+#' When specifying the regression formula, use variable name `c_all` for the 
+#' latent class assignments, `y_all` for the outcome, and 
+#' 
+#' 
 #' @return
 #' Returns updated list `estimates` containing the following additional objects:
 #' \describe{
@@ -84,7 +88,7 @@
 #' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
 #' q <- ncol(V)             # Number of regression covariates excluding class assignment
 #' # Survey-weighted regression formula
-#' glm_form <- "y_all ~ c_all"
+#' glm_form <- "~ c_all"
 #' 
 #' # Finally run weighted probit regression model
 #' estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 
@@ -102,7 +106,7 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
     # Add latent class assignment variable to survey data
     svy_data$c_all <- factor(estimates$c_all)
     # Add additional covariates
-    svy_data <- cbind(svy_data, V[, -1])
+    svy_data <- cbind(svy_data, V)
     # Specify survey design
     svydes <- survey::svydesign(ids = ~cluster_id, strata = ~factor(stratum_id), 
                                 weights = ~w_all, data = svy_data)
@@ -113,12 +117,20 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
     # Add latent class assignment variable to survey data
     svy_data$c_all <- factor(estimates$c_all)
     # Add additional covariates
-    svy_data <- cbind(svy_data, V[, -1])
+    svy_data <- cbind(svy_data, V)
     # Specify survey design
     svydes <- survey::svydesign(ids = ~cluster_id, weights = ~w_all, 
                                 data = svy_data)    
   }
-
+  
+  # Add outcome to formula
+  glm_form <- paste0("y_all ", glm_form)
+  
+  # If only one latent class, cannot have latent class as a covariate
+  if (length(levels(svy_data$c_all)) == 1) {
+    stop("Only one latent class found. Cannot use latent class as a covariate")
+  }
+  
   # Fit probit model according to specified formula
   fit <- survey::svyglm(formula = stats::as.formula(glm_form), design = svydes, 
                         family = stats::quasibinomial(link = "probit"))

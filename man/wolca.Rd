@@ -43,13 +43,18 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If no additional covariates are to
+be included, specify a column of all ones. All variables in \code{glm_form} must
+be found in \code{V}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
 
-\item{glm_form}{String specifying formula to use for probit regression. For
-example, \code{"y_all ~ c_all"} for the model with only latent class as a covariate.}
+\item{glm_form}{String specifying formula for probit regression,
+including latent class as a covariate. For example, \code{"~ c_all"} for the model
+with only latent class as covariates. All variables in \code{glm_form} must be
+found in \code{V}.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -176,9 +181,9 @@ sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 # Survey-weighted regression formula
-glm_form <- "y_all ~ c_all"
+glm_form <- "~ c_all"
 
 # Run wolca
 res <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 

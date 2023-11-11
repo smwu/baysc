@@ -12,6 +12,7 @@ catch_errors(
   stratum_id = NULL,
   V = NULL,
   run_sampler = NULL,
+  glm_form = NULL,
   K_max = NULL,
   class_cutoff = NULL,
   alpha_adapt = NULL,
@@ -44,10 +45,17 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If no additional covariates are to
+be included, specify a column of all ones. All variables in \code{glm_form} must
+be found in \code{V}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
+
+\item{glm_form}{String specifying formula for probit regression, excluding
+outcome and latent class. For example, \code{"~ 1"} for the model with only
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V}.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 

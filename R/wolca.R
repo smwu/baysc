@@ -5,8 +5,10 @@
 #' class analysis (WOLCA) in the first step and saves and returns the results.
 #'
 #' @inheritParams swolca
-#' @param glm_form String specifying formula to use for probit regression. For 
-#' example, `"y_all ~ c_all"` for the model with only latent class as a covariate. 
+#' @param glm_form String specifying formula for probit regression, 
+#' including latent class as a covariate. For example, `"~ c_all"` for the model 
+#' with only latent class as covariates. All variables in `glm_form` must be 
+#' found in `V`.
 #' 
 #' @details 
 #' `wolca` is a two-step approach that runs an unsupervised WOLCA in the first
@@ -95,9 +97,9 @@
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
 #' # Probit model only includes latent class
-#' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 #' # Survey-weighted regression formula
-#' glm_form <- "y_all ~ c_all"
+#' glm_form <- "~ c_all"
 #' 
 #' # Run wolca
 #' res <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
@@ -121,25 +123,30 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
   print("Read in data")
 
   # Obtain dimensions
-  n <- dim(data_vars$X_data)[1]        # Number of individuals
-  J <- dim(data_vars$X_data)[2]        # Number of exposure items
-  R <- max(apply(data_vars$X_data, 2,  # Number of exposure categories
+  n <- dim(x_mat)[1]        # Number of individuals
+  J <- dim(x_mat)[2]        # Number of exposure items
+  R <- max(apply(x_mat, 2,  # Number of exposure categories
                  function(x) length(unique(x))))  # CHANGE TO ADAPT TO ITEM
-  q <- ncol(V)              # Number of regression covariates excluding class assignment
 
   # Obtain normalized weights
-  kappa <- sum(data_vars$sample_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
-  w_all <- c(data_vars$sample_wt / kappa) # Weights normalized to sum to n, nx1
+  kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
+  w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
   
   #================= Catch errors ==============================================
   catch_errors(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
                cluster_id = cluster_id, stratum_id = stratum_id, V = V,
-               run_sampler = run_sampler, 
+               run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                n_runs = n_runs, burn = burn, thin = thin, 
                save_res = save_res, save_path = save_path)
+  
+  q <- ncol(V)  # Number of regression covariates excluding class assignment   
+  
+  if (!grepl("c_all", glm_form)) {
+    stop("glm_form should include latent class assignments, c_all")
+  }
 
   #================= ADAPTIVE SAMPLER ==========================================
   if (run_sampler %in% c("both", "adapt")) { # Run adaptive sampler

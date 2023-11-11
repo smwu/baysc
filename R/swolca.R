@@ -12,9 +12,15 @@
 #' indicating each individual is their own cluster.
 #' @param stratum_id Vector of individual stratum IDs. nx1. Default is `NULL`,
 #' indicating no stratification.
-#' @param V Regression design matrix without class assignment. nxq
+#' @param V Dataframe of additional regression covariates. nxq. Factor 
+#' covariates must be converted to factors. If no additional covariates are to 
+#' be included, specify a column of all ones. All variables in `glm_form` must 
+#' be found in `V`.
 #' @param run_sampler String specifying which sampler(s) should be run. Must be 
 #' one of `"both"` (default), `"fixed"`, or `"adapt"`.
+#' @param glm_form String specifying formula for probit regression, excluding 
+#' outcome and latent class. For example, `"~ 1"` for the model with only 
+#' latent class as covariates. All variables in `glm_form` must be found in `V`.
 #' @param K_max Upper limit for number of classes. Default is 30.
 #' @param adapt_seed Numeric seed for adaptive sampler. Default is `NULL`.
 #' @param class_cutoff Minimum class size proportion when determining number of
@@ -55,6 +61,9 @@
 #' @param n_runs Number of MCMC iterations. Default is 20000.
 #' @param burn Number of MCMC iterations to drop as a burn-in period. Default is 10000.
 #' @param thin Thinning factor for MCMC iterations. Default is 5.
+#' @param adjust_var Boolean for the fixed sampler specifying if the 
+#' post-processing variance adjustment for accurate interval coverage should be 
+#' applied. Default = `TRUE`.
 #' @param save_res Boolean specifying if results should be saved. Default = `TRUE`.
 #' @param save_path String specifying directory and file name to save results. Default is `NULL`.
 #' 
@@ -101,16 +110,14 @@
 #' @return
 #' If the fixed sampler is run, returns list `res` containing:
 #' \describe{
-#'   \item{\code{estimates}}{List of adjusted posterior model results}
+#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results}
 #'   \item{\code{runtime}}{Total runtime for model}
 #'   \item{\code{data_vars}}{List of data variables used}
 #'   \item{\code{MCMC_out}}{List of full MCMC output}
 #'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
 #'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results}
-#'   \item{\code{K_MCMC}}{If `K_fixed = NULL` and the adaptive sampler is run,
-#'   output list also contains MCMC output for the number of classes with size
-#'   greater than `class_cutoff` for each iteration}
+#'   \item{\code{estimates}}{If `adjust_var = TRUE` (default), list of adjusted 
+#'   posterior model results with correct uncertainty estimation}
 #' }
 #'
 #' If `save_res = TRUE` (default), also saves `res` as 
@@ -132,7 +139,7 @@
 #' 
 #' @importFrom RcppTN rtn
 #' @importFrom LaplacesDemon rinvgamma
-#' @importFrom stats rnorm median
+#' @importFrom stats rnorm median model.matrix as.formula
 #' @export
 #'
 #' @examples
@@ -147,23 +154,24 @@
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
 #' # Probit model only includes latent class
-#' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' glm_form <- "~ 1"
 #' 
 #' # Run swolca
 #' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
 #'        cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
-#'        run_sampler = "both", adapt_seed = 1,
+#'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
 #'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 #'
 swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL, 
-                   stratum_id = NULL, V, run_sampler = "both",
+                   stratum_id = NULL, V, run_sampler = "both", glm_form,
                    K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
                    alpha_adapt = NULL, eta_adapt = NULL,
                    mu0_adapt = NULL, Sig0_adapt = NULL,
                    fixed_seed = NULL, K_fixed = NULL, 
                    alpha_fixed = NULL, eta_fixed = NULL,
                    mu0_fixed = NULL, Sig0_fixed = NULL,
-                   n_runs = 20000, burn = 10000, thin = 5, 
+                   n_runs = 20000, burn = 10000, thin = 5, adjust_var = TRUE,
                    save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
@@ -177,7 +185,6 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
   J <- dim(x_mat)[2]        # Number of exposure items
   R <- max(apply(x_mat, 2,  # Number of exposure categories
                  function(x) length(unique(x))))  # CHANGE TO ADAPT TO ITEM
-  q <- ncol(V)              # Number of regression covariates excluding class assignment
   
   # Obtain normalized weights
   kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
@@ -186,7 +193,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
   #================= Catch errors ==============================================
   catch_errors(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
                cluster_id = cluster_id, stratum_id = stratum_id, V = V,
-               run_sampler = run_sampler, 
+               run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                mu0_adapt = mu0_adapt, Sig0_adapt = Sig0_adapt, 
@@ -194,6 +201,11 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
                n_runs = n_runs, burn = burn, thin = thin, 
                save_res = save_res, save_path = save_path)
+  
+  # Obtain probit regression design matrix without class assignment
+  V <- model.matrix(as.formula(glm_form), data = V)
+  # Number of regression covariates excluding class assignment
+  q <- ncol(V)  
 
   #================= ADAPTIVE SAMPLER ==========================================
   if (run_sampler %in% c("both", "adapt")) { # Run adaptive sampler
@@ -343,25 +355,26 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
     estimates <- get_estimates(MCMC_out = MCMC_out, post_MCMC_out = post_MCMC_out,
                                n = n, J = J, V = V, y_all = y_all, x_mat = x_mat)
     
-    
-    #================= VARIANCE ADJUSTMENT =======================================
-    print("Running variance adjustment")
-    
-    # Stan model
-    mod_stan <- stanmodels$SWOLCA_main
-    
-    # Apply variance adjustment for correct coverage
-    # Obtain pi_red_adj, theta_red_adj, xi_red_adj, pi_med_adj, theta_med_adj,
-    # xi_med_adj, Phi_med_adj, c_all, pred_class_probs, log_lik_med
-    estimates_adj <- var_adjust(mod_stan = mod_stan, estimates = estimates,
-                                K = estimates$K_red, J = J, R = R, n = n, q = q,
-                                x_mat = x_mat, y_all = y_all, V = V, w_all = w_all,
-                                stratum_id = stratum_id, cluster_id = cluster_id)
-    
     # Create output list. Replaces adaptive sampler output list
-    res <- list(estimates = estimates_adj, V = V, MCMC_out = MCMC_out,
-                post_MCMC_out = post_MCMC_out, K_fixed = K_fixed,
-                estimates_unadj = estimates)
+    res <- list(estimates_unadj = estimates, V = V, MCMC_out = MCMC_out,
+                post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
+    
+    #================= VARIANCE ADJUSTMENT =====================================
+    if (adjust_var) {
+      print("Running variance adjustment")
+      
+      # Stan model
+      mod_stan <- stanmodels$SWOLCA_main
+      
+      # Apply variance adjustment for correct coverage
+      # Obtain pi_red_adj, theta_red_adj, xi_red_adj, pi_med_adj, theta_med_adj,
+      # xi_med_adj, Phi_med_adj, c_all, pred_class_probs, log_lik_med
+      estimates_adj <- var_adjust(mod_stan = mod_stan, estimates = estimates,
+                                  K = estimates$K_red, J = J, R = R, n = n, q = q,
+                                  x_mat = x_mat, y_all = y_all, V = V, w_all = w_all,
+                                  stratum_id = stratum_id, cluster_id = cluster_id)
+      res$estimates <- estimates_adj 
+    }
   }  
 
   #================= SAVE AND RETURN OUTPUT ====================================

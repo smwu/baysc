@@ -78,7 +78,7 @@
 #' 
 #' @importFrom RcppTN rtn
 #' @importFrom LaplacesDemon rinvgamma
-#' @importFrom stats rnorm median
+#' @importFrom stats rnorm median model.matrix as.formula
 #' @export
 #'
 #' @examples
@@ -90,14 +90,15 @@
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
 #' # Probit model only includes latent class
-#' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
+#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' glm_form = "~ 1"
 #' 
 #' # Run solca
 #' res <- solca(x_mat = x_mat, y_all = y_all, V = V, run_sampler = "both", 
-#'              adapt_seed = 1, n_runs = 50, burn = 25, thin = 1, 
-#'              save_res = FALSE)
+#'              glm_form = glm_form, adapt_seed = 1, n_runs = 50, burn = 25, 
+#'              thin = 1, save_res = FALSE)
 #'
-solca <- function(x_mat, y_all, V, run_sampler = "both", 
+solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
                   K_max = 30, adapt_seed = NULL, class_cutoff = 0.05, 
                   alpha_adapt = NULL, eta_adapt = NULL,
                   mu0_adapt = NULL, Sig0_adapt = NULL,
@@ -118,14 +119,13 @@ solca <- function(x_mat, y_all, V, run_sampler = "both",
   J <- dim(x_mat)[2]        # Number of exposure items
   R <- max(apply(x_mat, 2,  # Number of exposure categories
                  function(x) length(unique(x))))  # CHANGE TO ADAPT TO ITEM
-  q <- ncol(V)              # Number of regression covariates excluding class assignment
 
   # Set normalized weights to 1
   w_all <- rep(1, n)
   
   #================= Catch errors ==============================================
   catch_errors(x_mat = x_mat, y_all = y_all, V = V,
-               run_sampler = run_sampler, 
+               run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                mu0_adapt = mu0_adapt, Sig0_adapt = Sig0_adapt, 
@@ -133,6 +133,11 @@ solca <- function(x_mat, y_all, V, run_sampler = "both",
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
                n_runs = n_runs, burn = burn, thin = thin, 
                save_res = save_res, save_path = save_path)
+  
+  # Obtain probit regression design matrix without class assignment
+  V <- model.matrix(as.formula(glm_form), data = V)
+  # Number of regression covariates excluding class assignment
+  q <- ncol(V)   
 
   #================= ADAPTIVE SAMPLER ==========================================
   if (run_sampler %in% c("both", "adapt")) { # Run adaptive sampler
