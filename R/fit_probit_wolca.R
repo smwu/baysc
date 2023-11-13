@@ -56,8 +56,9 @@
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' J <- dim(x_mat)[2]        # Number of exposure items
-#' R <- max(apply(x_mat, 2,  # Number of exposure categories
-#' function(x) length(unique(x))))  
+#' R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+#'              function(x) length(unique(x)))  
+#' R <- max(R_j)             # Maximum number of exposure categories across items
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
@@ -65,7 +66,10 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, R)
+#' eta <- matrix(0.01, nrow = J, ncol = R) 
+#' for (j in 1:J) {
+#'   eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+#' }
 #' 
 #' # First initialize OLCA params
 #' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)

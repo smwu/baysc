@@ -30,7 +30,7 @@ wolca(
 )
 }
 \arguments{
-\item{x_mat}{Categorical exposure matrix. nxp}
+\item{x_mat}{Categorical exposure matrix. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 
@@ -69,16 +69,18 @@ used. If specified, must be (\code{K_max})x1.}
 
 \item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
-Rx1, where R is the maximum number of categories for the exposure.}
+\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
+values are used. If specified, must be JxR, where J is the number of exposure
+items and R is the maximum number of categories for the exposure.}
 
 \item{alpha_fixed}{Fixed sampler hyperparameter for prior for \eqn{\pi}. Default is
 \code{NULL} and default values are used. If specified, must be (\code{K_fixed})x1.}
 
 \item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
-Rx1, where R is the maximum number of categories for the exposure.}
+\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
+values are used. If specified, must be JxR, where J is the number of exposure
+items and R is the maximum number of categories for the exposure.}
 
 \item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
 not necessary for the adaptive sampler. If bypassing the adaptive sampler and
@@ -146,7 +148,7 @@ argument. Use \code{adapt_seed} (default is \code{NULL}) to specify a seed
 for the adaptive sampler, and use \code{fixed_seed} (default is \code{NULL}) to specify
 a separate seed for the fixed sampler.
 
-\code{x_mat} is an nxp matrix with each row corresponding to the J-dimensional
+\code{x_mat} is an nxJ matrix with each row corresponding to the J-dimensional
 categorical exposure for an individual. If there is no clustering present,
 \code{cluster_id} should be set to the individual IDs. \code{V} is the design matrix for
 the probit regression, including the intercept and all covariates other than
@@ -165,7 +167,10 @@ If hyperparameters for the adaptive or fixed sampler are left as \code{NULL}
 \code{K_max} for the adaptive sampler and \code{K_fixed} for the fixed sampler.
 For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
 each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
-hyperparameter \eqn{\eta = 1} for each component. Note that hyperparameters
+hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the number
+of categories for exposure item j. If \code{R_j < R}, the remaining categories have
+hyperparameter set to 0.01. This is done independently for each exposure item j
+and is assumed to be the same across latent classes. Note that hyperparameters
 for the fixed sampler should probably only be specified if running the
 fixed sampler directly, bypassing the adaptive sampler.
 }
@@ -173,7 +178,7 @@ fixed sampler directly, bypassing the adaptive sampler.
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
-x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 stratum_id <- data_vars$true_Si      # Stratum indicators, nx1

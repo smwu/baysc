@@ -13,7 +13,7 @@ update_theta(theta, J, K, R, eta, w_all, c_all, x_mat)
 
 \item{K}{Number of classes}
 
-\item{x_mat}{Categorical exposure matrix. nxp}
+\item{x_mat}{Categorical exposure matrix. nxJ}
 }
 \value{
 Updated \code{theta} array after drawing from its posterior distribution.

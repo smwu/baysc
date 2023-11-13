@@ -19,7 +19,7 @@
 #' for the adaptive sampler, and use `fixed_seed` (default is `NULL`) to specify 
 #' a separate seed for the fixed sampler.
 #' 
-#' `x_mat` is an nxp matrix with each row corresponding to the J-dimensional 
+#' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
 #' categorical exposure for an individual. `V` is the design matrix for 
 #' the probit regression, including the intercept and all covariates other than 
 #' latent class. `K_max` is the maximum number of latent classes allowable, to 
@@ -37,11 +37,14 @@
 #' `K_max` for the adaptive sampler and `K_fixed` for the fixed sampler. 
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
-#' hyperparameter \eqn{\eta = 1} for each component. For \eqn{\xi_{k\cdot}}, a 
+#' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
+#' of categories for exposure item j. If `R_j < R`, the remaining categories have
+#' hyperparameter set to 0.01. This is done independently for each exposure item j
+#' and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a 
 #' Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0} 
 #' drawn from a Normal(0,1) hyperprior for each component, and variance matrix 
 #' hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn 
-#' from InvGamma(shape=5/2, scale=2/5) distributions. Note that hyperparameters
+#' from InvGamma(shape=3.5, scale=6.25) distributions. Note that hyperparameters
 #' for the fixed sampler should probably only be specified if running the 
 #' fixed sampler directly, bypassing the adaptive sampler. 
 #' 
@@ -85,7 +88,7 @@
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
@@ -117,8 +120,9 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
   # Obtain dimensions
   n <- dim(x_mat)[1]        # Number of individuals
   J <- dim(x_mat)[2]        # Number of exposure items
-  R <- max(apply(x_mat, 2,  # Number of exposure categories
-                 function(x) length(unique(x))))  # CHANGE TO ADAPT TO ITEM
+  R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+               function(x) length(unique(x)))  
+  R <- max(R_j)             # Maximum number of exposure categories across items
 
   # Set normalized weights to 1
   w_all <- rep(1, n)
@@ -154,7 +158,12 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
       alpha_adapt <- rep(1, K_max) / K_max   # Hyperparameter for prior for pi
     }
     if (is.null(eta_adapt)) {
-      eta_adapt <- rep(1, R)                 # Hyperparameter for prior for theta
+      # Hyperparameter for prior for theta
+      # Unviable categories have value 0.01 to prevent rank deficiency issues
+      eta_adapt <- matrix(0.01, nrow = J, ncol = R) 
+      for (j in 1:J) {
+        eta_adapt[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+      }
     }
     # Default hyperparameters for xi
     if (is.null(mu0_adapt)) {
@@ -236,7 +245,12 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
       alpha_fixed <- rep(1, K_fixed) / K_fixed   # Hyperparameter for prior for pi
     }
     if (is.null(eta_fixed)) {
-      eta_fixed <- rep(1, R)                 # Hyperparameter for prior for theta
+      # Hyperparameter for prior for theta
+      # Unviable categories have value 0.01 to prevent rank deficiency issues
+      eta_fixed <- matrix(0.01, nrow = J, ncol = R) 
+      for (j in 1:J) {
+        eta_fixed[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+      }
     }
     # Default hyperparameters for xi
     if (is.null(mu0_fixed)) {

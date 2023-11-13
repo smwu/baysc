@@ -32,7 +32,7 @@ catch_errors(
 )
 }
 \arguments{
-\item{x_mat}{Categorical exposure matrix. nxp}
+\item{x_mat}{Categorical exposure matrix. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 
@@ -68,8 +68,9 @@ used. If specified, must be (\code{K_max})x1.}
 
 \item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
-Rx1, where R is the maximum number of categories for the exposure.}
+\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
+values are used. If specified, must be JxR, where J is the number of exposure
+items and R is the maximum number of categories for the exposure.}
 
 \item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression coefficients
 \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
@@ -90,8 +91,9 @@ running the fixed sampler directly, need to specify a value here.}
 
 \item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
-Rx1, where R is the maximum number of categories for the exposure.}
+\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
+values are used. If specified, must be JxR, where J is the number of exposure
+items and R is the maximum number of categories for the exposure.}
 
 \item{mu0_fixed}{Fixed sampler mean hyperparameters for regression coefficients
 \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.

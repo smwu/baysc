@@ -11,7 +11,7 @@ data {
   vector<lower=0>[n] weights;       // individual-level survey weights
   
   vector[K] alpha;         // hyperparameter for pi prior
-  vector[R] eta;           // hyperparameter for theta prior
+  matrix[J, R] eta;           // hyperparameter for theta prior
   vector[q] mu0[K];           // hyperparameter for mean of xi prior
   cov_matrix[q] Sig0[K];      // hyperparameter for covariance of xi prior
 }
@@ -38,7 +38,7 @@ model {
   pi ~ dirichlet(alpha);  // prior for pi
   for (j in 1:J) {        // prior for theta
     for (k in 1:K) {
-      theta[j, k] ~ dirichlet(eta);
+      theta[j, k] ~ dirichlet(eta[j, ]);
     }
   }
   for (k in 1:K) {

@@ -22,7 +22,7 @@
 #' Returns list `MCMC_out` containing:
 #' \describe{
 #'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
-#'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xpxKxd}
+#'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
 #'   \item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
 #'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
 #'   \item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
@@ -46,7 +46,7 @@
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
 #' sampling_wt <- data_vars$sample_wt
@@ -54,20 +54,28 @@
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' J <- dim(x_mat)[2]        # Number of exposure items
-#' R <- max(apply(x_mat, 2,  # Number of exposure categories
-#' function(x) length(unique(x))))  
+#' R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+#'              function(x) length(unique(x)))  
+#' R <- max(R_j)             # Maximum number of exposure categories across items
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 #' 
 #' # Probit model only includes latent class
-#' V <- matrix(1, nrow = n)  
-#' q <- ncol(V)   # Number of regression covariates excluding class assignment
+#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' glm_form <- "~ 1"
+#' # Obtain probit regression design matrix without class assignment
+#' V <- model.matrix(as.formula(glm_form), data = V)
+#' # Number of regression covariates excluding class assignment
+#' q <- ncol(V)  
 #' 
 #' # Set hyperparameters
 #' K <- 30
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, R)
+#' eta <- matrix(0.01, nrow = J, ncol = R) 
+#' for (j in 1:J) {
+#'   eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+#' }
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi

@@ -22,9 +22,9 @@
 #' \describe{
 #'   \item{\code{K_red}}{Number of unique classes}
 #'   \item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
-#'   \item{\code{theta_red}}{Array of final posterior samples for theta. Mxpx(K_red)xd}
+#'   \item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
 #'   \item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
-#'   \item{\code{theta_med}}{Array of posterior median estimates for theta. px(K_red)xd}
+#'   \item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
 #'   \item{\code{c_all}}{Vector of final individual class assignments. nx1}
 #'   \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
 #' }
@@ -41,15 +41,16 @@
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
 #' sampling_wt <- data_vars$sample_wt
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' J <- dim(x_mat)[2]        # Number of exposure items
-#' R <- max(apply(x_mat, 2,  # Number of exposure categories
-#' function(x) length(unique(x))))  
+#' R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+#'              function(x) length(unique(x)))  
+#' R <- max(R_j)             # Maximum number of exposure categories across items
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
@@ -57,7 +58,10 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, R)
+#' eta <- matrix(0.01, nrow = J, ncol = R) 
+#' for (j in 1:J) {
+#'   eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+#' }
 #' 
 #' # First initialize OLCA params
 #' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)

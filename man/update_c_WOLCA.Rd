@@ -15,7 +15,7 @@ update_c_wolca(c_all, n, K, J, theta, x_mat, pi)
 
 \item{theta}{Array parameter of item level probabilities. JxKxR}
 
-\item{x_mat}{Categorical exposure matrix. nxp}
+\item{x_mat}{Categorical exposure matrix. nxJ}
 
 \item{pi}{Vector parameter of class membership probabilities. Kx1}
 }

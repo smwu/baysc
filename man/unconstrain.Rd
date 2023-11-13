@@ -15,7 +15,7 @@ unconstrain(i, K, stan_model, pi, theta, xi)
 
 \item{pi}{MCMC matrix output for pi; MxK}
 
-\item{theta}{MCMC array output for theta; MxpxKxd}
+\item{theta}{MCMC array output for theta; MxJxKxR}
 
 \item{xi:}{MCMC matrix output for xi; MxKxS}
 }

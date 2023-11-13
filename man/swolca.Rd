@@ -30,12 +30,13 @@ swolca(
   burn = 10000,
   thin = 5,
   adjust_var = TRUE,
+  num_reps = 100,
   save_res = TRUE,
   save_path = NULL
 )
 }
 \arguments{
-\item{x_mat}{Categorical exposure matrix. nxp}
+\item{x_mat}{Categorical exposure matrix. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 
@@ -73,8 +74,9 @@ used. If specified, must be (\code{K_max})x1.}
 
 \item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
-Rx1, where R is the maximum number of categories for the exposure.}
+\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
+values are used. If specified, must be JxR, where J is the number of exposure
+items and R is the maximum number of categories for the exposure.}
 
 \item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression coefficients
 \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
@@ -97,8 +99,9 @@ running the fixed sampler directly, need to specify a value here.}
 
 \item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}. Default is \code{NULL} and default values are used. If specified, must be
-Rx1, where R is the maximum number of categories for the exposure.}
+\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
+values are used. If specified, must be JxR, where J is the number of exposure
+items and R is the maximum number of categories for the exposure.}
 
 \item{mu0_fixed}{Fixed sampler mean hyperparameters for regression coefficients
 \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
@@ -119,6 +122,9 @@ number of regression covariates excluding latent class assignment.}
 \item{adjust_var}{Boolean for the fixed sampler specifying if the
 post-processing variance adjustment for accurate interval coverage should be
 applied. Default = \code{TRUE}.}
+
+\item{num_reps}{Number of bootstrap replicates to use for the variance
+adjustment estimate. Default is 100.}
 
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
@@ -166,9 +172,10 @@ number for \code{K_fixed}. Id only the adaptive sampler is to be run, specify
 \code{"adapt"} for the \code{run_sampler} argument.
 Use \code{adapt_seed} (default is \code{NULL}) to specify a seed
 for the adaptive sampler, and use \code{fixed_seed} (default is \code{NULL}) to specify
-a separate seed for the fixed sampler.
+a separate seed for the fixed sampler. Specify \code{adjust_var = TRUE} (default)
+to adjust the estimates to prevent overly conservative interval estimates.
 
-\code{x_mat} is an nxp matrix with each row corresponding to the J-dimensional
+\code{x_mat} is an nxJ matrix with each row corresponding to the J-dimensional
 categorical exposure for an individual. If there is no clustering present,
 \code{cluster_id} should be set to the individual IDs. \code{V} is the design matrix for
 the probit regression, including the intercept and all covariates other than
@@ -187,11 +194,14 @@ If hyperparameters for the adaptive or fixed sampler are left as \code{NULL}
 \code{K_max} for the adaptive sampler and \code{K_fixed} for the fixed sampler.
 For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
 each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
-hyperparameter \eqn{\eta = 1} for each component. For \eqn{\xi_{k\cdot}}, a
+hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the number
+of categories for exposure item j. If \code{R_j < R}, the remaining categories have
+hyperparameter set to 0.01. This is done independently for each exposure item j
+and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a
 Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0}
 drawn from a Normal(0,1) hyperprior for each component, and variance matrix
 hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn
-from InvGamma(shape=5/2, scale=2/5) distributions. Note that hyperparameters
+from InvGamma(shape=3.5, scale=6.25) distributions. Note that hyperparameters
 for the fixed sampler should probably only be specified if running the
 fixed sampler directly, bypassing the adaptive sampler.
 }
@@ -199,7 +209,7 @@ fixed sampler directly, bypassing the adaptive sampler.
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
-x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
@@ -211,8 +221,8 @@ V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 glm_form <- "~ 1"
 
 # Run swolca
-res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-       cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
+res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+       cluster_id = cluster_id, stratum_id = stratum_id, V = V,
        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 

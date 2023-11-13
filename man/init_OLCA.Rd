@@ -18,15 +18,15 @@ init_OLCA(K, n, J, R, alpha, eta)
 \item{alpha}{Kx1 vector of hyperparameters for prior for class membership
 probabilities \eqn{\pi}}
 
-\item{eta}{dx1 vector of hyperparameters for prior for item consumption
+\item{eta}{JxR matrix of hyperparameters for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}}
+\eqn{k}, assumed to be the same across classes.}
 }
 \value{
 Returns list \code{OLCA_params} containing:
 \describe{
 \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
-\item{\code{theta}}{Array parameter theta for item category probabilities. pxKxd}
+\item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
 \item{\code{c_all}}{Vector of random initial class assignments. nx1}
 }
 }
@@ -40,13 +40,13 @@ from a Dirichlet distribution with hyperparameter \eqn{\alpha = 1/K} for each
 of the K components. Then, class assignments \code{c_all} are initialized for each
 individual by drawing from a Categorical distribution with parameter \eqn{\pi}.
 Finally, item consumption level probabilities \eqn{\theta} are initialized by
-drawing from a Dirichlet distribution with hyperparameter \eqn{\eta = 1} for
-each of the R components, independently for each exposure item and latent class.
+drawing from a Dirichlet distribution with hyperparameter \eqn{\eta},
+independently for each exposure item and latent class.
 }
 \examples{
 K <- 30; n <- 4000; J <- 30; R <- 4
 alpha <- rep(1, K) / K
-eta <- rep(1, R)
+eta <- matrix(1, nrow = J, ncol = R)
 OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 # OLCA_params
 

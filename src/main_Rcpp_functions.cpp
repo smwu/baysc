@@ -280,12 +280,12 @@ void update_c_wolca(arma::vec& c_all, const int& n, const int& K, const int& J,
 //' @keywords internal
 // [[Rcpp::export]]
 void update_theta(arma::cube& theta, const int& J, const int& K, const int& R, 
-                  const arma::vec& eta, const arma::vec& w_all, 
-                  const arma::vec& c_all, arma::mat x_mat) {
+                  const arma::mat& eta, const arma::vec& w_all, 
+                  const arma::vec& c_all, arma::mat& x_mat) {
   NumericVector w_all_copy = as<NumericVector>(wrap(w_all));
-  // Posterior parameters for theta
-  NumericVector eta_post(R);  
+
   for (int j = 0; j < J; j++) {
+    NumericVector eta_post(R);  // Posterior parameters for theta for item j
     for (int k = 0; k < K; k++) {
       for (int r = 0; r < R; r++) {
         // Add sum of normalized weights for those assigned to class k with x_ij = r
@@ -293,7 +293,7 @@ void update_theta(arma::cube& theta, const int& J, const int& K, const int& R,
         LogicalVector indiv_r = (as<NumericVector>(wrap(x_mat.col(j))) == (r + 1));
         LogicalVector indiv_k = (as<IntegerVector>(wrap(c_all)) == (k + 1));
         NumericVector weights_r = w_all_copy[(indiv_r & indiv_k)];
-        eta_post[r] = eta[r] + sum(weights_r);
+        eta_post(r) = eta(j, r) + sum(weights_r);
       }
       // Rcout <<"eta_post: " << eta_post << "\n";  // Print out posterior alpha
       // Draw theta from posterior

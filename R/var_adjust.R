@@ -7,7 +7,7 @@
 #' @param K Number of classes
 #' @param stan_model Stan model
 #' @param pi MCMC matrix output for pi; MxK
-#' @param theta MCMC array output for theta; MxpxKxd
+#' @param theta MCMC array output for theta; MxJxKxR
 #' @param xi: MCMC matrix output for xi; MxKxS
 #' 
 #' @return Outputs vector of unconstrained parameters
@@ -77,8 +77,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' @param estimates Output from `get_estimates()` containing `K_red`, `pi_red`, 
 #' `theta_red`, `xi_red`, `pi_med`, `theta_med`, `xi_med`, `Phi_med`, `c_all`, 
 #' `pred_class_probs`, `loglik_med`
-#' @param num_reps Number of bootstrap replicates to use for the variance 
-#' estimate. Default is 100.
+#' @param R_j Jx1 vector of number of exposure categories for each item
 #' 
 #' @details
 #' `var_adjust` applies a post-processing variance adjustment that rescales the
@@ -99,10 +98,10 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' 
 #' \describe{
 #'   \item{\code{pi_red_adj}}{Matrix of adjusted posterior samples for pi. Mx(K_red)}
-#'   \item{\code{theta_red_adj}}{Array of adjusted posterior samples for theta. Mxpx(K_red)xd}
+#'   \item{\code{theta_red_adj}}{Array of adjusted posterior samples for theta. MxJx(K_red)xR}
 #'   \item{\code{xi_red_adj}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
 #'   \item{\code{pi_med_adj}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
-#'   \item{\code{theta_med_adj}}{Array of adjusted posterior median estimates for theta. px(K_red)xd}
+#'   \item{\code{theta_med_adj}}{Array of adjusted posterior median estimates for theta. px(K_red)xR}
 #'   \item{\code{xi_med_adj}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
 #'   \item{\code{Phi_med_adj}}{Vector of adjusted individual outcome probabilities. nx1}
 #'   \item{\code{c_all}}{Vector of final individual class assignments from `get_estimates()`. nx1}
@@ -117,12 +116,17 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' @importFrom survey svydesign as.svyrepdesign withReplicates
 #' @importFrom Matrix nearPD
 #' @export
+#' 
+#' @references 
+#' Williams, M. R., & Savitsky, T. D. (2021). Uncertainty Estimation for 
+#' Pseudo‐Bayesian Inference Under Complex Sampling. International Statistical 
+#' Review, 89(1), 72-107.
 #'
 #' @examples
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 #' stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
@@ -131,20 +135,28 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' J <- dim(x_mat)[2]        # Number of exposure items
-#' R <- max(apply(x_mat, 2,  # Number of exposure categories
-#' function(x) length(unique(x))))  
+#' R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+#'              function(x) length(unique(x)))  
+#' R <- max(R_j)             # Maximum number of exposure categories across items
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 #' 
 #' # Probit model only includes latent class
-#' V <- matrix(1, nrow = n)  
-#' q <- ncol(V)   # Number of regression covariates excluding class assignment
+#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' glm_form <- "~ 1"
+#' # Obtain probit regression design matrix without class assignment
+#' V <- model.matrix(as.formula(glm_form), data = V)
+#' # Number of regression covariates excluding class assignment
+#' q <- ncol(V)  
 #' 
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, R)
+#' eta <- matrix(0.01, nrow = J, ncol = R) 
+#' for (j in 1:J) {
+#'   eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+#' }
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi
@@ -178,23 +190,34 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #'
 #' # Finally apply variance adjustment to posterior estimates
 #' adj_estimates <- var_adjust(mod_stan = stanmodels$SWOLCA_main, 
-#'                             estimates = estimates, K = K, J = J,
+#'                             estimates = estimates, K = K, J = J, R_j = R_j,
 #'                             R = R, n = n, q = q, x_mat = x_mat, y_all = y_all,
-#'                             V = V, w_all = w_all, stratum_id = stratum_id, 
+#'                             V = V, w_all = w_all, alpha = alpha, eta = eta, 
+#'                             mu0 = mu0, Sig0 = Sig0, stratum_id = stratum_id, 
 #'                             cluster_id = cluster_id, num_reps = 100)                        
 #' 
-var_adjust <- function(mod_stan, estimates, K, J, R, n, q, x_mat, y_all, V, w_all, 
-                       stratum_id, cluster_id, num_reps = 100) {
+var_adjust <- function(mod_stan, estimates, K, J, R_j, R, n, q, x_mat, y_all, V, 
+                       w_all, alpha, eta, mu0, Sig0, stratum_id, cluster_id, 
+                       num_reps) {
+  
   #=============== Run Stan model ==============================================
-  # Define data for Stan model
-  alpha <- rep(1, K) / K            # Hyperparameter for prior for pi
-  eta <- rep(1, R)                  # Hyperparameter for prior for theta
-  mu0 <- Sig0 <- vector("list", K)  # Hyperparameters for xi
-  for (k in 1:K) {
-    mu0[[k]] <- stats::rnorm(n = q)
-    Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
-                      nrow = q, ncol = q)
+  # Set hyperparameters with K classes
+  alpha <- rep(1, K) / K
+  eta <- matrix(0.01, nrow = J, ncol = R)
+  for (j in 1:J) {
+    eta[j, 1:R_j[j]] <- rep(1, R_j[j])
   }
+  mu0 <- Sig0 <- vector("list", K)
+  for (k in 1:K) {
+    # MVN(0,1) hyperprior for prior mean of xi
+    mu0[[k]] <- stats::rnorm(n = q)
+    # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
+    # components and mean variance 2.5 for a weakly informative prior on xi
+    Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25),
+    nrow = q, ncol = q)
+  }
+  
+  # Define data for Stan model
   data_stan <- list(K = K, J = J, R = R, n = n, q = q, X = x_mat, y = y_all, 
                     V = V, weights = w_all, alpha = alpha, eta = eta, mu0 = mu0, 
                     Sig0 = Sig0)

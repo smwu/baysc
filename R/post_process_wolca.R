@@ -24,7 +24,7 @@
 #' \describe{
 #'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
 #'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
-#'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xpx(K_med)xd}
+#'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
 #' }
 #' 
@@ -38,15 +38,16 @@
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' cluster_id <- data_vars$cluster_id  # Cluster indicators, nx1
 #' sampling_wt <- data_vars$sample_wt
 #' 
 #' # Obtain dimensions
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' J <- dim(x_mat)[2]        # Number of exposure items
-#' R <- max(apply(x_mat, 2,  # Number of exposure categories
-#' function(x) length(unique(x))))  
+#' R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+#'              function(x) length(unique(x)))  
+#' R <- max(R_j)             # Maximum number of exposure categories across items 
 #' # Obtain normalized weights
 #' kappa <- sum(sampling_wt) / n   # Weights norm. constant
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
@@ -54,7 +55,10 @@
 #' # Set hyperparameters for fixed sampler
 #' K <- 3
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, R)
+#' eta <- matrix(0.01, nrow = J, ncol = R) 
+#' for (j in 1:J) {
+#'   eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+#' }
 #' 
 #' # First initialize OLCA params
 #' OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)

@@ -177,9 +177,10 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
       if (length(alpha_adapt) != K_max) {
         stop("length of alpha_adapt must be the same as K_max")
       }
-      if (length(eta_adapt) != R) {
-        stop("length of eta_adapt must be the same as the maximum number of 
-           exposure categories, R")
+      if ((nrow(eta_adapt) != J) | (ncol(eta_adapt) != R)) {
+        stop("eta_adapt must be a matrix with J rows and R columns, where J is
+             the number of exposure items and R is the maximum number of 
+             exposure categories")
       }
     }  
     if (any(!is.null(c(mu0_adapt, Sig0_adapt)))) {
@@ -212,9 +213,14 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
         if (length(alpha_fixed) != K_fixed) {
           stop("length of alpha_fixed must be the same as K_fixed")
         }
-        if (length(eta_fixed) != R) {
-          stop("length of eta_fixed must be the same as the maximum number of 
-           exposure categories, R")
+        if ((nrow(eta_fixed) != J) | (ncol(eta_fixed) != R)) {
+          stop("eta_fixed must be a matrix with J rows and R columns, where J is
+             the number of exposure items and R is the maximum number of 
+             exposure categories")
+        }
+        if (any(eta_fixed == 0)) {
+          warning("eta_fixed has 0 values and may result in rank-difficiency issues
+                during the Hessian calculation in the var_adjust() function")
         }
       }
       if (any(!is.null(c(mu0_fixed, Sig0_fixed)))) {

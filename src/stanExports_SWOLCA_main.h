@@ -105,7 +105,7 @@ static const std::vector<string> locations_array__ = {" (found before start of p
                                                       " (in 'SWOLCA_main', line 36, column 9 to column 10)",
                                                       " (in 'SWOLCA_main', line 36, column 2 to column 26)",
                                                       " (in 'SWOLCA_main', line 38, column 2 to column 24)",
-                                                      " (in 'SWOLCA_main', line 41, column 6 to column 35)",
+                                                      " (in 'SWOLCA_main', line 41, column 6 to column 40)",
                                                       " (in 'SWOLCA_main', line 40, column 19 to line 42, column 5)",
                                                       " (in 'SWOLCA_main', line 40, column 4 to line 42, column 5)",
                                                       " (in 'SWOLCA_main', line 39, column 17 to line 43, column 3)",
@@ -140,7 +140,8 @@ static const std::vector<string> locations_array__ = {" (found before start of p
                                                       " (in 'SWOLCA_main', line 13, column 9 to column 10)",
                                                       " (in 'SWOLCA_main', line 13, column 2 to column 18)",
                                                       " (in 'SWOLCA_main', line 14, column 9 to column 10)",
-                                                      " (in 'SWOLCA_main', line 14, column 2 to column 16)",
+                                                      " (in 'SWOLCA_main', line 14, column 12 to column 13)",
+                                                      " (in 'SWOLCA_main', line 14, column 2 to column 19)",
                                                       " (in 'SWOLCA_main', line 15, column 16 to column 17)",
                                                       " (in 'SWOLCA_main', line 15, column 9 to column 10)",
                                                       " (in 'SWOLCA_main', line 15, column 2 to column 19)",
@@ -174,7 +175,7 @@ private:
   std::vector<std::vector<double>> V;
   Eigen::Matrix<double, -1, 1> weights;
   Eigen::Matrix<double, -1, 1> alpha;
-  Eigen::Matrix<double, -1, 1> eta;
+  Eigen::Matrix<double, -1, -1> eta;
   std::vector<Eigen::Matrix<double, -1, 1>> mu0;
   std::vector<Eigen::Matrix<double, -1, -1>> Sig0;
  
@@ -383,33 +384,39 @@ public:
           pos__ = (pos__ + 1);}
       }
       current_statement__ = 65;
-      validate_non_negative_index("eta", "R", R);
+      validate_non_negative_index("eta", "J", J);
       current_statement__ = 66;
+      validate_non_negative_index("eta", "R", R);
+      current_statement__ = 67;
       context__.validate_dims("data initialization","eta","double",
-          context__.to_vec(R));
-      eta = Eigen::Matrix<double, -1, 1>(R);
+          context__.to_vec(J, R));
+      eta = Eigen::Matrix<double, -1, -1>(J, R);
       stan::math::fill(eta, std::numeric_limits<double>::quiet_NaN());
       
       {
         std::vector<local_scalar_t__> eta_flat__;
-        current_statement__ = 66;
+        current_statement__ = 67;
         assign(eta_flat__, nil_index_list(), context__.vals_r("eta"),
           "assigning variable eta_flat__");
-        current_statement__ = 66;
+        current_statement__ = 67;
         pos__ = 1;
-        current_statement__ = 66;
+        current_statement__ = 67;
         for (int sym1__ = 1; sym1__ <= R; ++sym1__) {
-          current_statement__ = 66;
-          assign(eta, cons_list(index_uni(sym1__), nil_index_list()),
-            eta_flat__[(pos__ - 1)], "assigning variable eta");
-          current_statement__ = 66;
-          pos__ = (pos__ + 1);}
+          current_statement__ = 67;
+          for (int sym2__ = 1; sym2__ <= J; ++sym2__) {
+            current_statement__ = 67;
+            assign(eta,
+              cons_list(index_uni(sym2__),
+                cons_list(index_uni(sym1__), nil_index_list())),
+              eta_flat__[(pos__ - 1)], "assigning variable eta");
+            current_statement__ = 67;
+            pos__ = (pos__ + 1);}}
       }
-      current_statement__ = 67;
-      validate_non_negative_index("mu0", "K", K);
       current_statement__ = 68;
-      validate_non_negative_index("mu0", "q", q);
+      validate_non_negative_index("mu0", "K", K);
       current_statement__ = 69;
+      validate_non_negative_index("mu0", "q", q);
+      current_statement__ = 70;
       context__.validate_dims("data initialization","mu0","double",
           context__.to_vec(K, q));
       mu0 = std::vector<Eigen::Matrix<double, -1, 1>>(K, Eigen::Matrix<double, -1, 1>(q));
@@ -417,30 +424,30 @@ public:
       
       {
         std::vector<local_scalar_t__> mu0_flat__;
-        current_statement__ = 69;
+        current_statement__ = 70;
         assign(mu0_flat__, nil_index_list(), context__.vals_r("mu0"),
           "assigning variable mu0_flat__");
-        current_statement__ = 69;
+        current_statement__ = 70;
         pos__ = 1;
-        current_statement__ = 69;
+        current_statement__ = 70;
         for (int sym1__ = 1; sym1__ <= q; ++sym1__) {
-          current_statement__ = 69;
+          current_statement__ = 70;
           for (int sym2__ = 1; sym2__ <= K; ++sym2__) {
-            current_statement__ = 69;
+            current_statement__ = 70;
             assign(mu0,
               cons_list(index_uni(sym2__),
                 cons_list(index_uni(sym1__), nil_index_list())),
               mu0_flat__[(pos__ - 1)], "assigning variable mu0");
-            current_statement__ = 69;
+            current_statement__ = 70;
             pos__ = (pos__ + 1);}}
       }
-      current_statement__ = 70;
+      current_statement__ = 71;
       validate_non_negative_index("Sig0", "K", K);
-      current_statement__ = 71;
-      validate_non_negative_index("Sig0", "q", q);
-      current_statement__ = 71;
+      current_statement__ = 72;
       validate_non_negative_index("Sig0", "q", q);
       current_statement__ = 72;
+      validate_non_negative_index("Sig0", "q", q);
+      current_statement__ = 73;
       context__.validate_dims("data initialization","Sig0","double",
           context__.to_vec(K, q, q));
       Sig0 = std::vector<Eigen::Matrix<double, -1, -1>>(K, Eigen::Matrix<double, -1, -1>(q, q));
@@ -448,58 +455,58 @@ public:
       
       {
         std::vector<local_scalar_t__> Sig0_flat__;
-        current_statement__ = 72;
+        current_statement__ = 73;
         assign(Sig0_flat__, nil_index_list(), context__.vals_r("Sig0"),
           "assigning variable Sig0_flat__");
-        current_statement__ = 72;
+        current_statement__ = 73;
         pos__ = 1;
-        current_statement__ = 72;
+        current_statement__ = 73;
         for (int sym1__ = 1; sym1__ <= q; ++sym1__) {
-          current_statement__ = 72;
+          current_statement__ = 73;
           for (int sym2__ = 1; sym2__ <= q; ++sym2__) {
-            current_statement__ = 72;
+            current_statement__ = 73;
             for (int sym3__ = 1; sym3__ <= K; ++sym3__) {
-              current_statement__ = 72;
+              current_statement__ = 73;
               assign(Sig0,
                 cons_list(index_uni(sym3__),
                   cons_list(index_uni(sym2__),
                     cons_list(index_uni(sym1__), nil_index_list()))),
                 Sig0_flat__[(pos__ - 1)], "assigning variable Sig0");
-              current_statement__ = 72;
+              current_statement__ = 73;
               pos__ = (pos__ + 1);}}}
       }
-      current_statement__ = 72;
-      for (int sym1__ = 1; sym1__ <= K; ++sym1__) {
-        current_statement__ = 72;
-        current_statement__ = 72;
-        check_cov_matrix(function__, "Sig0[sym1__]", Sig0[(sym1__ - 1)]);}
       current_statement__ = 73;
-      validate_positive_index("pi", "K", K);
+      for (int sym1__ = 1; sym1__ <= K; ++sym1__) {
+        current_statement__ = 73;
+        current_statement__ = 73;
+        check_cov_matrix(function__, "Sig0[sym1__]", Sig0[(sym1__ - 1)]);}
       current_statement__ = 74;
-      validate_non_negative_index("theta", "J", J);
+      validate_positive_index("pi", "K", K);
       current_statement__ = 75;
-      validate_non_negative_index("theta", "K", K);
+      validate_non_negative_index("theta", "J", J);
       current_statement__ = 76;
-      validate_positive_index("theta", "R", R);
+      validate_non_negative_index("theta", "K", K);
       current_statement__ = 77;
-      validate_non_negative_index("xi", "K", K);
+      validate_positive_index("theta", "R", R);
       current_statement__ = 78;
-      validate_non_negative_index("xi", "q", q);
+      validate_non_negative_index("xi", "K", K);
       current_statement__ = 79;
-      validate_non_negative_index("theta_prod", "J", J);
+      validate_non_negative_index("xi", "q", q);
       current_statement__ = 80;
-      validate_non_negative_index("theta_prod", "R", R);
+      validate_non_negative_index("theta_prod", "J", J);
       current_statement__ = 81;
-      validate_non_negative_index("xi_prod", "q", q);
+      validate_non_negative_index("theta_prod", "R", R);
       current_statement__ = 82;
-      validate_non_negative_index("pred_class_probs", "n", n);
+      validate_non_negative_index("xi_prod", "q", q);
       current_statement__ = 83;
-      validate_non_negative_index("pred_class_probs", "K", K);
+      validate_non_negative_index("pred_class_probs", "n", n);
       current_statement__ = 84;
-      validate_non_negative_index("pred_class", "n", n);
+      validate_non_negative_index("pred_class_probs", "K", K);
       current_statement__ = 85;
-      validate_non_negative_index("log_cond_c", "n", n);
+      validate_non_negative_index("pred_class", "n", n);
       current_statement__ = 86;
+      validate_non_negative_index("log_cond_c", "n", n);
+      current_statement__ = 87;
       validate_non_negative_index("log_cond_c", "K", K);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -651,7 +658,10 @@ public:
           for (int k = 1; k <= K; ++k) {
             current_statement__ = 31;
             lp_accum__.add(
-              dirichlet_lpdf<propto__>(theta[(j - 1)][(k - 1)], eta));}}
+              dirichlet_lpdf<propto__>(theta[(j - 1)][(k - 1)],
+                rvalue(eta,
+                  cons_list(index_uni(j),
+                    cons_list(index_omni(), nil_index_list())), "eta")));}}
         current_statement__ = 38;
         for (int k = 1; k <= K; ++k) {
           current_statement__ = 36;

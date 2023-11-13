@@ -13,7 +13,7 @@ update_loglik(loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all)
 
 \item{theta}{Array parameter of item level probabilities. JxKxR}
 
-\item{x_mat}{Categorical exposure matrix. nxp}
+\item{x_mat}{Categorical exposure matrix. nxJ}
 
 \item{pi}{Vector parameter of class membership probabilities. Kx1}
 

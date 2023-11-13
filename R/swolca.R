@@ -4,7 +4,7 @@
 #' `swolca` runs a supervised weighted overfitted latent class analysis (SWOLCA)
 #' and saves and returns the results.
 #'
-#' @param x_mat Categorical exposure matrix. nxp
+#' @param x_mat Categorical exposure matrix. nxJ
 #' @param y_all Vector of outcomes. nx1
 #' @param sampling_wt Vector of survey sampling weights. nx1. If no sampling 
 #' weights are available, set this to a vector of ones. 
@@ -30,8 +30,9 @@
 #' used. If specified, must be (`K_max`)x1. 
 #' @param eta_adapt Adaptive sampler hyperparameter for prior for item consumption
 #' level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class 
-#' \eqn{k}. Default is `NULL` and default values are used. If specified, must be 
-#' Rx1, where R is the maximum number of categories for the exposure.
+#' \eqn{k}, assumed to be the same across classes. Default is `NULL` and default 
+#' values are used. If specified, must be JxR, where J is the number of exposure
+#' items and R is the maximum number of categories for the exposure.
 #' @param mu0_adapt Adaptive sampler mean hyperparameters for regression coefficients
 #' \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is `NULL` and default values are used. 
 #' If specified, must be a list of `K_max` vectors of dimension qx1, where q is 
@@ -48,8 +49,9 @@
 #' `NULL` and default values are used. If specified, must be (`K_fixed`)x1. 
 #' @param eta_fixed Fixed sampler hyperparameter for prior for item consumption
 #' level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class 
-#' \eqn{k}. Default is `NULL` and default values are used. If specified, must be 
-#' Rx1, where R is the maximum number of categories for the exposure.
+#' \eqn{k}, assumed to be the same across classes. Default is `NULL` and default 
+#' values are used. If specified, must be JxR, where J is the number of exposure
+#' items and R is the maximum number of categories for the exposure.
 #' @param mu0_fixed Fixed sampler mean hyperparameters for regression coefficients
 #' \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is `NULL` and default values are used. 
 #' If specified, must be a list of `K_fixed` vectors of dimension qx1, where q is 
@@ -64,6 +66,8 @@
 #' @param adjust_var Boolean for the fixed sampler specifying if the 
 #' post-processing variance adjustment for accurate interval coverage should be 
 #' applied. Default = `TRUE`.
+#' @param num_reps Number of bootstrap replicates to use for the variance 
+#' adjustment estimate. Default is 100.
 #' @param save_res Boolean specifying if results should be saved. Default = `TRUE`.
 #' @param save_path String specifying directory and file name to save results. Default is `NULL`.
 #' 
@@ -78,9 +82,10 @@
 #' `"adapt"` for the `run_sampler` argument. 
 #' Use `adapt_seed` (default is `NULL`) to specify a seed 
 #' for the adaptive sampler, and use `fixed_seed` (default is `NULL`) to specify 
-#' a separate seed for the fixed sampler.
+#' a separate seed for the fixed sampler. Specify `adjust_var = TRUE` (default)
+#' to adjust the estimates to prevent overly conservative interval estimates. 
 #' 
-#' `x_mat` is an nxp matrix with each row corresponding to the J-dimensional 
+#' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
 #' categorical exposure for an individual. If there is no clustering present, 
 #' `cluster_id` should be set to the individual IDs. `V` is the design matrix for 
 #' the probit regression, including the intercept and all covariates other than 
@@ -99,11 +104,14 @@
 #' `K_max` for the adaptive sampler and `K_fixed` for the fixed sampler. 
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
-#' hyperparameter \eqn{\eta = 1} for each component. For \eqn{\xi_{k\cdot}}, a 
+#' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
+#' of categories for exposure item j. If `R_j < R`, the remaining categories have
+#' hyperparameter set to 0.01. This is done independently for each exposure item j
+#' and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a 
 #' Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0} 
 #' drawn from a Normal(0,1) hyperprior for each component, and variance matrix 
 #' hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn 
-#' from InvGamma(shape=5/2, scale=2/5) distributions. Note that hyperparameters
+#' from InvGamma(shape=3.5, scale=6.25) distributions. Note that hyperparameters
 #' for the fixed sampler should probably only be specified if running the 
 #' fixed sampler directly, bypassing the adaptive sampler. 
 #' 
@@ -146,7 +154,7 @@
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 #' stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
@@ -158,8 +166,8 @@
 #' glm_form <- "~ 1"
 #' 
 #' # Run swolca
-#' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-#'        cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
+#' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+#'        cluster_id = cluster_id, stratum_id = stratum_id, V = V,
 #'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
 #'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 #'
@@ -172,7 +180,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                    alpha_fixed = NULL, eta_fixed = NULL,
                    mu0_fixed = NULL, Sig0_fixed = NULL,
                    n_runs = 20000, burn = 10000, thin = 5, adjust_var = TRUE,
-                   save_res = TRUE, save_path = NULL) {
+                   num_reps = 100, save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
   start_time <- Sys.time()
@@ -183,8 +191,9 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
   # Obtain dimensions
   n <- dim(x_mat)[1]        # Number of individuals
   J <- dim(x_mat)[2]        # Number of exposure items
-  R <- max(apply(x_mat, 2,  # Number of exposure categories
-                 function(x) length(unique(x))))  # CHANGE TO ADAPT TO ITEM
+  R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+               function(x) length(unique(x)))  
+  R <- max(R_j)             # Maximum number of exposure categories across items
   
   # Obtain normalized weights
   kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
@@ -222,7 +231,12 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
       alpha_adapt <- rep(1, K_max) / K_max   # Hyperparameter for prior for pi
     }
     if (is.null(eta_adapt)) {
-      eta_adapt <- rep(1, R)                 # Hyperparameter for prior for theta
+      # Hyperparameter for prior for theta
+      # Unviable categories have value 0.01 to prevent rank deficiency issues
+      eta_adapt <- matrix(0.01, nrow = J, ncol = R) 
+      for (j in 1:J) {
+        eta_adapt[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+      }
     }
     # Default hyperparameters for xi
     if (is.null(mu0_adapt)) {
@@ -304,7 +318,12 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
       alpha_fixed <- rep(1, K_fixed) / K_fixed   # Hyperparameter for prior for pi
     }
     if (is.null(eta_fixed)) {
-      eta_fixed <- rep(1, R)                 # Hyperparameter for prior for theta
+      # Hyperparameter for prior for theta
+      # Unviable categories have value 0.01 to prevent rank deficiency issues
+      eta_fixed <- matrix(0.01, nrow = J, ncol = R) 
+      for (j in 1:J) {
+        eta_fixed[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+      }
     }
     # Default hyperparameters for xi
     if (is.null(mu0_fixed)) {
@@ -370,9 +389,12 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
       # Obtain pi_red_adj, theta_red_adj, xi_red_adj, pi_med_adj, theta_med_adj,
       # xi_med_adj, Phi_med_adj, c_all, pred_class_probs, log_lik_med
       estimates_adj <- var_adjust(mod_stan = mod_stan, estimates = estimates,
-                                  K = estimates$K_red, J = J, R = R, n = n, q = q,
-                                  x_mat = x_mat, y_all = y_all, V = V, w_all = w_all,
-                                  stratum_id = stratum_id, cluster_id = cluster_id)
+                                  K = estimates$K_red, J = J, R_j = R_j, R = R, 
+                                  n = n, q = q, x_mat = x_mat, y_all = y_all, 
+                                  V = V, w_all = w_all, alpha = alpha_fixed, 
+                                  eta = eta_fixed, mu0 = mu0_fixed, 
+                                  Sig0 = Sig0_fixed, stratum_id = stratum_id, 
+                                  cluster_id = cluster_id, num_reps = num_reps)
       res$estimates <- estimates_adj 
     }
   }  

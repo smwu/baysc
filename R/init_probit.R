@@ -43,21 +43,29 @@
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
-#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
+#' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
 #' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' n <- dim(x_mat)[1]        # Number of individuals
 #' J <- dim(x_mat)[2]        # Number of exposure items
-#' R <- max(apply(x_mat, 2,  # Number of exposure categories
-#' function(x) length(unique(x))))  
+#' R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
+#'              function(x) length(unique(x)))  
+#' R <- max(R_j)             # Maximum number of exposure categories across items
 #' 
-#' # Probit model covariates only include latent class 
-#' V <- matrix(1, nrow = n)
-#' q <- ncol(V)
+#' # Probit model only includes latent class
+#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' glm_form <- "~ 1"
+#' # Obtain probit regression design matrix without class assignment
+#' V <- model.matrix(as.formula(glm_form), data = V)
+#' # Number of regression covariates excluding class assignment
+#' q <- ncol(V)  
 #' 
 #' # Set hyperparameters
 #' K <- 30
 #' alpha <- rep(1, K) / K
-#' eta <- rep(1, R)
+#' eta <- matrix(0.01, nrow = J, ncol = R) 
+#' for (j in 1:J) {
+#'   eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
+#' }
 #' mu0 <- Sig0 <- vector("list", K)
 #' for (k in 1:K) {
 #'   # MVN(0,1) hyperprior for prior mean of xi
