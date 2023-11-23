@@ -13,7 +13,7 @@ fit_probit_wolca(
   y_all,
   w_all,
   ci_level = 0.95,
-  V,
+  V_data,
   q
 )
 }
@@ -21,9 +21,11 @@ fit_probit_wolca(
 \item{estimates}{Output from \code{get_estimates_wolca()} containing \code{K_red},
 \code{pi_red}, \code{theta_red}, \code{pi_med}, \code{theta_med}, \code{c_all}, \code{pred_class_probs}}
 
-\item{glm_form}{String specifying formula to use for probit regression. For
-example, \code{"y_all ~ c_all"} for the model with only latent class as a covariate.
-Must be congruous with \code{V}.}
+\item{glm_form}{String specifying formula for probit regression, excluding
+outcome and latent class. For example, \code{"~ 1"} for the model with only
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V_data}.
+Do not specify interaction terms for latent class by additional covariates,
+as these terms are already included.}
 
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
@@ -37,12 +39,13 @@ indicating each individual is their own cluster.}
 
 \item{w_all}{Weights normalized to sum to n. nx1}
 
-\item{ci_level}{Confidence interval level. Default is \code{0.95}.}
+\item{ci_level}{Confidence interval level for probit regression coefficient
+estimates. Default is \code{0.95}.}
 
-\item{V}{Dataframe of additional regression covariates. nxq. Factor
-covariates must be converted to factors. If no additional covariates are to
-be included, specify a column of all ones. All variables in \code{glm_form} must
-be found in \code{V}.}
+\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If \code{NULL} (default), no additional
+covariates are to be included. All variables in \code{glm_form} must
+be found in \code{V_data}.}
 
 \item{q}{Number of regression covariates excluding class assignment}
 }
@@ -68,9 +71,6 @@ residual degrees of freedom is less than 1, a Wald confidence interval is
 manually calculated using a t-distribution with degrees of freedom from the
 survey design. The point and interval estimates are then converted into the
 factor reference coding format to match the output from \code{swolca()} and \code{solca()}.
-
-When specifying the regression formula, use variable name \code{c_all} for the
-latent class assignments, \code{y_all} for the outcome, and
 }
 \examples{
 # Load data and obtain relevant variables
@@ -116,17 +116,19 @@ class_cutoff = 0.05)
 estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
 post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 
-# Define probit model data and variables
 # Probit model only includes latent class
-V <- matrix(1, nrow = n) # Regression design matrix without class assignment
-q <- ncol(V)             # Number of regression covariates excluding class assignment
+V_data <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 # Survey-weighted regression formula
-glm_form <- "~ c_all"
+glm_form <- "~ 1"
+# Obtain probit regression design matrix without class assignment
+V <- model.matrix(as.formula(glm_form), data = V_data)
+# Number of regression covariates excluding class assignment
+q <- ncol(V)  
 
 # Finally run weighted probit regression model
 estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 
 stratum_id = stratum_id, cluster_id = cluster_id, x_mat = x_mat, 
-y_all = y_all, w_all = w_all, V = V, q = q)
+y_all = y_all, w_all = w_all, V_data = V_data, q = q)
 
 }
 \seealso{

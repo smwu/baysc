@@ -10,7 +10,7 @@ wolca(
   sampling_wt,
   cluster_id,
   stratum_id,
-  V,
+  V_data = NULL,
   run_sampler = "both",
   glm_form,
   K_max = 30,
@@ -25,6 +25,7 @@ wolca(
   n_runs = 20000,
   burn = 10000,
   thin = 5,
+  ci_level = 0.95,
   save_res = TRUE,
   save_path = NULL
 )
@@ -43,18 +44,19 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V}{Dataframe of additional regression covariates. nxq. Factor
-covariates must be converted to factors. If no additional covariates are to
-be included, specify a column of all ones. All variables in \code{glm_form} must
-be found in \code{V}.}
+\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If \code{NULL} (default), no additional
+covariates are to be included. All variables in \code{glm_form} must
+be found in \code{V_data}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
 
-\item{glm_form}{String specifying formula for probit regression,
-including latent class as a covariate. For example, \code{"~ c_all"} for the model
-with only latent class as covariates. All variables in \code{glm_form} must be
-found in \code{V}.}
+\item{glm_form}{String specifying formula for probit regression, excluding
+outcome and latent class. For example, \code{"~ 1"} for the model with only
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V_data}.
+Do not specify interaction terms for latent class by additional covariates,
+as these terms are already included.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -93,6 +95,9 @@ running the fixed sampler directly, need to specify a value here.}
 \item{burn}{Number of MCMC iterations to drop as a burn-in period. Default is 10000.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
+
+\item{ci_level}{Confidence interval level for probit regression coefficient
+estimates. Default is \code{0.95}.}
 
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
@@ -150,9 +155,9 @@ a separate seed for the fixed sampler.
 
 \code{x_mat} is an nxJ matrix with each row corresponding to the J-dimensional
 categorical exposure for an individual. If there is no clustering present,
-\code{cluster_id} should be set to the individual IDs. \code{V} is the design matrix for
-the probit regression, including the intercept and all covariates other than
-latent class. \code{K_max} is the maximum number of latent classes allowable, to
+\code{cluster_id} should be set to the individual IDs. \code{V_data} includes all
+covariates to include in the probit regression other than latent class.
+\code{K_max} is the maximum number of latent classes allowable, to
 be used for the overfitted latent class model if the adaptive sampler is run.
 \code{class_cutoff} is the minimum size of each class as a proportion of the
 population, used when determining the number of latent classes.
@@ -186,13 +191,13 @@ sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+V_data <- NULL # Additional regression covariates
 # Survey-weighted regression formula
-glm_form <- "~ c_all"
+glm_form <- "~ 1"
 
 # Run wolca
 res <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-       cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
+       cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data, 
        run_sampler = "both", glm_form = glm_form, adapt_seed = 1, 
        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 

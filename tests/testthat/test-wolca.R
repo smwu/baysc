@@ -10,7 +10,7 @@ n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
 V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
-glm_form <- "~ c_all"
+glm_form <- "~ 1"
 
 # Run swolca
 res_adapt <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
@@ -35,9 +35,9 @@ test_that("fixed sampler works", {
 })
 
 
-# Run swolca with stratum covariate in probit model
+# Run wolca with stratum covariate in probit model
 V <- data.frame(stratum_id = as.factor(stratum_id))
-glm_form <- "~ c_all + stratum_id"
+glm_form <- "~ stratum_id"
 res_fixed_strat <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                           cluster_id = cluster_id, stratum_id = stratum_id, V = V,
                           run_sampler = "fixed", glm_form = glm_form, 

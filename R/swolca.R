@@ -12,15 +12,17 @@
 #' indicating each individual is their own cluster.
 #' @param stratum_id Vector of individual stratum IDs. nx1. Default is `NULL`,
 #' indicating no stratification.
-#' @param V Dataframe of additional regression covariates. nxq. Factor 
-#' covariates must be converted to factors. If no additional covariates are to 
-#' be included, specify a column of all ones. All variables in `glm_form` must 
-#' be found in `V`.
+#' @param V_data Dataframe of additional regression covariates. nxq. Factor 
+#' covariates must be converted to factors. If `NULL` (default), no additional 
+#' covariates are to be included. All variables in `glm_form` must 
+#' be found in `V_data`.
 #' @param run_sampler String specifying which sampler(s) should be run. Must be 
 #' one of `"both"` (default), `"fixed"`, or `"adapt"`.
 #' @param glm_form String specifying formula for probit regression, excluding 
 #' outcome and latent class. For example, `"~ 1"` for the model with only 
-#' latent class as covariates. All variables in `glm_form` must be found in `V`.
+#' latent class as covariates. All variables in `glm_form` must be found in `V_data`.
+#' Do not specify interaction terms for latent class by additional covariates, 
+#' as these terms are already included. 
 #' @param K_max Upper limit for number of classes. Default is 30.
 #' @param adapt_seed Numeric seed for adaptive sampler. Default is `NULL`.
 #' @param class_cutoff Minimum class size proportion when determining number of
@@ -87,10 +89,12 @@
 #' 
 #' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
 #' categorical exposure for an individual. If there is no clustering present, 
-#' `cluster_id` should be set to the individual IDs. `V` is the design matrix for 
-#' the probit regression, including the intercept and all covariates other than 
-#' latent class. `K_max` is the maximum number of latent classes allowable, to 
-#' be used for the overfitted latent class model if the adaptive sampler is run. 
+#' `cluster_id` should be set to the individual IDs. `V_data` includes all 
+#' additional covariates other than latent class that are to be included in the
+#' probit regression model. If there are no additional covariates, `V_data` 
+#' should be `NULL` (default). 
+#' `K_max` is the maximum number of latent classes allowable, to be used for 
+#' the overfitted latent class model if the adaptive sampler is run. 
 #' `class_cutoff` is the minimum size of each class as a proportion of the 
 #' population, used when determining the number of latent classes.  
 #' 
@@ -162,17 +166,18 @@
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
 #' # Probit model only includes latent class
-#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' V_data <- NULL # Additional regression covariates
 #' glm_form <- "~ 1"
 #' 
 #' # Run swolca
 #' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-#'        cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+#'        cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
 #'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
 #'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 #'
 swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL, 
-                   stratum_id = NULL, V, run_sampler = "both", glm_form,
+                   stratum_id = NULL, V_data = NULL, run_sampler = "both", 
+                   glm_form,
                    K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
                    alpha_adapt = NULL, eta_adapt = NULL,
                    mu0_adapt = NULL, Sig0_adapt = NULL,
@@ -199,9 +204,14 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
   kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
   w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
   
+  # If no additional covariates, set V_data to be a column of all ones
+  if (is.null(V_data)) {
+    V_data <- as.data.frame(matrix(1, nrow = n))
+  }
+  
   #================= Catch errors ==============================================
   catch_errors(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-               cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+               cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
@@ -209,10 +219,10 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
                n_runs = n_runs, burn = burn, thin = thin, 
-               save_res = save_res, save_path = save_path)
-  
+               save_res = save_res, save_path = save_path, model = "swolca")
+
   # Obtain probit regression design matrix without class assignment
-  V <- model.matrix(as.formula(glm_form), data = V)
+  V <- model.matrix(as.formula(glm_form), data = V_data)
   # Number of regression covariates excluding class assignment
   q <- ncol(V)  
 
@@ -305,7 +315,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                  mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
-                 n_runs = n_runs, burn = burn, thin = thin)
+                 n_runs = n_runs, burn = burn, thin = thin, model = "swolca")
     
     # Set seed
     if (!is.null(fixed_seed)) {
@@ -386,8 +396,8 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
       mod_stan <- stanmodels$SWOLCA_main
       
       # Apply variance adjustment for correct coverage
-      # Obtain pi_red_adj, theta_red_adj, xi_red_adj, pi_med_adj, theta_med_adj,
-      # xi_med_adj, Phi_med_adj, c_all, pred_class_probs, log_lik_med
+      # Obtain pi_red, theta_red, xi_red, pi_med, theta_med, xi_med, Phi_med, 
+      # c_all, pred_class_probs, log_lik_med
       estimates_adj <- var_adjust(mod_stan = mod_stan, estimates = estimates,
                                   K = estimates$K_red, J = J, R_j = R_j, R = R, 
                                   n = n, q = q, x_mat = x_mat, y_all = y_all, 
@@ -406,7 +416,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
 
   # Store data variables used
   data_vars <- list(n = n, J = J, R = R, q = q, sample_wt = sampling_wt,
-                    X_data = x_mat, Y_data = y_all, V = V,
+                    X_data = x_mat, Y_data = y_all, V_data = V_data, glm_form = glm_form,
                     true_Si = stratum_id, cluster_id = cluster_id)
   res$data_vars <- data_vars
   

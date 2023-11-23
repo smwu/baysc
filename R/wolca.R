@@ -5,10 +5,8 @@
 #' class analysis (WOLCA) in the first step and saves and returns the results.
 #'
 #' @inheritParams swolca
-#' @param glm_form String specifying formula for probit regression, 
-#' including latent class as a covariate. For example, `"~ c_all"` for the model 
-#' with only latent class as covariates. All variables in `glm_form` must be 
-#' found in `V`.
+#' @param ci_level Confidence interval level for probit regression coefficient 
+#' estimates. Default is `0.95`.
 #' 
 #' @details 
 #' `wolca` is a two-step approach that runs an unsupervised WOLCA in the first
@@ -31,9 +29,9 @@
 #' 
 #' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
 #' categorical exposure for an individual. If there is no clustering present, 
-#' `cluster_id` should be set to the individual IDs. `V` is the design matrix for 
-#' the probit regression, including the intercept and all covariates other than 
-#' latent class. `K_max` is the maximum number of latent classes allowable, to 
+#' `cluster_id` should be set to the individual IDs. `V_data` includes all 
+#' covariates to include in the probit regression other than latent class. 
+#' `K_max` is the maximum number of latent classes allowable, to 
 #' be used for the overfitted latent class model if the adaptive sampler is run. 
 #' `class_cutoff` is the minimum size of each class as a proportion of the 
 #' population, used when determining the number of latent classes.  
@@ -100,23 +98,23 @@
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
 #' # Probit model only includes latent class
-#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' V_data <- NULL # Additional regression covariates
 #' # Survey-weighted regression formula
-#' glm_form <- "~ c_all"
+#' glm_form <- "~ 1"
 #' 
 #' # Run wolca
 #' res <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-#'        cluster_id = cluster_id, stratum_id = stratum_id, V = V, 
+#'        cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data, 
 #'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1, 
 #'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 #'
 wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, 
-                  V, run_sampler = "both", glm_form, K_max = 30, 
+                  V_data = NULL, run_sampler = "both", glm_form, K_max = 30, 
                   adapt_seed = NULL, class_cutoff = 0.05,
                   alpha_adapt = NULL, eta_adapt = NULL,
                   alpha_fixed = NULL, eta_fixed = NULL,
                   K_fixed = NULL, fixed_seed = NULL,
-                  n_runs = 20000, burn = 10000, thin = 5, 
+                  n_runs = 20000, burn = 10000, thin = 5, ci_level = 0.95,
                   save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
@@ -136,21 +134,25 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
   kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
   w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
   
+  # If no additional covariates, set V_data to be a column of all ones
+  if (is.null(V_data)) {
+    V_data <- as.data.frame(matrix(1, nrow = n))
+  }
+  
   #================= Catch errors ==============================================
   catch_errors(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-               cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+               cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                n_runs = n_runs, burn = burn, thin = thin, 
-               save_res = save_res, save_path = save_path)
+               save_res = save_res, save_path = save_path, model = "wolca")
   
-  q <- ncol(V)  # Number of regression covariates excluding class assignment   
-  
-  if (!grepl("c_all", glm_form)) {
-    stop("glm_form should include latent class assignments, c_all")
-  }
+  # Obtain probit regression design matrix without class assignment
+  V <- model.matrix(as.formula(glm_form), data = V_data)
+  # Number of regression covariates excluding class assignment 
+  q <- ncol(V_data)    
 
   #================= ADAPTIVE SAMPLER ==========================================
   if (run_sampler %in% c("both", "adapt")) { # Run adaptive sampler
@@ -213,7 +215,7 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
     # Catch errors: check hyperparameter dimensions for fixed sampler
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
-                 n_runs = n_runs, burn = burn, thin = thin)
+                 n_runs = n_runs, burn = burn, thin = thin, model = "wolca")
     
     # Set seed
     if (!is.null(fixed_seed)) {
@@ -262,7 +264,7 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
     estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 
                                   stratum_id = stratum_id, cluster_id = cluster_id, 
                                   x_mat = x_mat, y_all = y_all, w_all = w_all, 
-                                  V = V, q = q)
+                                  V_data = V_data, q = q, ci_level = ci_level)
     
     # Create output list. Replaces adaptive sampler output list
     res <- list(estimates = estimates, V = V, MCMC_out = MCMC_out,
@@ -276,8 +278,9 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
   
   # Store data variables used
   data_vars <- list(n = n, J = J, R = R, q = q, sample_wt = sampling_wt,
-                    X_data = x_mat, Y_data = y_all, V = V,
-                    true_Si = stratum_id, cluster_id = cluster_id)
+                    X_data = x_mat, Y_data = y_all, V_data = V_data, glm_form = glm_form,
+                    true_Si = stratum_id, cluster_id = cluster_id, 
+                    ci_level = ci_level)
   res$data_vars <- data_vars
   
   # Save output

@@ -7,9 +7,9 @@
 solca(
   x_mat,
   y_all,
-  V,
+  V_data = NULL,
   run_sampler = "both",
-  glm_form = glm_form,
+  glm_form,
   K_max = 30,
   adapt_seed = NULL,
   class_cutoff = 0.05,
@@ -35,17 +35,19 @@ solca(
 
 \item{y_all}{Vector of outcomes. nx1}
 
-\item{V}{Dataframe of additional regression covariates. nxq. Factor
-covariates must be converted to factors. If no additional covariates are to
-be included, specify a column of all ones. All variables in \code{glm_form} must
-be found in \code{V}.}
+\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If \code{NULL} (default), no additional
+covariates are to be included. All variables in \code{glm_form} must
+be found in \code{V_data}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
-latent class as covariates. All variables in \code{glm_form} must be found in \code{V}.}
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V_data}.
+Do not specify interaction terms for latent class by additional covariates,
+as these terms are already included.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -156,9 +158,9 @@ for the adaptive sampler, and use \code{fixed_seed} (default is \code{NULL}) to 
 a separate seed for the fixed sampler.
 
 \code{x_mat} is an nxJ matrix with each row corresponding to the J-dimensional
-categorical exposure for an individual. \code{V} is the design matrix for
-the probit regression, including the intercept and all covariates other than
-latent class. \code{K_max} is the maximum number of latent classes allowable, to
+categorical exposure for an individual. \code{V_data} includes all
+covariates to include in the probit regression other than latent class.
+\code{K_max} is the maximum number of latent classes allowable, to
 be used for the overfitted latent class model if the adaptive sampler is run.
 \code{class_cutoff} is the minimum size of each class as a proportion of the
 population, used when determining the number of latent classes.
@@ -193,11 +195,11 @@ y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+V_data <- NULL # Additional regression covariates
 glm_form = "~ 1"
 
 # Run solca
-res <- solca(x_mat = x_mat, y_all = y_all, V = V, run_sampler = "both", 
+res <- solca(x_mat = x_mat, y_all = y_all, V_data = V_data, run_sampler = "both", 
              glm_form = glm_form, adapt_seed = 1, n_runs = 50, burn = 25, 
              thin = 1, save_res = FALSE)
 

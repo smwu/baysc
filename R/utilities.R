@@ -71,23 +71,27 @@ convert_ref_to_comb <- function(beta_ref) {
 #' are only performed on relevant variables.
 #' 
 #' @inheritParams swolca
+#' @param model String specifying which model is used. Must be one of `swolca` 
+#' (default), `solca`, or `wolca`
 #' @return The function stops and an error message is displayed if the input 
 #' variables are not acceptable
 #' @details All parameters are set to `NULL` by default so that error checks 
 #' are only performed on relevant variables.
 #' 
 #' @importFrom stats terms as.formula
+#' @importFrom stringr str_detect
 #' @keywords internal
 #' @export
 catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL, 
-                         cluster_id = NULL, stratum_id = NULL, V = NULL,
+                         cluster_id = NULL, stratum_id = NULL, V_data = NULL,
                          run_sampler = NULL, glm_form = NULL, K_max = NULL, 
                          class_cutoff = NULL, alpha_adapt = NULL, 
                          eta_adapt = NULL, mu0_adapt = NULL, 
                          Sig0_adapt = NULL, K_fixed = NULL, alpha_fixed = NULL, 
                          eta_fixed = NULL, mu0_fixed = NULL, Sig0_fixed = NULL,
                          n_runs = NULL, burn = NULL, thin = NULL, 
-                         save_res = NULL, save_path = NULL) {
+                         save_res = NULL, save_path = NULL, 
+                         model = "swolca") {
   if (is.null(x_mat)) {
     stop("need to specify exposure matrix")
   } else {
@@ -112,19 +116,19 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     
     # Check regression formula
     if (!is.null(glm_form)) {
-      regr_vars <- labels(terms(as.formula(glm_form)))   
-      if ("c_all" %in% regr_vars) {
-        regr_vars <- regr_vars[regr_vars != "c_all"]
-        if (!(all(regr_vars %in% colnames(V)))) {
-          stop("all variables in glm_form except c_all must exist in V")
-        }
-      } else {
-        if (!(all(regr_vars %in% colnames(V)))) {
-          stop("all variables in glm_form must exist in V")
-        }
-      }
       if (substring(glm_form, 1, 1) != "~") {
-        stop("glm_form must be a string starting with '~' that specifies a valid formula")
+        stop("glm_form must be a string starting with '~' that specifies a valid 
+             formula")
+      }
+      regr_vars <- labels(stats::terms(stats::as.formula(glm_form)))   
+      if (any(stringr::str_detect(regr_vars, "c_all"))) {
+        stop("please exclude latent class assignment, c_all, from glm_form, 
+              as it is already assumed to be included")
+      }
+      # Extract additional covariates, not including interaction terms
+      regr_vars <- regr_vars[!(stringr::str_detect(regr_vars, ":"))]
+      if (!(all(regr_vars %in% colnames(V_data)))) {
+        stop("all variables in glm_form must exist in V_data")
       }
     }
     
@@ -155,13 +159,13 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
       stop("number of rows in x_mat must match length of stratum_id")
     }
     
-    # Check same number of individuals for x and V
-    if (!is.null(V)) {
-      if (n != nrow(V)) {
-        stop("number of rows in x_mat must match number of rows in V")
+    # Check same number of individuals for x and V_data
+    if (!is.null(V_data)) {
+      if (n != nrow(V_data)) {
+        stop("number of rows in x_mat must match number of rows in V_data")
       }
-      if (class(V)[1] != "data.frame") {
-        stop("V must be a dataframe")
+      if (class(V_data)[1] != "data.frame") {
+        stop("V_data must be a dataframe")
       }
     }
     
@@ -263,3 +267,105 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
 }
 
 
+#' Convert from factor reference coding to P(Y=1|-) conditional probabilities
+#' 
+#' @description
+#' Convert regression estimates \eqn{\xi} from factor reference coding to 
+#' conditional probit regression probabilities, P(Y=1|-), for a given covariate.
+#' 
+#' @inheritParams swolca
+#' @param est_xi Matrix of xi parameter estimates. Kxq
+#' @param cov_name String specifying name of covariate of interest. Must be 
+#' included in `glm_form`.
+#' @return Returns dataframe `probs` of the converted probabilities for the 
+#' covariate specified in `cov_name`, with number of rows equal to K and number
+#' of columns equal to the number of categories for the covariate (including the
+#' baseline category) plus one. The first column specifies the latent class,
+#' the second column corresponds to the baseline category intercept for all K 
+#' latent classes, and the remaining columns correspond to the other categories 
+#' for the covariate. 
+#' 
+#' @importFrom stats terms as.formula pnorm
+#' @keywords internal
+#' @export
+#' 
+convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
+  # check that cov_name is found in glm_form
+  if (!grepl(cov_name, glm_form)) {
+    stop("cov_name must be one of the variables specified in glm_form")
+  }
+  
+  # Number of latent classes
+  K <- nrow(est_xi)
+  # Get covariate names
+  cov_names <- labels(terms(as.formula(glm_form)))
+  # Get index of covariate names corresponding to the covariate of interest
+  select_cov <- which(cov_names == cov_name)
+  
+  # Get column indices for each variable in glm_form
+  cov_col_inds <- attr(model.matrix(as.formula(glm_form), data = V), "assign")
+  # Design matrix indices for covariate group, including intercept
+  cols <- c(1, which(cov_col_inds == select_cov))
+  
+  # Get conversions for each category of the covariate group 
+  probs <- as.data.frame(matrix(NA, nrow = K, ncol = (length(cols) + 1)))
+  colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 1:length(cols[-1])))
+  probs[, 1] <- 1:K
+  for (categ in 1:length(cols)) {
+    # Convert from factor variable to probabilities
+    probs[, categ + 1] <- stats::pnorm(est_xi[, 1] + 
+                                         (categ > 1) * est_xi[, cols[categ]])
+  }
+  return(probs)
+}
+
+#' Convert from factor reference coding to reference cell coding 
+#' 
+#' @description
+#' Convert regression estimates \eqn{\xi} from factor reference coding to 
+#' standard reference cell coding.
+#' 
+#' @inheritParams swolca
+#' @param est_xi Matrix of xi parameter estimates. Kxq
+#' @param cov_name String specifying name of covariate of interest. Must be 
+#' included in `glm_form`.
+#' @return Returns dataframe `betas` of the converted probabilities for the 
+#' covariate specified in `cov_name`, with number of rows equal to K and number
+#' of columns equal to the number of categories for the covariate (including the
+#' baseline category) plus one. The first column specifies the latent class,
+#' the second column corresponds to the baseline category intercept for all K 
+#' latent classes, and the remaining columns correspond to the other categories 
+#' for the covariate. 
+#' 
+#' @importFrom stats terms as.formula
+#' @keywords internal
+#' @export
+#' 
+convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
+  # check that cov_name is found in glm_form
+  if (!grepl(cov_name, glm_form)) {
+    stop("cov_name must be one of the variables specified in glm_form")
+  }
+  
+  # Number of latent classes
+  K <- nrow(est_xi)
+  # Get covariate names
+  cov_names <- labels(terms(as.formula(glm_form)))
+  # Get index of covariate names corresponding to the covariate of interest
+  select_cov <- which(cov_names == cov_name)
+  
+  # Get column indices for each variable in glm_form
+  cov_col_inds <- attr(model.matrix(as.formula(glm_form), data = V), "assign")
+  # Design matrix indices for covariate group, including intercept
+  cols <- c(1, which(cov_col_inds == select_cov))
+  
+  # Get conversions for each category of the covariate group 
+  probs <- as.data.frame(matrix(NA, nrow = K, ncol = (length(cols) + 1)))
+  colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 1:length(cols[-1])))
+  probs[, 1] <- 1:K
+  for (categ in 1:length(cols)) {
+    # Convert from factor variable to probabilities
+    probs[, categ + 1] <- pnorm(est_xi[, 1] + (categ > 1) * est_xi[, cols[categ]])
+  }
+  return(probs)
+}

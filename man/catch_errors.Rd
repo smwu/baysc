@@ -10,7 +10,7 @@ catch_errors(
   sampling_wt = NULL,
   cluster_id = NULL,
   stratum_id = NULL,
-  V = NULL,
+  V_data = NULL,
   run_sampler = NULL,
   glm_form = NULL,
   K_max = NULL,
@@ -28,7 +28,8 @@ catch_errors(
   burn = NULL,
   thin = NULL,
   save_res = NULL,
-  save_path = NULL
+  save_path = NULL,
+  model = "swolca"
 )
 }
 \arguments{
@@ -45,17 +46,19 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V}{Dataframe of additional regression covariates. nxq. Factor
-covariates must be converted to factors. If no additional covariates are to
-be included, specify a column of all ones. All variables in \code{glm_form} must
-be found in \code{V}.}
+\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If \code{NULL} (default), no additional
+covariates are to be included. All variables in \code{glm_form} must
+be found in \code{V_data}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
-latent class as covariates. All variables in \code{glm_form} must be found in \code{V}.}
+latent class as covariates. All variables in \code{glm_form} must be found in \code{V_data}.
+Do not specify interaction terms for latent class by additional covariates,
+as these terms are already included.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -114,6 +117,9 @@ number of regression covariates excluding latent class assignment.}
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results. Default is \code{NULL}.}
+
+\item{model}{String specifying which model is used. Must be one of \code{swolca}
+(default), \code{solca}, or \code{wolca}}
 }
 \value{
 The function stops and an error message is displayed if the input

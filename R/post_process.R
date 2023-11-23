@@ -54,10 +54,10 @@
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 #' 
 #' # Probit model only includes latent class
-#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' V_data <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 #' glm_form <- "~ 1"
 #' # Obtain probit regression design matrix without class assignment
-#' V <- model.matrix(as.formula(glm_form), data = V)
+#' V <- model.matrix(as.formula(glm_form), data = V_data)
 #' # Number of regression covariates excluding class assignment
 #' q <- ncol(V)  
 #' 

@@ -20,9 +20,9 @@
 #' a separate seed for the fixed sampler.
 #' 
 #' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
-#' categorical exposure for an individual. `V` is the design matrix for 
-#' the probit regression, including the intercept and all covariates other than 
-#' latent class. `K_max` is the maximum number of latent classes allowable, to 
+#' categorical exposure for an individual. `V_data` includes all 
+#' covariates to include in the probit regression other than latent class. 
+#'  `K_max` is the maximum number of latent classes allowable, to 
 #' be used for the overfitted latent class model if the adaptive sampler is run. 
 #' `class_cutoff` is the minimum size of each class as a proportion of the 
 #' population, used when determining the number of latent classes.  
@@ -93,15 +93,15 @@
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
 #' # Probit model only includes latent class
-#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' V_data <- NULL # Additional regression covariates
 #' glm_form = "~ 1"
 #' 
 #' # Run solca
-#' res <- solca(x_mat = x_mat, y_all = y_all, V = V, run_sampler = "both", 
+#' res <- solca(x_mat = x_mat, y_all = y_all, V_data = V_data, run_sampler = "both", 
 #'              glm_form = glm_form, adapt_seed = 1, n_runs = 50, burn = 25, 
 #'              thin = 1, save_res = FALSE)
 #'
-solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
+solca <- function(x_mat, y_all, V_data = NULL, run_sampler = "both", glm_form,
                   K_max = 30, adapt_seed = NULL, class_cutoff = 0.05, 
                   alpha_adapt = NULL, eta_adapt = NULL,
                   mu0_adapt = NULL, Sig0_adapt = NULL,
@@ -127,8 +127,13 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
   # Set normalized weights to 1
   w_all <- rep(1, n)
   
+  # If no additional covariates, set V_data to be a column of all ones
+  if (is.null(V_data)) {
+    V_data <- as.data.frame(matrix(1, nrow = n))
+  }
+  
   #================= Catch errors ==============================================
-  catch_errors(x_mat = x_mat, y_all = y_all, V = V,
+  catch_errors(x_mat = x_mat, y_all = y_all, V_data = V_data,
                run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
@@ -136,10 +141,10 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
                n_runs = n_runs, burn = burn, thin = thin, 
-               save_res = save_res, save_path = save_path)
+               save_res = save_res, save_path = save_path, model = "solca")
   
   # Obtain probit regression design matrix without class assignment
-  V <- model.matrix(as.formula(glm_form), data = V)
+  V <- model.matrix(as.formula(glm_form), data = V_data)
   # Number of regression covariates excluding class assignment
   q <- ncol(V)   
 
@@ -232,7 +237,7 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                  mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
-                 n_runs = n_runs, burn = burn, thin = thin)
+                 n_runs = n_runs, burn = burn, thin = thin, model = "solca")
     
     # Set seed
     if (!is.null(fixed_seed)) {
@@ -313,7 +318,7 @@ solca <- function(x_mat, y_all, V, run_sampler = "both", glm_form = glm_form,
   
   # Store data variables used
   data_vars <- list(n = n, J = J, R = R, q = q, X_data = x_mat, Y_data = y_all, 
-                    V = V)
+                    V_data = V_data, glm_form = glm_form)
   res$data_vars <- data_vars
   
   # Save output

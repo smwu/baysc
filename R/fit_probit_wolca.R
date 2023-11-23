@@ -8,11 +8,7 @@
 #' @inheritParams wolca
 #' @param estimates Output from `get_estimates_wolca()` containing `K_red`, 
 #' `pi_red`, `theta_red`, `pi_med`, `theta_med`, `c_all`, `pred_class_probs`
-#' @param glm_form String specifying formula to use for probit regression. For 
-#' example, `"y_all ~ c_all"` for the model with only latent class as a covariate.
-#' Must be congruous with `V`.
 #' @param w_all Weights normalized to sum to n. nx1
-#' @param ci_level Confidence interval level. Default is `0.95`.
 #' @param q Number of regression covariates excluding class assignment
 #' 
 #' @details
@@ -23,10 +19,6 @@
 #' manually calculated using a t-distribution with degrees of freedom from the 
 #' survey design. The point and interval estimates are then converted into the 
 #' factor reference coding format to match the output from `swolca()` and `solca()`. 
-#' 
-#' When specifying the regression formula, use variable name `c_all` for the 
-#' latent class assignments, `y_all` for the outcome, and 
-#' 
 #' 
 #' @return
 #' Returns updated list `estimates` containing the following additional objects:
@@ -40,7 +32,7 @@
 #' @seealso [run_MCMC_Rcpp_wolca()] [post_process_wolca()] 
 #' [get_estimates_wolca()] [wolca()] 
 #' @importFrom survey svydesign svyglm degf
-#' @importFrom stats confint as.formula quasibinomial
+#' @importFrom stats confint as.formula quasibinomial terms as.formula
 #' @export
 #'
 #' @examples
@@ -87,32 +79,35 @@
 #' estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
 #' post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 #' 
-#' # Define probit model data and variables
 #' # Probit model only includes latent class
-#' V <- matrix(1, nrow = n) # Regression design matrix without class assignment
-#' q <- ncol(V)             # Number of regression covariates excluding class assignment
+#' V_data <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 #' # Survey-weighted regression formula
-#' glm_form <- "~ c_all"
+#' glm_form <- "~ 1"
+#' # Obtain probit regression design matrix without class assignment
+#' V <- model.matrix(as.formula(glm_form), data = V_data)
+#' # Number of regression covariates excluding class assignment
+#' q <- ncol(V)  
 #' 
 #' # Finally run weighted probit regression model
 #' estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 
 #' stratum_id = stratum_id, cluster_id = cluster_id, x_mat = x_mat, 
-#' y_all = y_all, w_all = w_all, V = V, q = q)
+#' y_all = y_all, w_all = w_all, V_data = V_data, q = q)
 #' 
 fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id, 
-                             x_mat, y_all, w_all, ci_level = 0.95, V, q) {
+                             x_mat, y_all, w_all, ci_level = 0.95, V_data, q) {
   
   # Create survey design
   if (!is.null(stratum_id)) {  # Include stratifying variable
     # Survey data frame for specifying survey design
-    svy_data <- data.frame(stratum_id = stratum_id, cluster_id = cluster_id,
+    svy_data <- data.frame(stratum_id = factor(stratum_id), 
+                           cluster_id = factor(cluster_id),
                            x_mat = x_mat, y_all = y_all, w_all = w_all)
     # Add latent class assignment variable to survey data
     svy_data$c_all <- factor(estimates$c_all)
     # Add additional covariates
-    svy_data <- cbind(svy_data, V)
+    svy_data <- cbind(svy_data, V_data)
     # Specify survey design
-    svydes <- survey::svydesign(ids = ~cluster_id, strata = ~factor(stratum_id), 
+    svydes <- survey::svydesign(ids = ~cluster_id, strata = ~stratum_id, 
                                 weights = ~w_all, data = svy_data)
   } else { # No stratifying variable
     # Survey data frame for specifying survey design
@@ -121,14 +116,20 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
     # Add latent class assignment variable to survey data
     svy_data$c_all <- factor(estimates$c_all)
     # Add additional covariates
-    svy_data <- cbind(svy_data, V)
+    svy_data <- cbind(svy_data, V_data)
     # Specify survey design
     svydes <- survey::svydesign(ids = ~cluster_id, weights = ~w_all, 
                                 data = svy_data)    
   }
   
-  # Add outcome to formula
-  glm_form <- paste0("y_all ", glm_form)
+  # Add outcome and latent class main and interaction terms to formula
+  terms <- labels(stats::terms(stats::as.formula(glm_form)))
+  if (length(terms) > 1) {
+    full_glm_form <- paste0("y_all ~ ", 
+                            paste0("c_all * ", terms, collapse = " + ")) 
+  } else {
+    full_glm_form <- paste0("y_all ~ c_all") 
+  }
   
   # If only one latent class, cannot have latent class as a covariate
   if (length(levels(svy_data$c_all)) == 1) {
@@ -136,11 +137,12 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
   }
   
   # Fit probit model according to specified formula
-  fit <- survey::svyglm(formula = stats::as.formula(glm_form), design = svydes, 
+  fit <- survey::svyglm(formula = stats::as.formula(full_glm_form), 
+                        design = svydes, 
                         family = stats::quasibinomial(link = "probit"))
   # Obtain coefficients and confidence interval
   coefs <- fit$coefficients
-  ci <- stats::confint(fit)
+  ci <- stats::confint(fit, level = ci_level)
   # If zero/negative residual df, manually calculate the Wald confidence interval 
   # using a t-distribution with degrees of freedom from the survey design. 
   # Best if no cluster-level covariates in the regression model
@@ -150,8 +152,10 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
   }
   
   # Convert format to match SWOLCA and SOLCA
-  xi_est <- xi_est_lb <- xi_est_ub <- matrix(NA, nrow = estimates$K_red, ncol = q)
-  # Position of interaction terms
+  xi_est <- xi_est_lb <- xi_est_ub <- xi_p_vals <- matrix(NA, 
+                                                          nrow = estimates$K_red, 
+                                                          ncol = q)
+  # Position of interaction terms for additional covariates
   if (q == 1) {
     # If only latent class as a covariate (no interactions)
     est_int_k1 <- NULL   # baseline class

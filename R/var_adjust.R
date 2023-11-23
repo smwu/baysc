@@ -97,13 +97,13 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' Returns list `estimates_adj` containing:
 #' 
 #' \describe{
-#'   \item{\code{pi_red_adj}}{Matrix of adjusted posterior samples for pi. Mx(K_red)}
-#'   \item{\code{theta_red_adj}}{Array of adjusted posterior samples for theta. MxJx(K_red)xR}
-#'   \item{\code{xi_red_adj}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
-#'   \item{\code{pi_med_adj}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
-#'   \item{\code{theta_med_adj}}{Array of adjusted posterior median estimates for theta. px(K_red)xR}
-#'   \item{\code{xi_med_adj}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
-#'   \item{\code{Phi_med_adj}}{Vector of adjusted individual outcome probabilities. nx1}
+#'   \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red)}
+#'   \item{\code{theta_red}}{Array of adjusted posterior samples for theta. MxJx(K_red)xR}
+#'   \item{\code{xi_red}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
+#'   \item{\code{pi_med}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
+#'   \item{\code{theta_med}}{Array of adjusted posterior median estimates for theta. px(K_red)xR}
+#'   \item{\code{xi_med}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
+#'   \item{\code{Phi_med}}{Vector of adjusted individual outcome probabilities. nx1}
 #'   \item{\code{c_all}}{Vector of final individual class assignments from `get_estimates()`. nx1}
 #'   \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities from `get_estimates()`. nx(K_red)}
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods from `get_estimates()`. nx1} 
@@ -143,10 +143,10 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
 #' 
 #' # Probit model only includes latent class
-#' V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+#' V_data <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 #' glm_form <- "~ 1"
 #' # Obtain probit regression design matrix without class assignment
-#' V <- model.matrix(as.formula(glm_form), data = V)
+#' V <- model.matrix(as.formula(glm_form), data = V_data)
 #' # Number of regression covariates excluding class assignment
 #' q <- ncol(V)  
 #' 
@@ -339,10 +339,10 @@ var_adjust <- function(mod_stan, estimates, K, J, R_j, R, n, q, x_mat, y_all, V,
     Phi_med_adj[i] <- Phi_med_all_c[i, c_all[i]] 
   }
   
-  estimates_adj <- list(pi_red_adj = pi_red_adj, theta_red_adj = theta_red_adj, 
-                       xi_red_adj = xi_red_adj, pi_med_adj = pi_med_adj, 
-                       theta_med_adj = theta_med_adj, xi_med_adj = xi_med_adj, 
-                       Phi_med_adj = Phi_med_adj, c_all = c_all,
+  estimates_adj <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
+                       xi_red = xi_red_adj, pi_med = pi_med_adj, 
+                       theta_med = theta_med_adj, xi_med = xi_med_adj, 
+                       Phi_med = Phi_med_adj, c_all = c_all,
                        pred_class_probs = estimates$pred_class_probs,
                        log_lik_med = estimates$loglik_med)
   return(estimates_adj)

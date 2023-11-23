@@ -13,8 +13,10 @@ LazyData: true
 Imports: 
     dplyr,
     e1071,
+    ggplot2,
     gtools,
     LaplacesDemon,
+    magrittr,
     Matrix,
     matrixStats,
     methods,
@@ -22,10 +24,13 @@ Imports:
     Rcpp (>= 1.0.11),
     RcppArmadillo,
     RcppTN,
+    rlang,
     rstan (>= 2.21.8),
-    rstantools (>= 2.3.1.1),
     stats,
+    stringr,
     survey,
+    tidyr,
+    tidyselect,
     truncnorm
 LinkingTo: 
     BH (>= 1.66.0),
@@ -43,5 +48,6 @@ Depends:
 Biarch: true
 SystemRequirements: GNU make
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    rstantools (>= 2.3.1.1)
 Config/testthat/edition: 3
