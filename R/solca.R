@@ -136,12 +136,13 @@ solca <- function(x_mat, y_all, V_data = NULL, run_sampler = "both", glm_form,
   catch_errors(x_mat = x_mat, y_all = y_all, V_data = V_data,
                run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
+               adapt_seed = adapt_seed, fixed_seed = fixed_seed,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                mu0_adapt = mu0_adapt, Sig0_adapt = Sig0_adapt, 
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
                n_runs = n_runs, burn = burn, thin = thin, 
-               save_res = save_res, save_path = save_path, model = "solca")
+               save_res = save_res, save_path = save_path)
   
   # Obtain probit regression design matrix without class assignment
   V <- model.matrix(as.formula(glm_form), data = V_data)
@@ -237,7 +238,7 @@ solca <- function(x_mat, y_all, V_data = NULL, run_sampler = "both", glm_form,
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                  mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
-                 n_runs = n_runs, burn = burn, thin = thin, model = "solca")
+                 n_runs = n_runs, burn = burn, thin = thin)
     
     # Set seed
     if (!is.null(fixed_seed)) {

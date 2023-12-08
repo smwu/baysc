@@ -14,6 +14,8 @@ catch_errors(
   run_sampler = NULL,
   glm_form = NULL,
   K_max = NULL,
+  adapt_seed = NULL,
+  fixed_seed = NULL,
   class_cutoff = NULL,
   alpha_adapt = NULL,
   eta_adapt = NULL,
@@ -27,13 +29,14 @@ catch_errors(
   n_runs = NULL,
   burn = NULL,
   thin = NULL,
+  adjust_var = NULL,
+  num_reps = NULL,
   save_res = NULL,
-  save_path = NULL,
-  model = "swolca"
+  save_path = NULL
 )
 }
 \arguments{
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 
@@ -61,6 +64,10 @@ Do not specify interaction terms for latent class by additional covariates,
 as these terms are already included.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
+
+\item{adapt_seed}{Numeric seed for adaptive sampler. Default is \code{NULL}.}
+
+\item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
 
 \item{class_cutoff}{Minimum class size proportion when determining number of
 classes in adaptive sampler. Default is 0.05.}
@@ -114,9 +121,17 @@ number of regression covariates excluding latent class assignment.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
+\item{adjust_var}{Boolean for the fixed sampler specifying if the
+post-processing variance adjustment for accurate interval coverage should be
+applied. Default = \code{TRUE}.}
+
+\item{num_reps}{Number of bootstrap replicates to use for the variance
+adjustment estimate. Default is 100.}
+
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
-\item{save_path}{String specifying directory and file name to save results. Default is \code{NULL}.}
+\item{save_path}{String specifying directory and file name to save results,
+e.g., "~/Documents/run". Default is \code{NULL}.}
 
 \item{model}{String specifying which model is used. Must be one of \code{swolca}
 (default), \code{solca}, or \code{wolca}}

@@ -2,10 +2,8 @@
 % Please edit documentation in R/utilities.R
 \name{convert_to_probs}
 \alias{convert_to_probs}
-\title{Convert from factor reference coding to P(Y=1|-) conditional probabilities}
+\title{Convert from mixture reference coding to P(Y=1|-) conditional probabilities}
 \usage{
-convert_to_probs(est_xi, glm_form, V, cov_name)
-
 convert_to_probs(est_xi, glm_form, V, cov_name)
 }
 \arguments{
@@ -28,20 +26,9 @@ baseline category) plus one. The first column specifies the latent class,
 the second column corresponds to the baseline category intercept for all K
 latent classes, and the remaining columns correspond to the other categories
 for the covariate.
-
-Returns dataframe \code{betas} of the converted probabilities for the
-covariate specified in \code{cov_name}, with number of rows equal to K and number
-of columns equal to the number of categories for the covariate (including the
-baseline category) plus one. The first column specifies the latent class,
-the second column corresponds to the baseline category intercept for all K
-latent classes, and the remaining columns correspond to the other categories
-for the covariate.
 }
 \description{
-Convert regression estimates \eqn{\xi} from factor reference coding to
+Convert regression estimates \eqn{\xi} from mixture reference coding to
 conditional probit regression probabilities, P(Y=1|-), for a given covariate.
-
-Convert regression estimates \eqn{\xi} from factor reference coding to
-standard reference cell coding.
 }
 \keyword{internal}

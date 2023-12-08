@@ -152,37 +152,13 @@ fit_probit_wolca <- function(estimates, glm_form, stratum_id, cluster_id,
   }
   
   # Convert format to match SWOLCA and SOLCA
-  xi_est <- xi_est_lb <- xi_est_ub <- xi_p_vals <- matrix(NA, 
-                                                          nrow = estimates$K_red, 
-                                                          ncol = q)
-  # Position of interaction terms for additional covariates
-  if (q == 1) {
-    # If only latent class as a covariate (no interactions)
-    est_int_k1 <- NULL   # baseline class
-    est_int_koth <- NULL # additional classes
-  } else if (q > 1) {
-    est_int_k1 <- estimates$K_red + 1:(q-1)       # baseline class
-    est_int_koth <- (estimates$K_red-1)*(1:(q-1)) # additional classes
-  }
-  
-  # Get estimates for first class level, including all interactions
-  xi_est[1, ] <- coefs[c(1, est_int_k1)]
-  xi_est_lb[1, ] <- ci[c(1, est_int_k1), 1]
-  xi_est_ub[1, ] <- ci[c(1, est_int_k1), 2]
-  # Get estimates for additional class levels, including all interactions
-  for (k in 2:estimates$K_red) {
-    xi_est[k, ] <- coefs[c(k, (k + (q-1)) + est_int_koth)] + 
-      xi_est[1, ]
-    xi_est_lb[k, ] <- ci[c(k, (k + (q-1)) + est_int_koth), 1] + 
-      xi_est_lb[1, ]
-    xi_est_ub[k, ] <- ci[c(k, (k + (q-1)) + est_int_koth), 2] + 
-      xi_est_ub[1, ]
-  }
-  
+  xi_list <- convert_ref_to_mix(K = estimates$K_red, q = q, est_beta = coefs,
+                               ci_beta = ci)
+
   # Return output with probit regression estimates
-  estimates$xi_est <- xi_est
-  estimates$xi_est_lb <- xi_est_lb
-  estimates$xi_est_ub <- xi_est_ub
+  estimates$xi_est <- xi_list$est_xi
+  estimates$xi_est_lb <- xi_list$est_xi_lb
+  estimates$xi_est_ub <- xi_list$est_xi_ub
   estimates$fit <- fit
   
   return(estimates)

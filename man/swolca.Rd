@@ -36,7 +36,7 @@ swolca(
 )
 }
 \arguments{
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 
@@ -130,7 +130,8 @@ adjustment estimate. Default is 100.}
 
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
-\item{save_path}{String specifying directory and file name to save results. Default is \code{NULL}.}
+\item{save_path}{String specifying directory and file name to save results,
+e.g., "~/Documents/run". Default is \code{NULL}.}
 }
 \value{
 If the fixed sampler is run, returns list \code{res} containing:
@@ -210,7 +211,7 @@ for the fixed sampler should probably only be specified if running the
 fixed sampler directly, bypassing the adaptive sampler.
 }
 \examples{
-# Load data and obtain relevant variables
+# Load simulated data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
 x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
@@ -229,6 +230,24 @@ res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
        cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+   
+\dontrun{        
+# Run swolca on NHANES data
+data("data_nhanes")
+x_mat <- dplyr::select(data_nhanes, citrus:drinks)
+y_all <- data_nhanes$BP_flag
+stratum_id <- data_nhanes$stratum_id
+cluster_id <- data_nhanes$cluster_id
+sampling_wt <- data_nhanes$sample_wt
+V_data <- dplyr::select(data_nhanes, age_cat, racethnic, smoker, physactive)
+glm_form <- "~ age_cat + racethnic + smoker + physactive"
+res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+                     cluster_id = cluster_id, stratum_id = stratum_id, 
+                     V_data = V_data, run_sampler = "both", 
+                     glm_form = glm_form, adapt_seed = 20230225,
+                     n_runs = 20000, burn = 10000, thin = 5, save_res = TRUE,
+                     save_path = "~/Documents/run")
+}
 
 }
 \seealso{

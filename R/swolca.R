@@ -4,7 +4,7 @@
 #' `swolca` runs a supervised weighted overfitted latent class analysis (SWOLCA)
 #' and saves and returns the results.
 #'
-#' @param x_mat Categorical exposure matrix. nxJ
+#' @param x_mat Matrix of multivariate categorical exposures. nxJ
 #' @param y_all Vector of outcomes. nx1
 #' @param sampling_wt Vector of survey sampling weights. nx1. If no sampling 
 #' weights are available, set this to a vector of ones. 
@@ -71,7 +71,8 @@
 #' @param num_reps Number of bootstrap replicates to use for the variance 
 #' adjustment estimate. Default is 100.
 #' @param save_res Boolean specifying if results should be saved. Default = `TRUE`.
-#' @param save_path String specifying directory and file name to save results. Default is `NULL`.
+#' @param save_path String specifying directory and file name to save results, 
+#' e.g., "~/Documents/run". Default is `NULL`.
 #' 
 #' @details 
 #' 
@@ -155,7 +156,7 @@
 #' @export
 #'
 #' @examples
-#' # Load data and obtain relevant variables
+#' # Load simulated data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
 #' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
@@ -174,6 +175,24 @@
 #'        cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
 #'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
 #'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+#'    
+#' \dontrun{        
+#' # Run swolca on NHANES data
+#' data("data_nhanes")
+#' x_mat <- dplyr::select(data_nhanes, citrus:drinks)
+#' y_all <- data_nhanes$BP_flag
+#' stratum_id <- data_nhanes$stratum_id
+#' cluster_id <- data_nhanes$cluster_id
+#' sampling_wt <- data_nhanes$sample_wt
+#' V_data <- dplyr::select(data_nhanes, age_cat, racethnic, smoker, physactive)
+#' glm_form <- "~ age_cat + racethnic + smoker + physactive"
+#' res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+#'                      cluster_id = cluster_id, stratum_id = stratum_id, 
+#'                      V_data = V_data, run_sampler = "both", 
+#'                      glm_form = glm_form, adapt_seed = 20230225,
+#'                      n_runs = 20000, burn = 10000, thin = 5, save_res = TRUE,
+#'                      save_path = "~/Documents/run")
+#' }
 #'
 swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL, 
                    stratum_id = NULL, V_data = NULL, run_sampler = "both", 
@@ -214,12 +233,13 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
+               adapt_seed = adapt_seed, fixed_seed = fixed_seed,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                mu0_adapt = mu0_adapt, Sig0_adapt = Sig0_adapt, 
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
                n_runs = n_runs, burn = burn, thin = thin, 
-               save_res = save_res, save_path = save_path, model = "swolca")
+               save_res = save_res, save_path = save_path)
 
   # Obtain probit regression design matrix without class assignment
   V <- model.matrix(as.formula(glm_form), data = V_data)
@@ -315,7 +335,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                  mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
-                 n_runs = n_runs, burn = burn, thin = thin, model = "swolca")
+                 n_runs = n_runs, burn = burn, thin = thin)
     
     # Set seed
     if (!is.null(fixed_seed)) {

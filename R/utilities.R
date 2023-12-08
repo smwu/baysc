@@ -45,24 +45,6 @@ manual_CI <- function(model_object, svy_df, ci = 0.95){
 }
 
 
-#' Convert from reference cell coding to factor reference coding 
-#'
-#' `convert_ref_to_comb` converts from reference cell coding to a combination of 
-#' factor variable and reference cell coding, referred to as factor reference coding
-#' 
-#' @param beta_ref Matrix of probit coefficients in reference cell coding. (K*q)x1
-#' @return Outputs Kxq matrix `beta_comb` of probit coefficients using factor 
-#' variable coding
-#' @keywords internal
-#' @export
-convert_ref_to_comb <- function(beta_ref) {
-  beta_comb <- beta_ref
-  for (i in 2:nrow(beta_ref)) {
-    beta_comb[i, ] <- beta_ref[i, ] - beta_ref[1, ]
-  }
-  return(beta_comb)
-}
-
 #' Catch errors in input variables for external functions
 #' 
 #' @description
@@ -85,16 +67,22 @@ convert_ref_to_comb <- function(beta_ref) {
 catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL, 
                          cluster_id = NULL, stratum_id = NULL, V_data = NULL,
                          run_sampler = NULL, glm_form = NULL, K_max = NULL, 
+                         adapt_seed = NULL, fixed_seed = NULL,
                          class_cutoff = NULL, alpha_adapt = NULL, 
                          eta_adapt = NULL, mu0_adapt = NULL, 
                          Sig0_adapt = NULL, K_fixed = NULL, alpha_fixed = NULL, 
                          eta_fixed = NULL, mu0_fixed = NULL, Sig0_fixed = NULL,
                          n_runs = NULL, burn = NULL, thin = NULL, 
-                         save_res = NULL, save_path = NULL, 
-                         model = "swolca") {
+                         adjust_var = NULL, num_reps = NULL,
+                         save_res = NULL, save_path = NULL) {
   if (is.null(x_mat)) {
     stop("need to specify exposure matrix")
   } else {
+    
+    # Check type for x_mat
+    if (!is.matrix(x_mat)) {
+      stop("x_mat must be a matrix")
+    }
     
     # Obtain dimensions
     n <- dim(x_mat)[1]        # Number of individuals
@@ -137,10 +125,16 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
       if (n != length(y_all)) {
         stop("number of rows in x_mat must match length of y_all")
       }
+      if (!is.vector(y_all)) {
+        stop("y_all must be a vector")
+      }
     }
     
     # Check same number of individuals for x and sampling weights
     if (!is.null(sampling_wt)) {
+      if (!is.vector(sampling_wt)) {
+        stop("sampling_wt must be a vector")
+      }
       if (n != length(sampling_wt)) {
         stop("number of rows in x_mat must match length of sampling_wt")
       }
@@ -150,13 +144,23 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     # same number of individuals for x and clusters
     if (is.null(cluster_id)) {
       cluster_id <- 1:n
-    } else if (n != length(cluster_id)) {
-      stop("number of rows in x_mat must match length of cluster_id")
+    } else {
+      if (!is.vector(cluster_id)) {
+        stop("cluster_id must be a vector")
+      }
+      if (n != length(cluster_id)) {
+        stop("number of rows in x_mat must match length of cluster_id")
+      }
     }
     
     # Check same number of individuals for x and strata
-    if (!is.null(stratum_id) & (n != length(stratum_id))) {
-      stop("number of rows in x_mat must match length of stratum_id")
+    if (!is.null(stratum_id)) {
+      if (!is.vector(stratum_id)) {
+        stop("stratum_id must be a vector")
+      }
+      if (n != length(stratum_id)) {
+        stop("number of rows in x_mat must match length of stratum_id")
+      }
     }
     
     # Check same number of individuals for x and V_data
@@ -173,6 +177,18 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     if (!is.null(class_cutoff)) {
       if (class_cutoff <= 0 | class_cutoff >= 1) {
         stop("class_cutoff must be a proportion in (0,1)")
+      }
+    }
+    
+    # Check seeds
+    if (!is.null(adapt_seed)) {
+      if (!is.numeric(adapt_seed)) {
+        stop("adapt_seed must be numeric")
+      }
+    }
+    if (!is.null(fixed_seed)) {
+      if (!is.numeric(fixed_seed)) {
+        stop("fixed_seed must be numeric")
       }
     }
     
@@ -254,12 +270,39 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
         stop("n_runs must be larger than burn")
       }
     }
+    
+    # Check variance adjustment parameters
+    if (!is.null(adjust_var)) {
+      if (!is.logical(adjust_var)) {
+        stop("adjust_var must be a boolean specifying if the post-processing 
+        variance adjustment for accurate interval coverage should be applied")
+      } else if (adjust_var) {
+        if (!is.integer(num_reps) | num_reps < 1) {
+          stop("num_reps must be a positive integer, recommended to be at least
+          50. More replicates will lead to more accurate results but will take 
+          longer to run.")
+        }
+      }
+    } 
 
     # Check saving parameters
     if (!is.null(save_res)) {
+      if (!is.logical(save_res)) {
+        stop("save_res must be a boolean specifying if results should be saved")
+      }
       if (save_res) {
-        if (is.null(save_path)) {
-          stop("need to specify a path and file name in save_path, such as ~/Documents/run")
+        if (is.null(save_path) | !is.character(save_path)) {
+          stop("save_path must be a string specifying a path and file name, such as '~/Documents/run'")
+        } else {
+          last_slash_ind <- regexpr("\\/[^\\/]*$", save_path)
+          if (!dir.exists(substr(save_path, start = 1, stop = last_slash_ind))) {
+            stop("directory specified in save_path does not exist")
+          }
+          if (last_slash_ind == length(save_path)) {
+            stop("please append the start of a file name to the end of save_path. 
+            For example, '~/Documents/run' can produce a saved file named 
+            'run_swolca_results.RData'")
+          }
         }
       }
     }
@@ -267,10 +310,125 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
 }
 
 
-#' Convert from factor reference coding to P(Y=1|-) conditional probabilities
+#' Convert from reference cell coding to mixture reference coding 
+#'
+#' `convert_ref_to_mix` converts from reference cell coding to a combination of 
+#' factor variable and reference cell coding, referred to as mixture reference 
+#' coding.
+#' 
+#' @param K Number of latent classes
+#' @param q Number of regression covariates excluding class assignment
+#' @param est_beta Vector of probit regression coefficients in reference cell 
+#' coding. (K*q)x1. Order of betas must correspond to a formula with `c_all` as
+#' the first covariate and all interaction terms involving `c_all` present.
+#' @param ci_beta Matrix of interval estimates for probit regression 
+#' coefficients in reference cell coding. (K*q)x2, where the first column is 
+#' the lower bound and the second column is the upper bound. Set to `NULL` 
+#' (default), if no interval estimate conversions are necessary.
+#' 
+#' @return Outputs list `xi_list` containing `est_xi`, a Kxq matrix of 
+#' regression estimates in mixture reference coding. If `ci_beta` is not `NULL`,
+#' `xi_list` also contains `est_xi_lb` and `est_xi_ub`, which are Kxq matrices
+#' of the lower and upper bound interval estimates, respectively, in mixture 
+#' reference coding.
+#' 
+#' @keywords internal
+#' @seealso [fit_probit_wolca()]
+#' @export
+convert_ref_to_mix <- function(K, q, est_beta, ci_beta = NULL) {
+  est_xi <- matrix(NA, nrow = K, ncol = q)
+  if (!is.null(ci_beta)) {
+    est_xi_lb <- est_xi_ub <- matrix(NA, nrow = K, ncol = q)
+  }
+  
+  # If only latent class as a covariate (no interactions)
+  if (q == 1) {
+    est_int_k1 <- NULL   # baseline class
+    est_int_koth <- NULL # additional classes
+  # Position of interaction terms for additional covariates
+  } else if (q > 1) {
+    est_int_k1 <- K + 1:(q-1)       # baseline class
+    est_int_koth <- (K - 1) * (1:(q-1)) # additional classes
+  }
+  
+  # Get estimates for first class level, including all interactions
+  est_xi[1, ] <- est_beta[c(1, est_int_k1)]
+  if (!is.null(ci_beta)) {
+    est_xi_lb[1, ] <- ci_beta[c(1, est_int_k1), 1]
+    est_xi_ub[1, ] <- ci_beta[c(1, est_int_k1), 2]
+  }
+  # Get estimates for additional class levels, including all interactions
+  for (k in 2:K) {
+    est_xi[k, ] <- est_beta[c(k, (k + (q-1)) + est_int_koth)] + est_xi[1, ]
+    if (!is.null(ci_beta)) {
+      est_xi_lb[k, ] <- ci_beta[c(k, (k + (q-1)) + est_int_koth), 1] + est_xi_lb[1, ]
+      est_xi_ub[k, ] <- ci_beta[c(k, (k + (q-1)) + est_int_koth), 2] + est_xi_ub[1, ]
+    }
+  }
+  
+  # Return estimates and credible intervals in mixture reference coding
+  xi_list <- list(est_xi = est_xi)
+  if (!is.null(ci_beta)) {
+    xi_list$est_xi_lb = est_xi_lb
+    xi_list$est_xi_ub = est_xi_ub
+  }
+  return(xi_list)
+      # beta_comb <- beta_ref
+      # for (i in 2:nrow(beta_ref)) {
+      #   beta_comb[i, ] <- beta_ref[i, ] - beta_ref[1, ]
+      # }
+      # return(beta_comb)
+}
+
+
+#' Convert from mixture reference coding to reference cell coding
 #' 
 #' @description
-#' Convert regression estimates \eqn{\xi} from factor reference coding to 
+#' Convert regression estimates \eqn{\xi} from mixture reference coding, a 
+#' combination of factor variable and reference cell coding, to standard 
+#' reference cell coding.
+#' 
+#' @param est_xi Matrix of xi parameter estimates in mixture reference coding. Kxq
+#' @return Returns vector `est_beta` of the probit regression coefficients
+#' converted into reference cell coding with interactions. (K*q)x1
+#' 
+#' @keywords internal
+#' @export
+convert_mix_to_ref <- function(est_xi) {
+  est_beta <- est_xi
+  for (i in 2:nrow(est_xi)) {
+    est_beta[i, ] <- est_xi[i, ] - est_xi[1, ]
+  }
+  est_beta <- c(est_beta)
+  return(est_beta)
+  
+  ## Alternative method
+  # K <- nrow(est_xi)
+  # q <- ncol(est_xi)
+  # est_beta <- numeric(K * q)
+  # # If only latent class as a covariate (no interactions)
+  # if (q == 1) {
+  #   est_int_k1 <- NULL   # baseline class
+  #   est_int_koth <- NULL # additional classes
+  # # Position of interaction terms for additional covariates
+  # } else if (q > 1) {
+  #   est_int_k1 <- K + 1:(q-1)       # baseline class
+  #   est_int_koth <- (K - 1) * (1:(q-1)) # additional classes
+  # }
+  # 
+  # # Get estimates for first class level, including all interactions
+  # est_beta[c(1, est_int_k1)] <- est_xi[1, ]
+  # # Get estimates for additional class levels, including all interactions
+  # for (k in 2:K) {
+  #   est_beta[c(k, (k + (q-1)) + est_int_koth)] <- est_xi[k, ] - est_xi[1, ]
+  # }
+  # return(est_beta)
+}
+
+#' Convert from mixture reference coding to P(Y=1|-) conditional probabilities
+#' 
+#' @description
+#' Convert regression estimates \eqn{\xi} from mixture reference coding to 
 #' conditional probit regression probabilities, P(Y=1|-), for a given covariate.
 #' 
 #' @inheritParams swolca
@@ -293,6 +451,8 @@ convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
   # check that cov_name is found in glm_form
   if (!grepl(cov_name, glm_form)) {
     stop("cov_name must be one of the variables specified in glm_form")
+  } else if (grepl("c_all", glm_form)) {
+    stop("glm_form must not contain the latent class variable c_all")
   }
   
   # Number of latent classes
@@ -312,60 +472,11 @@ convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
   colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 1:length(cols[-1])))
   probs[, 1] <- 1:K
   for (categ in 1:length(cols)) {
-    # Convert from factor variable to probabilities
+    # Convert from mixture reference to probabilities
     probs[, categ + 1] <- stats::pnorm(est_xi[, 1] + 
                                          (categ > 1) * est_xi[, cols[categ]])
   }
   return(probs)
 }
 
-#' Convert from factor reference coding to reference cell coding 
-#' 
-#' @description
-#' Convert regression estimates \eqn{\xi} from factor reference coding to 
-#' standard reference cell coding.
-#' 
-#' @inheritParams swolca
-#' @param est_xi Matrix of xi parameter estimates. Kxq
-#' @param cov_name String specifying name of covariate of interest. Must be 
-#' included in `glm_form`.
-#' @return Returns dataframe `betas` of the converted probabilities for the 
-#' covariate specified in `cov_name`, with number of rows equal to K and number
-#' of columns equal to the number of categories for the covariate (including the
-#' baseline category) plus one. The first column specifies the latent class,
-#' the second column corresponds to the baseline category intercept for all K 
-#' latent classes, and the remaining columns correspond to the other categories 
-#' for the covariate. 
-#' 
-#' @importFrom stats terms as.formula
-#' @keywords internal
-#' @export
-#' 
-convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
-  # check that cov_name is found in glm_form
-  if (!grepl(cov_name, glm_form)) {
-    stop("cov_name must be one of the variables specified in glm_form")
-  }
-  
-  # Number of latent classes
-  K <- nrow(est_xi)
-  # Get covariate names
-  cov_names <- labels(terms(as.formula(glm_form)))
-  # Get index of covariate names corresponding to the covariate of interest
-  select_cov <- which(cov_names == cov_name)
-  
-  # Get column indices for each variable in glm_form
-  cov_col_inds <- attr(model.matrix(as.formula(glm_form), data = V), "assign")
-  # Design matrix indices for covariate group, including intercept
-  cols <- c(1, which(cov_col_inds == select_cov))
-  
-  # Get conversions for each category of the covariate group 
-  probs <- as.data.frame(matrix(NA, nrow = K, ncol = (length(cols) + 1)))
-  colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 1:length(cols[-1])))
-  probs[, 1] <- 1:K
-  for (categ in 1:length(cols)) {
-    # Convert from factor variable to probabilities
-    probs[, categ + 1] <- pnorm(est_xi[, 1] + (categ > 1) * est_xi[, cols[categ]])
-  }
-  return(probs)
-}
+

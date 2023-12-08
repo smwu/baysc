@@ -26,6 +26,7 @@ Imports:
     RcppTN,
     rlang,
     rstan (>= 2.21.8),
+    SimCorMultRes,
     stats,
     stringr,
     survey,
