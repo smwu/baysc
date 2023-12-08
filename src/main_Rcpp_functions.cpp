@@ -198,17 +198,20 @@ void update_c(arma::vec& c_all, const int& n, const int& K, const int& J,
         log_theta_comp_k += log(theta(j, k, x_mat(i, j) - 1));
       }
       // Calculate and control extremes for probit component
-      log_probit_comp_k = log(R::dnorm(z_all(i), (V.row(i) * xi.row(k).t()).eval()(0,0), 1.0, false));
+      log_probit_comp_k = log(R::dnorm(z_all(i), 
+                                       (V.row(i) * xi.row(k).t()).eval()(0,0), 
+                                       1.0, false));
       if (log_probit_comp_k == R_NegInf) {
         log_probit_comp_k = log(1e-16);
       }
-      log_probit_comp_k += log((y_all(i) * (z_all(i) > 0)) + ((1 - y_all(i)) * (z_all(i) <= 0)));
+      log_probit_comp_k += log((y_all(i) * (z_all(i) > 0)) + 
+        ((1 - y_all(i)) * (z_all(i) <= 0)));
       // if (i == 1 | i == 2) {
-      //   Rcout << "k: " << k << "\n";
-      //   Rcout << "log_theta_comp_k: " << log_theta_comp_k << "\n";
-      //   Rcout << "log_probit_comp_k:" << log_probit_comp_k << "\n";
-      //   Rcout << "dnorm(z_all(i)):" << R::dnorm(z_all(i), 
-      //                           (V.row(i) * xi.row(k).t()).eval()(0,0), 1.0, false) << "\n";
+        // Rcout << "k: " << k << "\n";
+        // Rcout << "log_theta_comp_k: " << log_theta_comp_k << "\n";
+        // Rcout << "log_probit_comp_k:" << log_probit_comp_k << "\n";
+        // Rcout << "dnorm(z_all(i)):" << R::dnorm(z_all(i),
+        //                         (V.row(i) * xi.row(k).t()).eval()(0,0), 1.0, false) << "\n";
       // }
       // Individual log-likelihood for class k
       log_cond_c(i, k) = log(pi(k)) + log_theta_comp_k + log_probit_comp_k;

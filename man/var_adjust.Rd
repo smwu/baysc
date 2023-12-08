@@ -45,7 +45,7 @@ var_adjust(
 
 \item{q}{Number of regression covariates excluding class assignment}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 

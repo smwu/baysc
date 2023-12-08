@@ -17,7 +17,7 @@ and \code{theta}}
 
 \item{J}{Number of exposure items}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 }
 \value{
 Returns list \code{estimates} containing:

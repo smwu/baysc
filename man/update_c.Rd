@@ -15,7 +15,7 @@ update_c(c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all)
 
 \item{theta}{Array parameter of item level probabilities. JxKxR}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{pi}{Vector parameter of class membership probabilities. Kx1}
 

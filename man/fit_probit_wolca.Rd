@@ -33,7 +33,7 @@ indicating no stratification.}
 \item{cluster_id}{Vector of individual cluster IDs. nx1. Default is \code{NULL},
 indicating each individual is their own cluster.}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 

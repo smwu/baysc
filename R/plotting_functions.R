@@ -70,7 +70,8 @@ plot_theta_modes <- function(res, item_labels = NULL, item_title = "Item",
   mode_item_probs$Item <- rownames(mode_item_probs)
   
   # Create plot
-  mode_plot <- mode_item_probs %>% tidyr::gather("Class", "Level", -(rlang::.data$Item)) 
+  mode_plot <- mode_item_probs %>% 
+    tidyr::gather("Class", "Level", -(rlang::.data$Item)) 
   mode_plot %>% ggplot2::ggplot(ggplot2::aes(x=rlang::.data$Class, 
                                              y=factor(rlang::.data$Item, 
                                                       levels = rev(item_labels)), 

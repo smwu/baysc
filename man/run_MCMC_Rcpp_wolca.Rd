@@ -39,7 +39,7 @@ and \code{theta}}
 
 \item{w_all}{Weights normalized to sum to n. nx1}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{alpha}{Kx1 vector of hyperparameters for prior for class membership
 probabilities \eqn{\pi}}

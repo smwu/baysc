@@ -28,15 +28,16 @@
         "-I/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/StanHeaders/include",
         "-DEIGEN_DONT_VECTORIZE",
         "-I/Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include",
-        "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1",
-        "-I/Library/Developer/CommandLineTools/usr/lib/clang/15.0.0/include",
-        "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
-        "-I/Library/Developer/CommandLineTools/usr/include"
+        "-I/usr/local/include",
+        "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1",
+        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/15.0.0/include",
+        "-I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
+        "-I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include"
     ],
     "pch": "RcppArmadillo",
     "is_cpp": true,
-    "hash": "169819702716996212621698249504",
-    "compiler": "9771681811594477936",
+    "hash": "169819702717006907281698249504",
+    "compiler": "13858268432519978961",
     "rversion": "4.3.1",
     "dbversion": 4
 }

@@ -144,10 +144,11 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
                cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                run_sampler = run_sampler, glm_form = glm_form,
                K_max = K_max, class_cutoff = class_cutoff,
+               adapt_seed = adapt_seed, fixed_seed = fixed_seed,
                alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                n_runs = n_runs, burn = burn, thin = thin, 
-               save_res = save_res, save_path = save_path, model = "wolca")
+               save_res = save_res, save_path = save_path)
   
   # Obtain probit regression design matrix without class assignment
   V <- model.matrix(as.formula(glm_form), data = V_data)
@@ -215,7 +216,7 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
     # Catch errors: check hyperparameter dimensions for fixed sampler
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
-                 n_runs = n_runs, burn = burn, thin = thin, model = "wolca")
+                 n_runs = n_runs, burn = burn, thin = thin)
     
     # Set seed
     if (!is.null(fixed_seed)) {

@@ -21,7 +21,7 @@ get_estimates(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat)
 
 \item{y_all}{Vector of outcomes. nx1}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 }
 \value{
 Returns list \code{estimates} containing:

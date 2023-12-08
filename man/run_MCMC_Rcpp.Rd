@@ -49,7 +49,7 @@ and \code{theta}}
 
 \item{w_all}{Weights normalized to sum to n. nx1}
 
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 

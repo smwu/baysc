@@ -31,7 +31,7 @@ solca(
 )
 }
 \arguments{
-\item{x_mat}{Categorical exposure matrix. nxJ}
+\item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
 \item{y_all}{Vector of outcomes. nx1}
 
@@ -109,7 +109,8 @@ number of regression covariates excluding latent class assignment.}
 
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
-\item{save_path}{String specifying directory and file name to save results. Default is \code{NULL}.}
+\item{save_path}{String specifying directory and file name to save results,
+e.g., "~/Documents/run". Default is \code{NULL}.}
 }
 \value{
 If the fixed sampler is run, returns list \code{res} containing:
