@@ -176,3 +176,26 @@
 #' data(sim_data)
 #' x_mat <- sim_data$X_data
 "sim_data"
+
+
+#' NHANES SWOLCA results 
+#' 
+#' Results from running `swolca()` on the `data_nhanes` dataset
+#' @docType data
+#' @usage data(run_nhanes_swolca_results)
+#' @format List `res` containing:
+#' \describe{
+#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results}
+#'   \item{\code{runtime}}{Total runtime for model}
+#'   \item{\code{data_vars}}{List of data variables used}
+#'   \item{\code{MCMC_out}}{List of full MCMC output}
+#'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
+#'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
+#'   \item{\code{estimates}}{List of adjusted posterior model results with 
+#'   correct uncertainty estimation}
+#' }
+#' @source Result from running `swocla()` on `data_nhanes`
+#' @keywords datasets
+#' @examples 
+#' data(run_nhanes_swolca_results)
+"run_nhanes_swolca_results"
