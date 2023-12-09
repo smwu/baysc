@@ -62,8 +62,19 @@ corresponding to a latent class.
 }
 \examples{
 data(run_nhanes_swolca_results)
+
+# Default labels
 plot_Phi_line(res = run_nhanes_swolca_results, cov_name = "racethnic")
+
+# Specifying labels
+cov_labels <- c("NH White", "NH Black", "NH Asian", "Hispanic/Latino", 
+                "Other/Mixed")
+class_labels <- paste0("Class", 1:5)
+x_title <- "Race and Ethnicity"
+plot_Phi_line(res = run_nhanes_swolca_results, cov_name = "racethnic",
+             cov_labels = cov_labels, class_labels = class_labels, 
+             x_title = x_title)
 }
 \seealso{
-\code{\link[=plot_theta_probs]{plot_theta_probs()}} \code{\link[=plot_pi_boxplots]{plot_pi_boxplots()}} \code{\link[=plot_theta_modes]{plot_theta_modes()}}
+\code{\link[=get_regr_coefs]{get_regr_coefs()}} \code{\link[=plot_theta_probs]{plot_theta_probs()}} \code{\link[=plot_pi_boxplots]{plot_pi_boxplots()}} \code{\link[=plot_theta_modes]{plot_theta_modes()}}
 }

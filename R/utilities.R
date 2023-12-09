@@ -480,3 +480,47 @@ convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
 }
 
 
+
+#' Get confidence or credible interval
+#' 
+#' `get_ci` is a helper function that formats confidence or credible intervals
+#' @param post_samp Numeric vector of posterior samples
+#' @param lb Lower bound quantile of interval estimate. Default is 0.025 
+#' corresponding to a 95% interval
+#' @param ub Upper bound quantile of interval estimate. Default is 0.975 
+#' corresponding to a 95% interval
+#' @param digits Number of digits to round to. Default is 2.
+#' @importFrom stats quantile
+#' @return Outputs string `ci` with formatted interval
+#' @keywords internal
+#' @export
+get_ci <- function(post_samp, quant_lb = 0.025, quant_ub = 0.975, digits = 2) {
+  quantiles <- format(round(stats::quantile(post_samp, c(quant_lb, quant_ub)), 
+                            digits), nsmall = digits)
+  ci <- paste0("(", quantiles[1], ", ", quantiles[2], ")")
+  return(ci)
+}
+
+
+
+#' Get posterior probability
+#' 
+#' `get_prob_pos` is a helper function that obtains the probability that the
+#' posterior sample estimates are greater than some specified value
+#' @param post_samp Numeric vector of posterior samples
+#' @param cutoff Value specifying cutoff to compare posterior samples to. Default
+#' is 0.
+#' @param digits Number of digits to round to. Default is 2, where posterior 
+#' probabilities smaller than 0.01 are denoted as "<0.01". 
+#' @return Outputs `prob_pos` posterior probability
+#' @keywords internal
+#' @export
+get_prob_pos <- function(post_samp, cutoff = 0, digits = 2) {
+  prob_pos <- format(round(mean(post_samp > cutoff), digits), nsmall = digits)
+  round_value <- 10^(-digits)
+  if (prob_pos < round_value) {
+    prob_pos <- paste0("<", round_value)
+  }
+  return(prob_pos)
+}
+

@@ -38,7 +38,13 @@ membership probabilities in the posterior samples, for each latent class.
 }
 \examples{
 data(run_nhanes_swolca_results)
+
+# Default labels
 plot_pi_boxplots(res = run_nhanes_swolca_results)
+
+# Specifying labels
+class_labels <- paste0("Class ", 1:5)
+plot_pi_boxplots(res = run_nhanes_swolca_results, class_labels = class_labels)
 }
 \seealso{
 \code{\link[=plot_theta_probs]{plot_theta_probs()}} \code{\link[=plot_theta_modes]{plot_theta_modes()}} \code{\link[=plot_Phi_line]{plot_Phi_line()}}

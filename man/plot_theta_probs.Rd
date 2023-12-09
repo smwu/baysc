@@ -50,7 +50,23 @@ categories, for each exposure item and each latent class.
 }
 \examples{
 data(run_nhanes_swolca_results)
+
+# Default labels
 plot_theta_probs(res = run_nhanes_swolca_results)
+
+# Specifying labels
+item_labels <- c("Citrus/Melon/Berries", "Other Fruits", "Fruit Juice", 
+                  "Dark Green Vegs", "Tomatoes", "Oth Red/Orange Vegs",
+                  "Potatoes", "Other Starchy Vegs", "Other Vegetables",
+                  "Whole Grains", "Refined Grains", "Meat", "Cured Meats",
+                  "Organ Meat", "Poultry", "Seafood (High n-3)", "Seafood (Low n-3)",
+                  "Eggs", "Soybean Products", "Nuts and Seeds", "Legumes (Protein)",
+                  "Milk", "Yogurt", "Cheese", "Oils", "Solid Fats", "Added Sugar",
+                  "Alcoholic Drinks")
+categ_labels <- c("None", "Low", "Med", "High")
+class_labels <- paste0("C", 1:5)
+plot_theta_probs(res = run_nhanes_swolca_results, item_labels = item_labels,
+                 categ_labels = categ_labels, class_labels = class_labels)
 
 }
 \seealso{
