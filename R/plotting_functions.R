@@ -25,7 +25,7 @@
 #' @return
 #' Returns a `ggplot2` object displaying a heatmap of the latent class patterns.
 #' 
-#' @seealso [swolca()] [solca()] [wolca()]
+#' @seealso [plot_theta_probs()] [plot_pi_boxplots()] [plot_Phi_line()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_brewer labs 
 #' theme_classic scale_x_discrete theme element_text
@@ -34,8 +34,26 @@
 #' @importFrom rlang .data
 #' @export
 #'
-#' #examples 
+#' @examples 
+#' data(run_nhanes_swolca_results)
 #' 
+#' # Default labels
+#' plot_theta_modes(res = run_nhanes_swolca_results)
+#' 
+#' # Specifying labels
+#' item_labels <- c("Citrus/Melon/Berries", "Other Fruits", "Fruit Juice", 
+#'                   "Dark Green Vegs", "Tomatoes", "Oth Red/Orange Vegs",
+#'                   "Potatoes", "Other Starchy Vegs", "Other Vegetables",
+#'                   "Whole Grains", "Refined Grains", "Meat", "Cured Meats",
+#'                   "Organ Meat", "Poultry", "Seafood (High n-3)", "Seafood (Low n-3)",
+#'                   "Eggs", "Soybean Products", "Nuts and Seeds", "Legumes (Protein)",
+#'                   "Milk", "Yogurt", "Cheese", "Oils", "Solid Fats", "Added Sugar",
+#'                   "Alcoholic Drinks")
+#' categ_labels <- c("None", "Low", "Med", "High")
+#' class_labels <- paste0("Class ", 1:5)
+#' plot_theta_modes(res = run_nhanes_swolca_results, item_labels = item_labels,
+#'                  categ_labels = categ_labels, class_labels = class_labels)
+#'
 plot_theta_modes <- function(res, item_labels = NULL, item_title = "Item",
                              categ_labels = NULL, 
                              categ_title = "Consumption Level",
@@ -57,25 +75,36 @@ plot_theta_modes <- function(res, item_labels = NULL, item_title = "Item",
   # Define item, latent class, and category names if not specified
   if (is.null(item_labels)) {
     item_labels <- 1:res$data_vars$J
+  } else if (length(item_labels) != res$data_vars$J) {
+    stop(paste0("length of item_labels must equal the number of exposure items, J = ",
+                res$data_vars$J))
   }
+  K <- dim(mode_item_probs)[2]
   if (is.null(class_labels)) {
-    K <- dim(mode_item_probs)[2]
     class_labels <- 1:K
+  } else if (length(class_labels) != K) {
+    stop(paste0("length of class_labels must equal the number of latent classes, K = ", K))
   }
   if (is.null(categ_labels)) {
     categ_labels <- 1:res$data_vars$R
+  } else if (length(categ_labels) != res$data_vars$R) {
+    stop(paste0("length of categ_labels must equal the number of exposure categories, R = ", 
+                res$data_vars$R))
   }
   rownames(mode_item_probs) <- item_labels
   colnames(mode_item_probs) <- class_labels
   mode_item_probs$Item <- rownames(mode_item_probs)
   
+  # Initialize variables to NULL to avoid global binding notes in R CMD check
+  Class <- Item <- Level <- NULL
+  
   # Create plot
   mode_plot <- mode_item_probs %>% 
-    tidyr::gather("Class", "Level", -(rlang::.data$Item)) 
-  mode_plot %>% ggplot2::ggplot(ggplot2::aes(x=rlang::.data$Class, 
-                                             y=factor(rlang::.data$Item, 
+    tidyr::gather("Class", "Level", -Item) 
+  mode_plot %>% ggplot2::ggplot(ggplot2::aes(x=Class, 
+                                             y=factor(Item, 
                                                       levels = rev(item_labels)), 
-                                             fill = factor(rlang::.data$Level))) + 
+                                             fill = factor(Level))) + 
     ggplot2::geom_tile(color="black", linewidth = 0.3) + 
     ggplot2::scale_fill_brewer(type="seq", palette="RdYlBu", direction = -1,
                                name = categ_title, labels = categ_labels) +
@@ -109,7 +138,7 @@ plot_theta_modes <- function(res, item_labels = NULL, item_title = "Item",
 #' Returns a `ggplot2` object displaying a grouped barplot of the probability of 
 #' the exposure categories, for each exposure item and each latent class
 #' 
-#' @seealso [swolca()] [solca()] [wolca()]
+#' @seealso [plot_theta_modes()] [plot_pi_boxplots()] [plot_Phi_line()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_bar facet_wrap scale_fill_brewer labs 
 #' theme_bw theme element_text element_blank element_rect
@@ -117,7 +146,25 @@ plot_theta_modes <- function(res, item_labels = NULL, item_title = "Item",
 #' @importFrom rlang .data
 #' @export
 #'
-#' #examples 
+#' @examples 
+#' data(run_nhanes_swolca_results)
+#' 
+#' # Default labels
+#' plot_theta_probs(res = run_nhanes_swolca_results)
+#' 
+#' # Specifying labels
+#' item_labels <- c("Citrus/Melon/Berries", "Other Fruits", "Fruit Juice", 
+#'                   "Dark Green Vegs", "Tomatoes", "Oth Red/Orange Vegs",
+#'                   "Potatoes", "Other Starchy Vegs", "Other Vegetables",
+#'                   "Whole Grains", "Refined Grains", "Meat", "Cured Meats",
+#'                   "Organ Meat", "Poultry", "Seafood (High n-3)", "Seafood (Low n-3)",
+#'                   "Eggs", "Soybean Products", "Nuts and Seeds", "Legumes (Protein)",
+#'                   "Milk", "Yogurt", "Cheese", "Oils", "Solid Fats", "Added Sugar",
+#'                   "Alcoholic Drinks")
+#' categ_labels <- c("None", "Low", "Med", "High")
+#' class_labels <- paste0("C", 1:5)
+#' plot_theta_probs(res = run_nhanes_swolca_results, item_labels = item_labels,
+#'                  categ_labels = categ_labels, class_labels = class_labels)
 #' 
 plot_theta_probs <- function(res, item_labels = NULL, categ_labels = NULL, 
                              categ_title = "Consumption Level",
@@ -139,47 +186,56 @@ plot_theta_probs <- function(res, item_labels = NULL, categ_labels = NULL,
   # Define item, latent class, and category names if not specified
   if (is.null(item_labels)) {
     item_labels <- 1:res$data_vars$J
+  } else if (length(item_labels) != res$data_vars$J) {
+    stop(paste0("length of item_labels must equal the number of exposure items, J = ",
+                res$data_vars$J))
   }
   if (is.null(class_labels)) {
     class_labels <- 1:K
+  } else if (length(class_labels) != K) {
+    stop(paste0("length of class_labels must equal the number of latent classes, K = ", K))
   }
   if (is.null(categ_labels)) {
     categ_labels <- 1:res$data_vars$R
+  } else if (length(categ_labels) != res$data_vars$R) {
+    stop(paste0("length of categ_labels must equal the number of exposure categories, R = ", 
+                res$data_vars$R))
   }
   
   dimnames(est_item_probs)[[1]] <- item_labels
   dimnames(est_item_probs)[[2]] <- class_labels
-  
-  # Create plot
   
   # Convert to dataframe with each row corresponding to a value in the array
   # Use base R instead of reshape2 to reduce number of package imports
       # theta_plot <- reshape2::melt(est_item_probs, level = 2)
   theta_plot <- data.frame(expand.grid(lapply(dim(est_item_probs), seq_len)), 
                            value = as.vector(est_item_probs))
-  theta_plot <- est_item_probs %>% tidyr::gather("Class", "Level", -(rlang::.data$Item)) 
   
+  # Initialize variables to NULL to avoid global binding notes in R CMD check
+  Item <- Class <- Probability <- Level <- NULL
+  
+  # Create plot
   colnames(theta_plot) <- c("Item", "Class", "Level", "Probability")
   theta_plot %>%
-    ggplot2::ggplot(ggplot2::aes(x = factor(rlang::.data$Class, levels = 1:K), 
-                                 y = rlang::.data$Probability,
-                                 fill = factor(rlang::.data$Level))) + 
+    ggplot2::ggplot(ggplot2::aes(x = factor(Class, labels = class_labels), 
+                                 y = Probability,
+                                 fill = factor(Level))) + 
     ggplot2::geom_bar(stat = "identity", position = "stack") + 
-    ggplot2::facet_wrap(factor(rlang::.data$Item, levels = item_labels) ~ ., nrow = 4) + 
+    ggplot2::facet_wrap(factor(Item, labels = item_labels) ~ ., nrow = 4) + 
     ggplot2::scale_fill_brewer(type="seq", palette="RdYlBu", direction = -1,
-                      name = categ_title, labels = categ_labels) +
+                               name = categ_title, labels = categ_labels) +
     ggplot2::theme_bw() + 
     ggplot2::labs(x = class_title, y = y_title) + 
     ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(),
-          axis.text.x = ggplot2::element_text(size = 11, color = "black"), 
-          axis.text.y = ggplot2::element_text(size = 11, color = "black"),
-          axis.title.x = ggplot2::element_text(size = 13, color = "black", face = "bold"),
-          axis.title.y = ggplot2::element_text(size = 13, color = "black", face = "bold"),
-          legend.title = ggplot2::element_text(size = 13, color = "black", face = "bold"),
-          legend.text = ggplot2::element_text(size = 11, color = "black"),
-          legend.position = "top",
-          strip.text = ggplot2::element_text(size = 9),
-          strip.background = ggplot2::element_rect(fill = "gray90"))
+                   axis.text.x = ggplot2::element_text(size = 11, color = "black"), 
+                   axis.text.y = ggplot2::element_text(size = 11, color = "black"),
+                   axis.title.x = ggplot2::element_text(size = 13, color = "black", face = "bold"),
+                   axis.title.y = ggplot2::element_text(size = 13, color = "black", face = "bold"),
+                   legend.title = ggplot2::element_text(size = 13, color = "black", face = "bold"),
+                   legend.text = ggplot2::element_text(size = 11, color = "black"),
+                   legend.position = "top",
+                   strip.text = ggplot2::element_text(size = 9),
+                   strip.background = ggplot2::element_rect(fill = "gray90"))
 }
 
 
@@ -198,7 +254,7 @@ plot_theta_probs <- function(res, item_labels = NULL, categ_labels = NULL,
 #' Returns a `ggplot2` object displaying a boxplot of the distribution of class 
 #' membership probabilities in the posterior samples, for each latent class.
 #' 
-#' @seealso [swolca()] [solca()] [wolca()]
+#' @seealso [plot_theta_probs()] [plot_theta_modes()] [plot_Phi_line()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_boxplot scale_fill_brewer labs 
 #' theme_bw theme element_size
@@ -208,7 +264,15 @@ plot_theta_probs <- function(res, item_labels = NULL, categ_labels = NULL,
 #' @importFrom magrittr %>%
 #' @export
 #'
-#' #examples 
+#' @examples 
+#' data(run_nhanes_swolca_results)
+#' 
+#' # Default labels
+#' plot_pi_boxplots(res = run_nhanes_swolca_results)
+#' 
+#' # Specifying labels
+#' class_labels <- paste0("Class ", 1:5)
+#' plot_pi_boxplots(res = run_nhanes_swolca_results, class_labels = class_labels)
 plot_pi_boxplots <- function(res, class_labels = NULL, 
                              class_title = "Dietary Pattern",
                              y_title = "Class Membership Probability", ...) {
@@ -221,19 +285,28 @@ plot_pi_boxplots <- function(res, class_labels = NULL,
     # Unadjusted estimates for `swolca()`
     pi_red <- as.data.frame(res$estimates_unadj$pi_red)
   }
+  # Get number of latent classes
+  K <- dim(pi_red)[2]
   
   # Set class labels to 1:K if not provided
   if (is.null(class_labels)) {
-    class_labels <- 1:(dim(pi_red)[2])
-  } 
+    class_labels <- 1:K
+  } else if (length(class_labels) != K) {
+    stop(paste0("length of class_labels must equal the number of latent classes, K = ", K))
+  }
   colnames(pi_red) <- class_labels
+  
   # Convert to longer format for plotting
   pi_red_plot <- pi_red %>% tidyr::pivot_longer(cols = tidyselect::everything(), 
                                                 names_to = "pi_comp", 
                                                 values_to = "value")
+  
+  # Initialize variables to NULL to avoid global binding notes in R CMD check
+  pi_comp <- value <- NULL
+  
   # Plot pi boxplots
-  pi_red_plot %>% ggplot2::ggplot(ggplot2::aes(x = rlang::.data$pi_comp, 
-                                               y = rlang::.data$value)) + 
+  pi_red_plot %>% ggplot2::ggplot(ggplot2::aes(x = pi_comp, 
+                                               y = value)) + 
     ggplot2::theme_bw() + ggplot2::scale_fill_brewer(palette="Set2") + 
     ggplot2::geom_boxplot() + 
     ggplot2::labs(x = class_title, y = y_title) + 
@@ -264,7 +337,8 @@ plot_pi_boxplots <- function(res, class_labels = NULL,
 #' parameter in the main function. 
 #' @param cov_labels String vector specifying the category labels for the 
 #' covariate of interest. Must be the same length as the number of categories
-#' in the covariate specified by `cov_name`
+#' in the covariate specified by `cov_name`. If `NULL` (default), numbers from 1
+#' to the number of covariate categories are used.
 #' @param x_title String specifying x-axix label. If `NULL` (default), `cov_name`
 #' is used
 #' @param y_title String specifying the title for the y-axis. Default is 
@@ -276,7 +350,7 @@ plot_pi_boxplots <- function(res, class_labels = NULL,
 #' probability of the outcome across categories of the covariate, for each 
 #' latent class.
 #' 
-#' @seealso [swolca()] [solca()] [wolca()]
+#' @seealso [plot_theta_probs()] [plot_pi_boxplots()] [plot_theta_modes()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_line geom_point scale_color_brewer labs 
 #' theme_bw theme element_text
@@ -287,7 +361,20 @@ plot_pi_boxplots <- function(res, class_labels = NULL,
 #' @importFrom rlang .data 
 #' @export
 #'
-#' #examples 
+#' @examples 
+#' data(run_nhanes_swolca_results)
+#' 
+#' # Default labels
+#' plot_Phi_line(res = run_nhanes_swolca_results, cov_name = "racethnic")
+#' 
+#' # Specifying labels
+#' cov_labels <- c("NH White", "NH Black", "NH Asian", "Hispanic/Latino", 
+#'                 "Other/Mixed")
+#' class_labels <- paste0("Class", 1:5)
+#' x_title <- "Race and Ethnicity"
+#' plot_Phi_line(res = run_nhanes_swolca_results, cov_name = "racethnic",
+#'              cov_labels = cov_labels, class_labels = class_labels, 
+#'              x_title = x_title)
 plot_Phi_line <- function(res, cov_name, ci_level = NULL,
                           cov_labels = NULL, class_labels = NULL, 
                           class_title = "Dietary Pattern", x_title = NULL, 
@@ -350,29 +437,39 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
     x_title <- cov_name
   }
   # Set cov_label to be numbered from one to the number of covariate categories 
+  num_categs <- ncol(Phi_df) - 1
   if (is.null(cov_labels)) {
-    cov_labels <- paste0(cov_name, 1:(ncol(Phi_df) - 2))
+    cov_labels <- paste0(cov_name, 1:num_categs)
+  } else if (length(cov_labels) != num_categs) {
+    stop(paste0("length of cov_labels must equal the number of covariate categories: ", 
+                num_categs))
   }
   # Set class_labels to be 1:K if not specified
+  K <- nrow(est_xi)
   if (is.null(class_labels)) {
-    class_labels <- 1:nrow(est_xi)
+    class_labels <- 1:K
+  } else if (length(class_labels) != K) {
+    stop(paste0("length of class_labels must equal the number of latent classes, K = ", K))
   }
+  
+  # Initialize variables to NULL to avoid global binding notes in R CMD check
+  Class <- Cov <- Phi <- NULL
   
   # Convert to longer format for plotting
   Phi_df_long <- Phi_df %>%
-    tidyr::pivot_longer(cols = -rlang::.data$Class, names_to = cov_name, values_to = "Phi") %>%
-    dplyr::mutate(Cov = factor(rlang::.data[[cov_name]], labels = cov_labels),
-                  Class = as.factor(rlang::.data$Class))
+    tidyr::pivot_longer(cols = -Class, names_to = "Cov", values_to = "Phi") %>%
+    dplyr::mutate(Cov = factor(Cov, labels = cov_labels),
+                  Class = as.factor(Class))
   
   if (!is.null(ci_level)) {
     Phi_lb_long <- Phi_lb %>%
-      tidyr::pivot_longer(cols = -rlang::.data$Class, names_to = cov_name, values_to = "Phi_lb") %>%
-      dplyr::mutate(Cov = factor(rlang::.data[[cov_name]], labels = cov_labels),
-                    Class = as.factor(rlang::.data$Class))
+      tidyr::pivot_longer(cols = -Class, names_to = "Cov", values_to = "Phi_lb") %>%
+      dplyr::mutate(Cov = factor(Cov, labels = cov_labels),
+                    Class = as.factor(Class))
     Phi_ub_long <- Phi_ub %>%
-      tidyr::pivot_longer(cols = -rlang::.data$Class, names_to = cov_name, values_to = "Phi_ub") %>%
-      dplyr::mutate(Cov = factor(rlang::.data[[cov_name]], labels = cov_labels),
-                    Class = as.factor(rlang::.data$Class))
+      tidyr::pivot_longer(cols = -Class, names_to = "Cov", values_to = "Phi_ub") %>%
+      dplyr::mutate(Cov = factor(Cov, labels = cov_labels),
+                    Class = as.factor(Class))
     Phi_all_long <- Phi_df_long %>%
       dplyr::left_join(Phi_lb_long, by = c("Class", "Cov")) %>%
       dplyr::left_join(Phi_ub_long, by = c("Class", "Cov"))
@@ -380,17 +477,17 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
   
   # Plot with credible intervals
   if (!is.null(ci_level)) {
-    Phi_all_long %>% ggplot2::ggplot(ggplot2::aes(x = rlang::.data$Cov, 
-                                                  y = rlang::.data$Phi, 
-                                                  group = rlang::.data$Class, 
-                                                  col = rlang::.data$Class)) + 
+    Phi_all_long %>% ggplot2::ggplot(ggplot2::aes(x = Cov, 
+                                                  y = Phi, 
+                                                  group = Class, 
+                                                  col = Class)) + 
       ggplot2::theme_bw() + 
       ggplot2::scale_color_brewer(palette = "Set2", labels = class_labels, 
                                   aesthetics = c("color", "fill")) +
       ggplot2::labs(col = class_title, x = x_title, y = y_title) + 
       ggplot2::geom_line(linewidth = 0.7) + ggplot2::geom_point(size = 2) + 
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = rlang::.data$Phi_lb, ymax = rlang::.data$Phi_ub, 
-                                        fill = rlang::.data$Class, colour = NA),
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = Phi_lb, ymax = Phi_ub, 
+                                        fill = Class, colour = NA),
                            alpha = 0.2, show.legend = FALSE) + 
       ggplot2::theme(text = ggplot2::element_text(size = 15),
                      axis.text.x = ggplot2::element_text(size = 11, color = "black"), 
@@ -404,10 +501,10 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
                      legend.position = "top")
     # Plot without credible intervals
   } else { 
-    Phi_df_long %>% ggplot2::ggplot(ggplot2::aes(x = rlang::.data$Cov, 
-                                                 y = rlang::.data$Phi, 
-                                                 group = rlang::.data$Class, 
-                                                 col = rlang::.data$Class)) + 
+    Phi_df_long %>% ggplot2::ggplot(ggplot2::aes(x = Cov, 
+                                                 y = Phi, 
+                                                 group = Class, 
+                                                 col = Class)) + 
       ggplot2::theme_bw() + 
       ggplot2::scale_color_brewer(palette = "Set2", labels = class_labels) +
       ggplot2::labs(col = class_title, x = x_title, y = y_title) + 
@@ -423,7 +520,6 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
                      legend.text = ggplot2::element_text(size = 13, color = "black"),
                      legend.position = "top")
   }
-  
   
   # ggarrange(p1, p2, p3, p4, common.legend = TRUE, legend = "top", nrow = 1, 
   #           ncol = 4, widths = c(0.7, 1, 0.45, 0.45))

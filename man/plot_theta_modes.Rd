@@ -48,6 +48,10 @@ Returns a \code{ggplot2} object displaying a heatmap of the latent class pattern
 patterns are defined by the category with the highest probability
 (i.e., the model category) for each exposure item.
 }
+\examples{
+data(run_nhanes_swolca_results)
+plot_theta_modes(res = run_nhanes_swolca_results)
+}
 \seealso{
-\code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=plot_theta_probs]{plot_theta_probs()}} \code{\link[=plot_pi_boxplots]{plot_pi_boxplots()}} \code{\link[=plot_Phi_line]{plot_Phi_line()}}
 }

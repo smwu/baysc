@@ -31,7 +31,8 @@ parameter in the main function.}
 
 \item{cov_labels}{String vector specifying the category labels for the
 covariate of interest. Must be the same length as the number of categories
-in the covariate specified by \code{cov_name}}
+in the covariate specified by \code{cov_name}. If \code{NULL} (default), numbers from 1
+to the number of covariate categories are used.}
 
 \item{class_labels}{String vector of names for the latent classes. Kx1.
 If \code{NULL} (default), numbers from 1 to K are used, where K is the final
@@ -59,6 +60,10 @@ the outcome, obtained by transforming the probit regression coefficients to
 the probability scale, for a categorical covariate, with each line
 corresponding to a latent class.
 }
+\examples{
+data(run_nhanes_swolca_results)
+plot_Phi_line(res = run_nhanes_swolca_results, cov_name = "racethnic")
+}
 \seealso{
-\code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=plot_theta_probs]{plot_theta_probs()}} \code{\link[=plot_pi_boxplots]{plot_pi_boxplots()}} \code{\link[=plot_theta_modes]{plot_theta_modes()}}
 }

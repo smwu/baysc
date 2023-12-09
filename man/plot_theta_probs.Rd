@@ -48,6 +48,11 @@ the exposure categories, for each exposure item and each latent class
 \code{plot_theta_probs} plots a grouped barplot of the probability of the exposure
 categories, for each exposure item and each latent class.
 }
+\examples{
+data(run_nhanes_swolca_results)
+plot_theta_probs(res = run_nhanes_swolca_results)
+
+}
 \seealso{
-\code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=plot_theta_modes]{plot_theta_modes()}} \code{\link[=plot_pi_boxplots]{plot_pi_boxplots()}} \code{\link[=plot_Phi_line]{plot_Phi_line()}}
 }

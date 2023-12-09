@@ -36,6 +36,10 @@ membership probabilities in the posterior samples, for each latent class.
 \code{plot_pi_boxplots} plots a boxplot of the class membership probabilities,
 \eqn{\pi}, in the posterior samples, for each latent class.
 }
+\examples{
+data(run_nhanes_swolca_results)
+plot_pi_boxplots(res = run_nhanes_swolca_results)
+}
 \seealso{
-\code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=plot_theta_probs]{plot_theta_probs()}} \code{\link[=plot_theta_modes]{plot_theta_modes()}} \code{\link[=plot_Phi_line]{plot_Phi_line()}}
 }
