@@ -16,8 +16,8 @@ plot_theta_probs(
 )
 }
 \arguments{
-\item{res}{Output from \code{swolca()}, \code{solca()}, or \code{wolca()} containing at
-least \code{estimates} (or \code{estimates_unadj}) and \code{data_vars}}
+\item{res}{An object of class \code{"swolca"}, \code{"solca"}, or \code{"wolca"}, resulting
+from a call to \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} or \code{\link[=wolca]{wolca()}}.}
 
 \item{item_labels}{String vector of names for the exposure items. Jx1. If
 \code{NULL} (default), numbers from 1 to J are used.}

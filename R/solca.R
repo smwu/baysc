@@ -49,7 +49,8 @@
 #' fixed sampler directly, bypassing the adaptive sampler. 
 #' 
 #' @return 
-#' If the fixed sampler is run, returns list `res` containing:
+#' If the fixed sampler is run, returns an object `res` of class `"solca"`; a 
+#' list containing the following:
 #' \describe{
 #'   \item{\code{estimates}}{List of posterior model results}
 #'   \item{\code{runtime}}{Total runtime for model}
@@ -223,7 +224,7 @@ solca <- function(x_mat, y_all, V_data = NULL, run_sampler = "both", glm_form,
     res <- list(MCMC_out = MCMC_out, K_fixed = K_fixed, K_MCMC = K_MCMC)
     # Save output
     if (save_res) {
-      save(res, file = paste0(save_path, "_swolca_adapt.RData"))
+      save(res, file = paste0(save_path, "_solca_adapt.RData"))
     }
     
     # Reduce memory burden
@@ -321,6 +322,8 @@ solca <- function(x_mat, y_all, V_data = NULL, run_sampler = "both", glm_form,
   data_vars <- list(n = n, J = J, R = R, q = q, X_data = x_mat, Y_data = y_all, 
                     V_data = V_data, glm_form = glm_form)
   res$data_vars <- data_vars
+  
+  class(res) <- "solca"
   
   # Save output
   if (save_res) {

@@ -190,9 +190,17 @@ init_probit <- function(K, n, q, V, mu0, Sig0, y_all, c_all) {
 #' @inheritParams init_OLCA
 #' @inheritParams init_probit
 #' @inheritParams swolca
-#' @param OLCA_params Output list from `init_OLCA()` containing `pi`, `c_all`, 
-#' and `theta`
-#' @param probit_params Output list from `init_probit()` containing `xi` and `z_all`
+#' @param OLCA_params Output list from `init_OLCA()` containing:
+#' \describe{
+#'   \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
+#'   \item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
+#'   \item{\code{c_all}}{Vector of random initial class assignments. nx1}
+#' }
+#' @param probit_params Output list from `init_probit()` containing:
+#' \describe{
+#'   \item{\code{xi}}{Matrix parameter xi for probit regression coefficients. Kxq}
+#'   \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
+#' }
 #' @param w_all Weights normalized to sum to n. nx1
 #' 
 #' @details
@@ -373,8 +381,15 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, 
 #'
 #' @inheritParams run_MCMC_Rcpp
 #' @inheritParams swolca
-#' @param MCMC_out Output from `run_MCMC_Rcpp` containing `pi_MCMC`, 
-#' `theta_MCMC`, `xi_MCMC`, `c_all_MCMC`, `z_all_MCMC`, and `loglik_MCMC`
+#' @param MCMC_out Output from `run_MCMC_Rcpp` containing:
+#' \describe{
+#'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+#'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+#'   \item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
+#'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+#'   \item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
+#'   \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
+#' }
 #' 
 #' @details
 #' First, `K_med`, the median number of classes with at least the `class_cutoff` 
@@ -512,10 +527,23 @@ post_process <- function(MCMC_out, J, R, q, class_cutoff) {
 #' variance adjustment
 #'
 #' @inheritParams run_MCMC_Rcpp
-#' @param MCMC_out Output from `run_MCMC_Rcpp` containing `pi_MCMC`, 
-#' `theta_MCMC`, `xi_MCMC`, `c_all_MCMC`, `z_all_MCMC`, and `loglik_MCMC`
-#' @param post_MCMC_out output from `post_process` containing `K_med`, `pi`, 
-#' `theta`, `xi`
+#' @param MCMC_out Output from `run_MCMC_Rcpp` containing:
+#' \describe{
+#'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+#'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+#'   \item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
+#'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+#'   \item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
+#'   \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
+#' }
+#' @param post_MCMC_out output from `post_process` containing:
+#' \describe{
+#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+#'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
+#'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
+#'   \item{\code{xi}}{Array of reduced and relabeled posterior samples for xi. (n_iter)x(K_med)xq}
+#'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
+#' }
 #' 
 #' @details
 #' First, duplicate classes that have the same modal exposure categories

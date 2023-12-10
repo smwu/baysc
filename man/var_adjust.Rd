@@ -29,9 +29,20 @@ var_adjust(
 \arguments{
 \item{mod_stan}{Stan model}
 
-\item{estimates}{Output from \code{get_estimates()} containing \code{K_red}, \code{pi_red},
-\code{theta_red}, \code{xi_red}, \code{pi_med}, \code{theta_med}, \code{xi_med}, \code{Phi_med}, \code{c_all},
-\code{pred_class_probs}, \code{loglik_med}}
+\item{estimates}{Output from \code{get_estimates()} containing:
+\describe{
+\item{\code{K_red}}{Number of unique classes}
+\item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+\item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
+\item{\code{xi_red}}{Array of final posterior samples for xi. Mx(K_red)xq}
+\item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
+\item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
+\item{\code{xi_med}}{Matrix of posterior median estimates for xi. (K_red)xq}
+\item{\code{Phi_med}}{Vector of final individual outcome probabilities. nx1}
+\item{\code{c_all}}{Vector of final individual class assignments. nx1}
+\item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+\item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1}
+}}
 
 \item{K}{Number of classes}
 

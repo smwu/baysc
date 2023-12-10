@@ -20,8 +20,12 @@ run_MCMC_Rcpp_wolca(
 )
 }
 \arguments{
-\item{OLCA_params}{Output list from \code{init_OLCA()} containing \code{pi}, \code{c_all},
-and \code{theta}}
+\item{OLCA_params}{Output list from \code{init_OLCA()} containing:
+\describe{
+\item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
+\item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
+\item{\code{c_all}}{Vector of random initial class assignments. nx1}
+}}
 
 \item{n_runs}{Number of MCMC iterations. Default is 20000.}
 

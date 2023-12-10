@@ -7,11 +7,20 @@
 get_estimates_wolca(MCMC_out, post_MCMC_out, n, J, x_mat)
 }
 \arguments{
-\item{MCMC_out}{Output from \code{run_MCMC_Rcpp_wolca} containing \code{pi_MCMC},
-\code{theta_MCMC}, and \code{c_all_MCMC}}
+\item{MCMC_out}{Output from \code{run_MCMC_Rcpp_wolca} containing:
+\describe{
+\item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+\item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+\item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+}}
 
-\item{post_MCMC_out}{output from \code{post_process_wolca} containing \code{K_med}, \code{pi},
-and \code{theta}}
+\item{post_MCMC_out}{output from \code{post_process_wolca} containing:
+\describe{
+\item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+\item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
+\item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
+\item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
+}}
 
 \item{n}{Number of individuals}
 

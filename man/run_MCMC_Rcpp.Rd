@@ -26,10 +26,18 @@ run_MCMC_Rcpp(
 )
 }
 \arguments{
-\item{OLCA_params}{Output list from \code{init_OLCA()} containing \code{pi}, \code{c_all},
-and \code{theta}}
+\item{OLCA_params}{Output list from \code{init_OLCA()} containing:
+\describe{
+\item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
+\item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
+\item{\code{c_all}}{Vector of random initial class assignments. nx1}
+}}
 
-\item{probit_params}{Output list from \code{init_probit()} containing \code{xi} and \code{z_all}}
+\item{probit_params}{Output list from \code{init_probit()} containing:
+\describe{
+\item{\code{xi}}{Matrix parameter xi for probit regression coefficients. Kxq}
+\item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
+}}
 
 \item{n_runs}{Number of MCMC iterations. Default is 20000.}
 

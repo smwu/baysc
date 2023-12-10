@@ -134,7 +134,8 @@ adjustment estimate. Default is 100.}
 e.g., "~/Documents/run". Default is \code{NULL}.}
 }
 \value{
-If the fixed sampler is run, returns list \code{res} containing:
+If the fixed sampler is run, returns an object \code{res} of class \code{"swolca"}; a
+list containing the following:
 \describe{
 \item{\code{estimates_unadj}}{List of unadjusted posterior model results}
 \item{\code{runtime}}{Total runtime for model}
@@ -234,7 +235,7 @@ res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 \dontrun{        
 # Run swolca on NHANES data
 data("data_nhanes")
-x_mat <- dplyr::select(data_nhanes, citrus:drinks)
+x_mat <- as.matrix(dplyr::select(data_nhanes, citrus:drinks))
 y_all <- data_nhanes$BP_flag
 stratum_id <- data_nhanes$stratum_id
 cluster_id <- data_nhanes$cluster_id
@@ -242,10 +243,10 @@ sampling_wt <- data_nhanes$sample_wt
 V_data <- dplyr::select(data_nhanes, age_cat, racethnic, smoker, physactive)
 glm_form <- "~ age_cat + racethnic + smoker + physactive"
 res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                     cluster_id = cluster_id, stratum_id = stratum_id, 
-                     V_data = V_data, run_sampler = "both", 
+                     cluster_id = cluster_id, stratum_id = stratum_id,
+                     V_data = V_data, run_sampler = "both",
                      glm_form = glm_form, adapt_seed = 20230225,
-                     n_runs = 20000, burn = 10000, thin = 5, save_res = TRUE,
+                     n_runs = 20000, burn = 19800, thin = 5, save_res = FALSE,
                      save_path = "~/Documents/run")
 }
 

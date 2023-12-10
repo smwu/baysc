@@ -5,8 +5,8 @@
 #' patterns are defined by the category with the highest probability 
 #' (i.e., the model category) for each exposure item.
 #'
-#' @param res Output from `swolca()`, `solca()`, or `wolca()` containing at 
-#' least `estimates` (or `estimates_unadj`) and `data_vars`
+#' @param res An object of class `"swolca"`, `"solca"`, or `"wolca"`, resulting 
+#' from a call to [swolca()] [solca()] or [wolca()]. 
 #' @param item_labels String vector of names for the exposure items. Jx1. If
 #' `NULL` (default), numbers from 1 to J are used.
 #' @param item_title String specifying the title for the exposure items. 
@@ -59,6 +59,12 @@ plot_theta_modes <- function(res, item_labels = NULL, item_title = "Item",
                              categ_title = "Consumption Level",
                              class_labels = NULL, 
                              class_title = "Dietary Pattern", ...) {
+  
+  # Check object class
+  if (!(class(res) %in% c("swolca", "solca", "wolca"))) {
+    stop("res must be an object of class `swolca`, `solca`, or `wolca`, resulting 
+         from a call to one of these functions")
+  }
   
   # Obtain theta estimates
   if (!is.null(res$estimates)) {
@@ -172,6 +178,12 @@ plot_theta_probs <- function(res, item_labels = NULL, categ_labels = NULL,
                              class_title = "Dietary Pattern", 
                              y_title = "Consumption Level Probability", ...) {
   
+  # Check object class
+  if (!(class(res) %in% c("swolca", "solca", "wolca"))) {
+    stop("res must be an object of class `swolca`, `solca`, or `wolca`, resulting 
+         from a call to one of these functions")
+  }
+  
   # Obtain theta estimates
   if (!is.null(res$estimates)) {
     # Estimates for `solca()` or `wolca()` or adjusted estimates for `swolca()` 
@@ -277,6 +289,12 @@ plot_pi_boxplots <- function(res, class_labels = NULL,
                              class_title = "Dietary Pattern",
                              y_title = "Class Membership Probability", ...) {
   
+  # Check object class
+  if (!(class(res) %in% c("swolca", "solca", "wolca"))) {
+    stop("res must be an object of class `swolca`, `solca`, or `wolca`, resulting 
+         from a call to one of these functions")
+  }
+  
   # Obtain pi estimates
   if (!is.null(res$estimates)) {
     # Estimates for `solca()` or `wolca()` or adjusted estimates for `swolca()` 
@@ -379,6 +397,12 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
                           cov_labels = NULL, class_labels = NULL, 
                           class_title = "Dietary Pattern", x_title = NULL, 
                           y_title = "Probability of Outcome", ...) {
+  
+  # Check object class
+  if (!(class(res) %in% c("swolca", "solca", "wolca"))) {
+    stop("res must be an object of class `swolca`, `solca`, or `wolca`, resulting 
+         from a call to one of these functions")
+  }
   
   if (!is.null(ci_level)) {
     if (!(ci_level > 0 & ci_level < 1)) {
@@ -559,6 +583,12 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
 #' get_regr_coefs(res = run_nhanes_swolca_results, ci_level = 0.95, digits = 2)
 #' 
 get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
+  
+  # Check object class
+  if (!(class(res) %in% c("swolca", "solca", "wolca"))) {
+    stop("res must be an object of class `swolca`, `solca`, or `wolca`, resulting 
+         from a call to one of these functions")
+  }
   
   if (!(ci_level > 0 & ci_level < 1)) {
     stop("ci_level must be between 0 and 1")

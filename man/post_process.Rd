@@ -7,8 +7,15 @@
 post_process(MCMC_out, J, R, q, class_cutoff)
 }
 \arguments{
-\item{MCMC_out}{Output from \code{run_MCMC_Rcpp} containing \code{pi_MCMC},
-\code{theta_MCMC}, \code{xi_MCMC}, \code{c_all_MCMC}, \code{z_all_MCMC}, and \code{loglik_MCMC}}
+\item{MCMC_out}{Output from \code{run_MCMC_Rcpp} containing:
+\describe{
+\item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+\item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+\item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
+\item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+\item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
+\item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
+}}
 
 \item{J}{Number of exposure items}
 

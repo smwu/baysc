@@ -54,7 +54,8 @@
 #' fixed sampler directly, bypassing the adaptive sampler. 
 #'
 #' @return
-#' If the fixed sampler is run, returns list `res` containing:
+#' If the fixed sampler is run, returns an object `res` of class `"wolca"`; a 
+#' list containing the following:
 #' \describe{
 #'   \item{\code{estimates}}{List of posterior model results}
 #'   \item{\code{runtime}}{Total runtime for model}
@@ -202,7 +203,7 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
     res <- list(MCMC_out = MCMC_out, K_fixed = K_fixed, K_MCMC = K_MCMC)
     # Save output
     if (save_res) {
-      save(res, file = paste0(save_path, "_swolca_adapt.RData"))
+      save(res, file = paste0(save_path, "_wolca_adapt.RData"))
     }
     
     # Reduce memory burden
@@ -283,6 +284,8 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
                     true_Si = stratum_id, cluster_id = cluster_id, 
                     ci_level = ci_level)
   res$data_vars <- data_vars
+  
+  class(res) <- "wolca"
   
   # Save output
   if (save_res) {

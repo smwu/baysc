@@ -118,12 +118,12 @@ res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                      cluster_id = cluster_id, stratum_id = stratum_id, 
                      V_data = V_data, run_sampler = "both", 
                      glm_form = glm_form, adapt_seed = 20230225, 
-                     n_runs = 20000, burn = 10000, thin = 5, save_res = TRUE,
+                     n_runs = 20000, burn = 19800, thin = 5, save_res = TRUE,
                      save_path = "~/Downloads/run_nhanes")
 
-load("~/Downloads/run_nhanes_swolca_adapt.RData")
-run_nhanes_swolca_adapt <- res
-usethis::use_data(run_nhanes_swolca_adapt, overwrite = TRUE, compress = "xz")
+# load("~/Downloads/run_nhanes_swolca_adapt.RData")
+# run_nhanes_swolca_adapt <- res
+# usethis::use_data(run_nhanes_swolca_adapt, overwrite = TRUE, compress = "xz")
 
 load("~/Downloads/run_nhanes_swolca_results.RData")
 run_nhanes_swolca_results <- res

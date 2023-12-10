@@ -7,8 +7,12 @@
 post_process_wolca(MCMC_out, J, R, class_cutoff)
 }
 \arguments{
-\item{MCMC_out}{Output from \code{run_MCMC_Rcpp_wolca} containing \code{pi_MCMC},
-\code{theta_MCMC}, and \code{c_all_MCMC}}
+\item{MCMC_out}{Output from \code{run_MCMC_Rcpp_wolca} containing:
+\describe{
+\item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+\item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+\item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+}}
 
 \item{J}{Number of exposure items}
 

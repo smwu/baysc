@@ -105,7 +105,8 @@ estimates. Default is \code{0.95}.}
 e.g., "~/Documents/run". Default is \code{NULL}.}
 }
 \value{
-If the fixed sampler is run, returns list \code{res} containing:
+If the fixed sampler is run, returns an object \code{res} of class \code{"wolca"}; a
+list containing the following:
 \describe{
 \item{\code{estimates}}{List of posterior model results}
 \item{\code{runtime}}{Total runtime for model}

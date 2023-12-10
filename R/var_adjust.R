@@ -74,9 +74,20 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' @inheritParams run_MCMC_Rcpp
 #' @inheritParams swolca
 #' @param mod_stan Stan model
-#' @param estimates Output from `get_estimates()` containing `K_red`, `pi_red`, 
-#' `theta_red`, `xi_red`, `pi_med`, `theta_med`, `xi_med`, `Phi_med`, `c_all`, 
-#' `pred_class_probs`, `loglik_med`
+#' @param estimates Output from `get_estimates()` containing:
+#' \describe{
+#'   \item{\code{K_red}}{Number of unique classes}
+#'   \item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+#'   \item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
+#'   \item{\code{xi_red}}{Array of final posterior samples for xi. Mx(K_red)xq}
+#'   \item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
+#'   \item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
+#'   \item{\code{xi_med}}{Matrix of posterior median estimates for xi. (K_red)xq}
+#'   \item{\code{Phi_med}}{Vector of final individual outcome probabilities. nx1}
+#'   \item{\code{c_all}}{Vector of final individual class assignments. nx1}
+#'   \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+#'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1} 
+#' }
 #' @param R_j Jx1 vector of number of exposure categories for each item
 #' 
 #' @details
@@ -201,7 +212,7 @@ var_adjust <- function(mod_stan, estimates, K, J, R_j, R, n, q, x_mat, y_all, V,
                        num_reps) {
   
   #=============== Run Stan model ==============================================
-  # Set hyperparameters with K classes
+  # Set hyperparameters with K classes (usually fewer classes than K_fixed)
   alpha <- rep(1, K) / K
   eta <- matrix(0.01, nrow = J, ncol = R)
   for (j in 1:J) {
@@ -290,16 +301,23 @@ var_adjust <- function(mod_stan, estimates, K, J, R_j, R, n, q, x_mat, y_all, V,
   if (min(Re(eigen(V1)$values)) < 0) { 
     V1_pd <- Matrix::nearPD(V1)
     R1 <- chol(V1_pd$mat)
+    V1_pd_diff <- sum(abs(eigen(V1)$values - eigen(V1_pd$mat)$values))
     print(paste0("V1: absolute eigenvalue difference to nearest p.d. matrix: ", 
-                 sum(abs(eigen(V1)$values - eigen(V1_pd$mat)$values))))
+                 V1_pd_diff))
   } else {
     R1 <- chol(V1)
   }
   if (min(Re(eigen(H_inv)$values)) < 0) {
     H_inv_pd <- Matrix::nearPD(H_inv)
     R2_inv <- chol(H_inv_pd$mat)
+    H_inv_pd_diff <- sum(abs(eigen(H_inv)$values - eigen(H_inv_pd$mat)$values))
     print(paste0("H_inv: absolute eigenvalue difference to nearest p.d. matrix: ", 
-                 sum(abs(eigen(H_inv)$values - eigen(H_inv_pd$mat)$values))))
+                 H_inv_pd_diff))
+    if (H_inv_pd_diff > 5) {
+      stop("NaNs created during variance adjustment, likely due to lack of 
+      smoothness in the posterior. Please run the sampler for more iterations or 
+      set adjust_var to FALSE.")
+    }
   } else {
     R2_inv <- chol(H_inv)
   }

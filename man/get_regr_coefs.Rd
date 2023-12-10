@@ -7,8 +7,8 @@
 get_regr_coefs(res, ci_level = 0.95, digits = 2)
 }
 \arguments{
-\item{res}{Output from \code{swolca()}, \code{solca()}, or \code{wolca()} containing at
-least \code{estimates} (or \code{estimates_unadj}) and \code{data_vars}}
+\item{res}{An object of class \code{"swolca"}, \code{"solca"}, or \code{"wolca"}, resulting
+from a call to \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} or \code{\link[=wolca]{wolca()}}.}
 
 \item{ci_level}{Numeric from 0 to 1 specifying the credible interval level.
 Default is 0.95, which gives a 95\\% equal-tailed interval composed of the

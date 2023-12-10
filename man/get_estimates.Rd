@@ -7,11 +7,24 @@
 get_estimates(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat)
 }
 \arguments{
-\item{MCMC_out}{Output from \code{run_MCMC_Rcpp} containing \code{pi_MCMC},
-\code{theta_MCMC}, \code{xi_MCMC}, \code{c_all_MCMC}, \code{z_all_MCMC}, and \code{loglik_MCMC}}
+\item{MCMC_out}{Output from \code{run_MCMC_Rcpp} containing:
+\describe{
+\item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+\item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+\item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
+\item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+\item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
+\item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
+}}
 
-\item{post_MCMC_out}{output from \code{post_process} containing \code{K_med}, \code{pi},
-\code{theta}, \code{xi}}
+\item{post_MCMC_out}{output from \code{post_process} containing:
+\describe{
+\item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+\item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
+\item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
+\item{\code{xi}}{Array of reduced and relabeled posterior samples for xi. (n_iter)x(K_med)xq}
+\item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
+}}
 
 \item{n}{Number of individuals}
 

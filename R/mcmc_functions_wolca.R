@@ -126,8 +126,12 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
 #'
 #' @inheritParams run_MCMC_Rcpp_wolca
 #' @inheritParams wolca
-#' @param MCMC_out Output from `run_MCMC_Rcpp_wolca` containing `pi_MCMC`, 
-#' `theta_MCMC`, and `c_all_MCMC`
+#' @param MCMC_out Output from `run_MCMC_Rcpp_wolca` containing:
+#' \describe{
+#'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+#'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+#'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+#' }
 #' 
 #' @details
 #' First, `K_med`, the median number of classes with at least the `class_cutoff` 
@@ -240,10 +244,19 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
 #' for the unsupervised WOLCA model
 #'
 #' @inheritParams run_MCMC_Rcpp_wolca
-#' @param MCMC_out Output from `run_MCMC_Rcpp_wolca` containing `pi_MCMC`, 
-#' `theta_MCMC`, and `c_all_MCMC`
-#' @param post_MCMC_out output from `post_process_wolca` containing `K_med`, `pi`, 
-#' and `theta`
+#' @param MCMC_out Output from `run_MCMC_Rcpp_wolca` containing:
+#' \describe{
+#'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
+#'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
+#'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+#' }
+#' @param post_MCMC_out output from `post_process_wolca` containing:
+#' \describe{
+#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+#'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
+#'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
+#'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
+#' }
 #' 
 #' @details
 #' First, duplicate classes that have the same modal exposure categories
@@ -392,8 +405,16 @@ get_estimates_wolca <- function(MCMC_out, post_MCMC_out, n, J, x_mat) {
 #' unsupervised WOLCA 
 #'
 #' @inheritParams wolca
-#' @param estimates Output from `get_estimates_wolca()` containing `K_red`, 
-#' `pi_red`, `theta_red`, `pi_med`, `theta_med`, `c_all`, `pred_class_probs`
+#' @param estimates Output from `get_estimates_wolca()` containing:
+#' \describe{
+#'   \item{\code{K_red}}{Number of unique classes}
+#'   \item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+#'   \item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
+#'   \item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
+#'   \item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
+#'   \item{\code{c_all}}{Vector of final individual class assignments. nx1}
+#'   \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+#' }
 #' @param w_all Weights normalized to sum to n. nx1
 #' @param q Number of regression covariates excluding class assignment
 #' 

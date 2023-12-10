@@ -18,8 +18,16 @@ fit_probit_wolca(
 )
 }
 \arguments{
-\item{estimates}{Output from \code{get_estimates_wolca()} containing \code{K_red},
-\code{pi_red}, \code{theta_red}, \code{pi_med}, \code{theta_med}, \code{c_all}, \code{pred_class_probs}}
+\item{estimates}{Output from \code{get_estimates_wolca()} containing:
+\describe{
+\item{\code{K_red}}{Number of unique classes}
+\item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+\item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
+\item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
+\item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
+\item{\code{c_all}}{Vector of final individual class assignments. nx1}
+\item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+}}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
