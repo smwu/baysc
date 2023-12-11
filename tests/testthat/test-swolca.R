@@ -23,15 +23,15 @@ res_fixed <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                     K_fixed = 3, n_runs = 5, burn = 1, thin = 1, save_res = FALSE)
 
 test_that("adaptive sampler works", {
-  expect_equal(res_adapt$K_fixed, 5)
-  expect_equal(max(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 1168) 
-  expect_equal(min(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 1)  
+  expect_equal(res_adapt$K_fixed, 7)
+  expect_equal(max(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 1002) 
+  expect_equal(min(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 258)  
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates_unadj$pi_med, 2), c(0.16, 0.24, 0.59))
-  expect_equal(max(table(res_fixed$estimates_unadj$c_all)), 1812) 
-  expect_equal(min(table(res_fixed$estimates_unadj$c_all)), 1013)  
+  expect_equal(round(res_fixed$estimates_unadj$pi_med, 2), c(0.48, 0.31, 0.21))
+  expect_equal(max(table(res_fixed$estimates_unadj$c_all)), 2156) 
+  expect_equal(min(table(res_fixed$estimates_unadj$c_all)), 842)  
 })
 
 
@@ -45,8 +45,8 @@ res_fixed_strat <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_w
                           thin = 1, save_res = FALSE)
 
 test_that("stratum covariate works", {
-  expect_equal(round(res_fixed_strat$estimates_unadj$pi_med, 2), c(0.19, 0.24, 0.57))
-  expect_equal(max(table(res_fixed_strat$estimates_unadj$c_all)), 1812) 
-  expect_equal(min(table(res_fixed_strat$estimates_unadj$c_all)), 1013) 
+  expect_equal(round(res_fixed_strat$estimates_unadj$pi_med, 2), c(0.51, 0.26, 0.23))
+  expect_equal(max(table(res_fixed_strat$estimates_unadj$c_all)), 2156) 
+  expect_equal(min(table(res_fixed_strat$estimates_unadj$c_all)), 842) 
 })
 

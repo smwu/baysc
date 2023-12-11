@@ -12,7 +12,7 @@ simulate_pop(
   N_s = c(60000, 20000),
   modal_theta_prob = 0.85,
   formula_c = "~ s_all",
-  formula_x = "~ c_all + s_all",
+  formula_x = "~ c_all",
   formula_y = "~ c_all * s_all",
   beta_mat_c = NULL,
   beta_mat_x = NULL,
@@ -49,8 +49,8 @@ which generates C dependent on stratum variable S. All variables in the
 formula must be \code{"c_all"}, \code{"s_all"}, or specified in \code{V_additional}.}
 
 \item{formula_x}{String specifying formula for multinomial logistic regression
-to create multivariate categorical exposure X. Default is \code{"~ c_all + s_all"},
-which generates X dependent on latent class C and stratum S. All variables in
+to create multivariate categorical exposure X. Default is \code{"~ c_all"},
+which generates X dependent on latent class C. All variables in
 the formula must be \code{"c_all"}, \code{"s_all"}, or specified in \code{V_additional}.}
 
 \item{formula_y}{String specifying formula for logistic regression to create
@@ -137,9 +137,9 @@ If \code{NULL} (default) is used for \code{beta_mat_c}, \code{beta_mat_x}, or \c
 the following default values are used, corresponding to the scenario with K=3
 latent class and H=2 levels for variable S: \code{beta_mat_c} is a 3x2 matrix with
 values \code{c(0, 0, 0.5, 1.3, -0.4, 1.5)} by row; \code{beta_mat_x} is a list of J=30
-4x4 matrices as in the example provided below; and \code{beta_vec_y} is a vector
+4x4 matrices as in Example 1 provided below; and \code{beta_vec_y} is a vector
 of length \eqn{3*2=6} with values \code{c(1, -0.7, -1.5, -0.5, -0.5, -0.3)}. The
-generation of default values is demonstrated in the example provided below.
+generation of default values is demonstrated in Example 1 provided below.
 
 To save the simulated population, set \code{save_res = TRUE} (default) and
 \code{save_path} to a string that specifies both the location and the beginning of
@@ -157,10 +157,9 @@ formula_c <- "~ s_all"
 beta_mat_c <- matrix(c(0, 0, 0.5, 1.3, -0.4, 1.5), 
                      byrow = TRUE, nrow = K, ncol = H)
 
-# Generate X ~ C + S
-formula_x <- "~ c_all + s_all"
-V_unique <- expand.grid(factor(1:K), factor(1:H)) # Df of unique cov values
-colnames(V_unique) <- c("c_all", "s_all")
+# Generate X ~ C
+formula_x <- "~ c_all"
+V_unique <- data.frame(c_all = factor(1:K)) # Df of unique cov values
 design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
                                          data = V_unique)
 thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
@@ -171,7 +170,7 @@ thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
                                       rep(4, times = 0.4 * J),
                                       rep(1, times = 0.3 * J))))
 beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
-                          R = R, design_mat = design_mat_unique, depends_s = TRUE)
+                          R = R, design_mat = design_mat_unique)
 
 # Generate Y ~ C + S + C:S
 formula_y <- "~ c_all * s_all"
@@ -185,6 +184,27 @@ sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
                         beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
                         cluster_size = cluster_size, 
                         pop_seed = pop_seed, save_res = FALSE)
+                        
+\dontrun{
+### Example 2: Selection-dependent pattern profiles     
+# Generate X ~ C + S
+formula_x <- "~ c_all + s_all"
+V_unique <- expand.grid(factor(1:K), factor(1:H)) # Df of unique cov values
+colnames(V_unique) <- c("c_all", "s_all")
+design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
+                                         data = V_unique)
+beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
+                          R = R, design_mat = design_mat_unique, depends_s = TRUE)
+
+# Create population
+sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
+                        modal_theta_prob = modal_theta_prob, 
+                        formula_c = formula_c, formula_x = formula_x, 
+                        formula_y = formula_y, beta_mat_c = beta_mat_c, 
+                        beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
+                        cluster_size = cluster_size, 
+                        pop_seed = pop_seed, save_res = FALSE)
+}
 
 \dontrun{
 ### Example 2: Additional effect modifiers for Y      

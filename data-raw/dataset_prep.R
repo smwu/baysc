@@ -88,7 +88,7 @@ data_nhanes <- data_nhanes %>%
 usethis::use_data(data_nhanes, overwrite = TRUE)
 
 
-#================== Code to prepare NHANES results datasets ====================
+#========= Code to prepare `run_nhanes_swolca_results` dataset =================
 data("data_nhanes")
 x_mat <- as.matrix(dplyr::select(data_nhanes, citrus:drinks))
 y_all <- data_nhanes$BP_flag
@@ -129,3 +129,12 @@ load("~/Downloads/run_nhanes_swolca_results.RData")
 run_nhanes_swolca_results <- res
 usethis::use_data(run_nhanes_swolca_results, overwrite = TRUE, compress = "xz")
 
+
+
+#================= Code to prepare `sim_data` dataset ==========================
+# Create population with default parameters
+sim_pop <- simulate_pop(save_res = FALSE)
+# Create sample with default parameters
+sim_samp <- simulate_samp(sim_pop = sim_pop, save_res = FALSE)
+sim_data <- sim_samp
+usethis::use_data(sim_data, overwrite = TRUE)

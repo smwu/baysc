@@ -140,37 +140,51 @@
 
 #' Simulated data
 #' 
-#' A dataset simulated using `simulate_data.R`
+#' A dataset simulated using [simulate_pop()] and [simulate_samp()].
 #' @docType data
 #' @usage data(sim_data)
-#' @format A list with 20 elements:
+#' @format A list with 23 elements:
 #' \describe{
-#'   \item{\code{samp_ind}}{Vector of population indices for sampled individuals. nx1}
-#'   \item{\code{sample_wt}}{Vector of individual survey sampling weights. nx1}
-#'   \item{\code{true_Si}}{Vector of stratum indicators. nx1}
-#'   \item{\code{cluster_id}}{Vector of cluster indicators. nx1}
-#'   \item{\code{X_data}}{Matrix of multivariate categorical exposure. nxp}
-#'   \item{\code{Y_data}}{Vector of outcomes. nx1}
-#'   \item{\code{N}}{Population size}
-#'   \item{\code{N_s}}{Vector of stratum-specific population sizes. Sx1}
-#'   \item{\code{p}}{Number of exposure items}
-#'   \item{\code{d}}{Number of exposure categories}
-#'   \item{\code{S}}{Number of strata}
-#'   \item{\code{true_K}}{True number of latent classes}
-#'   \item{\code{true_pi_s}}{Matrix of true class membership probabilities by stratum. SxK}
-#'   \item{\code{true_pi}}{Vector of true class membership probabilities across strata. Kx1}
-#'   \item{\code{true_global_patterns}}{Matrix of true modal category values for 
-#'   each exposure item and latent class. pxK}
-#'   \item{\code{true_global_thetas}}{Array of true item level probabilities for 
-#'   each exposure item and latent class. pxKxR}
-#'   \item{\code{true_xi}}{Matrix of true probit regression model coefficients. Kxq}
-#'   \item{\code{true_Ci}}{Vector of true latent class assignments. nx1}
-#'   \item{\code{true_Phi_mat}}{Matrix of true outcome probabilities for each
-#'   class and stratum. KxS}
-#'   \item{\code{true_Phi}}{Vector of true outcome probabilities for all 
+#'   \item{\code{samp_ind}}{Vector of population indices for sampled 
+#'   individuals. nx1, where n=4000.}
+#'   \item{\code{sample_wt}}{Vector of sampling weights for sampled 
 #'   individuals. nx1}
+#'   \item{\code{N}}{Population size}
+#'   \item{\code{J}}{Number of exposure items}
+#'   \item{\code{R}}{Number of exposure categories}
+#'   \item{\code{H}}{Number of stratum (i.e., levels of S)}
+#'   \item{\code{N_s}}{Vector of population sizes for levels of S. Hx1, where H = 2.}
+#'   \item{\code{true_K}}{True number of latent classes, K}
+#'   \item{\code{true_Ai}}{`NULL` or vector of additional continuous variable 
+#'   for sampled individuals. nx1}
+#'   \item{\code{true_Bi}}{`NULL` or vector of additional binary variable for 
+#'   sampled individuals. nx1}
+#'   \item{\code{true_Si}}{Vector of true stratum indicators for sampled 
+#'   individuals. nx1}
+#'   \item{\code{true_Ci}}{Vector of true latent class indicators for sampled 
+#'   individuals. nx1}
+#'   \item{\code{true_pi}}{Vector of true pi values overall in the population. 
+#'   Kx1, where K = 3.}
+#'   \item{\code{true_pi_s}}{`NULL` or HxK matrix of true pi values within each 
+#'   level of S}
+#'   \item{\code{X_data}}{Matrix of multivariate categorical exposure for 
+#'   sampled individuals. nxJ, where J = 30.}
+#'   \item{\code{true_global_patterns}}{Matrix of true global exposure patterns 
+#'   defined by modal category. JxK}
+#'   \item{\code{true_global_thetas}}{Array of true thetas. JxKxR, where R = 4.}
+#'   \item{\code{Y_data}}{Vector of binary outcome for sampled individuals. nx1}
+#'   \item{\code{cluster_id}}{Vector of true cluster indicators for sampled 
+#'   individuals. nx1}
+#'   \item{\code{cluster_size}}{Cluster size}
+#'   \item{\code{true_xi}}{Matrix of probit regression coefficients in mixture 
+#'   reference coding. Kxq, where q is the number of covariate terms in the 
+#'   regression, excluding all terms involving C; q = 2 for this dataset.}
+#'   \item{\code{true_Phi}}{Vector of true outcome probabilities for sampled 
+#'   individuals. nx1}
+#'   \item{\code{true_Phi_mat}}{`NULL` or matrix of true outcome probabilities
+#'   for individuals aggregated by C and S. KxH}
 #' }
-#' @source Simulated data using `simulate_data.R`
+#' @source Simulated data using [simulate_pop()] and [simulate_samp()].
 #' @keywords datasets
 #' @examples 
 #' data(sim_data)
@@ -194,7 +208,7 @@
 #'   \item{\code{estimates}}{List of adjusted posterior model results with 
 #'   correct uncertainty estimation}
 #' }
-#' @source Result from running `swocla()` on `data_nhanes`
+#' @source Result from running `swolca()` on `data_nhanes`
 #' @keywords datasets
 #' @examples 
 #' data(run_nhanes_swolca_results)

@@ -29,9 +29,9 @@ test_that("adaptive sampler works", {
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.17, 0.25, 0.58))
-  expect_equal(max(table(res_fixed$estimates$c_all)), 1812) 
-  expect_equal(min(table(res_fixed$estimates$c_all)), 1013)  
+  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.51, 0.26, 0.23))
+  expect_equal(max(table(res_fixed$estimates$c_all)), 2156) 
+  expect_equal(min(table(res_fixed$estimates$c_all)), 842)  
 })
 
 
@@ -45,8 +45,8 @@ res_fixed_strat <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt
                           thin = 1, save_res = FALSE)
 
 test_that("stratum covariate works", {
-  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.17, 0.25, 0.58))
-  expect_equal(max(table(res_fixed_strat$estimates$c_all)), 1812) 
-  expect_equal(min(table(res_fixed_strat$estimates$c_all)), 1013) 
+  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.51, 0.26, 0.23))
+  expect_equal(max(table(res_fixed_strat$estimates$c_all)), 2156) 
+  expect_equal(min(table(res_fixed_strat$estimates$c_all)), 842) 
 })
 

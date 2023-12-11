@@ -21,15 +21,15 @@ res_fixed <- solca(x_mat = x_mat, y_all = y_all, V = V,
                     K_fixed = 3, n_runs = 5, burn = 1, thin = 1, save_res = FALSE)
 
 test_that("adaptive sampler works", {
-  expect_equal(res_adapt$K_fixed, 3)
-  expect_equal(max(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 1672) 
-  expect_equal(min(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 8)  
+  expect_equal(res_adapt$K_fixed, 7)
+  expect_equal(max(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 1002) 
+  expect_equal(min(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 242)  
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.24, 0.29, 0.48))
-  expect_equal(max(table(res_fixed$estimates$c_all)), 1812) 
-  expect_equal(min(table(res_fixed$estimates$c_all)), 1013)  
+  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.69, 0.31))
+  expect_equal(max(table(res_fixed$estimates$c_all)), 2600) 
+  expect_equal(min(table(res_fixed$estimates$c_all)), 1400)  
 })
 
 
@@ -42,8 +42,8 @@ res_fixed_strat <- solca(x_mat = x_mat, y_all = y_all, V = V,
                           thin = 1, save_res = FALSE)
 
 test_that("stratum covariate works", {
-  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.27, 0.28, 0.45))
-  expect_equal(max(table(res_fixed_strat$estimates$c_all)), 1812) 
-  expect_equal(min(table(res_fixed_strat$estimates$c_all)), 1013) 
+  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.54, 0.21, 0.25))
+  expect_equal(max(table(res_fixed_strat$estimates$c_all)), 2156) 
+  expect_equal(min(table(res_fixed_strat$estimates$c_all)), 842) 
 })
 

@@ -18,7 +18,7 @@ correct uncertainty estimation}
 }
 }
 \source{
-Result from running \code{swocla()} on \code{data_nhanes}
+Result from running \code{swolca()} on \code{data_nhanes}
 }
 \usage{
 data(run_nhanes_swolca_results)

@@ -396,8 +396,8 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' which generates C dependent on stratum variable S. All variables in the 
 #' formula must be `"c_all"`, `"s_all"`, or specified in `V_additional`.
 #' @param formula_x String specifying formula for multinomial logistic regression 
-#' to create multivariate categorical exposure X. Default is `"~ c_all + s_all"`, 
-#' which generates X dependent on latent class C and stratum S. All variables in 
+#' to create multivariate categorical exposure X. Default is `"~ c_all"`, 
+#' which generates X dependent on latent class C. All variables in 
 #' the formula must be `"c_all"`, `"s_all"`, or specified in `V_additional`.
 #' @param formula_y String specifying formula for logistic regression to create 
 #' binary outcome Y. Default is `"~ c_all * s_all"`, which generates Y dependent 
@@ -438,9 +438,9 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' the following default values are used, corresponding to the scenario with K=3 
 #' latent class and H=2 levels for variable S: `beta_mat_c` is a 3x2 matrix with
 #' values `c(0, 0, 0.5, 1.3, -0.4, 1.5)` by row; `beta_mat_x` is a list of J=30
-#' 4x4 matrices as in the example provided below; and `beta_vec_y` is a vector 
+#' 4x4 matrices as in Example 1 provided below; and `beta_vec_y` is a vector 
 #' of length \eqn{3*2=6} with values `c(1, -0.7, -1.5, -0.5, -0.5, -0.3)`. The 
-#' generation of default values is demonstrated in the example provided below.
+#' generation of default values is demonstrated in Example 1 provided below.
 #' 
 #' To save the simulated population, set `save_res = TRUE` (default) and 
 #' `save_path` to a string that specifies both the location and the beginning of 
@@ -500,10 +500,9 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' beta_mat_c <- matrix(c(0, 0, 0.5, 1.3, -0.4, 1.5), 
 #'                      byrow = TRUE, nrow = K, ncol = H)
 #' 
-#' # Generate X ~ C + S
-#' formula_x <- "~ c_all + s_all"
-#' V_unique <- expand.grid(factor(1:K), factor(1:H)) # Df of unique cov values
-#' colnames(V_unique) <- c("c_all", "s_all")
+#' # Generate X ~ C
+#' formula_x <- "~ c_all"
+#' V_unique <- data.frame(c_all = factor(1:K)) # Df of unique cov values
 #' design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
 #'                                          data = V_unique)
 #' thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
@@ -514,7 +513,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'                                       rep(4, times = 0.4 * J),
 #'                                       rep(1, times = 0.3 * J))))
 #' beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
-#'                           R = R, design_mat = design_mat_unique, depends_s = TRUE)
+#'                           R = R, design_mat = design_mat_unique)
 #' 
 #' # Generate Y ~ C + S + C:S
 #' formula_y <- "~ c_all * s_all"
@@ -528,6 +527,27 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'                         beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
 #'                         cluster_size = cluster_size, 
 #'                         pop_seed = pop_seed, save_res = FALSE)
+#'                         
+#' \dontrun{
+#' ### Example 2: Selection-dependent pattern profiles     
+#' # Generate X ~ C + S
+#' formula_x <- "~ c_all + s_all"
+#' V_unique <- expand.grid(factor(1:K), factor(1:H)) # Df of unique cov values
+#' colnames(V_unique) <- c("c_all", "s_all")
+#' design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
+#'                                          data = V_unique)
+#' beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
+#'                           R = R, design_mat = design_mat_unique, depends_s = TRUE)
+#' 
+#' # Create population
+#' sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
+#'                         modal_theta_prob = modal_theta_prob, 
+#'                         formula_c = formula_c, formula_x = formula_x, 
+#'                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
+#'                         beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
+#'                         cluster_size = cluster_size, 
+#'                         pop_seed = pop_seed, save_res = FALSE)
+#' }
 #' 
 #' \dontrun{
 #' ### Example 2: Additional effect modifiers for Y      
@@ -555,7 +575,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4, 
                          N_s = c(60000, 20000),  modal_theta_prob = 0.85, 
                          formula_c = "~ s_all", 
-                         formula_x = "~ c_all + s_all", 
+                         formula_x = "~ c_all", 
                          formula_y = "~ c_all * s_all", 
                          beta_mat_c = NULL, beta_mat_x = NULL,
                          beta_vec_y = NULL, xi_mat_y = NULL, 
@@ -677,9 +697,8 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
   # Set defaults for generating exposure X dependent on C and S and check
   # beta_mat_x for errors
   if (is.null(beta_mat_x)) {
-    if (K != 3 | H != 2) {
-      stop("If default for beta_mat_x is to be used, K must be equal to 3 and H 
-         must be equal to 2.")
+    if (K != 3) {
+      stop("If default for beta_mat_x is to be used, K must be equal to 3.")
     }
     thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
                                           rep(3, times = 0.5 * J)),
@@ -690,7 +709,7 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
                                           rep(1, times = 0.3 * J))))
     beta_mat_x <- get_betas_x(thetas = thetas,
                               modal_theta_prob = modal_theta_prob, R = R,
-                              design_mat = design_mat_x, depends_s = TRUE)
+                              design_mat = design_mat_x, depends_s = FALSE)
   } else if (!is.list(beta_mat_x) | !is.matrix(beta_mat_x[[1]])) {
     # Check that beta_mat_x is a list of matrices
     stop("beta_mat_x must be a list of matrices")
@@ -780,7 +799,7 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
     cov_terms <- colnames(stats::model.matrix(stats::as.formula(formula_y)))
     cov_terms_no_c <- cov_terms[!stringr::str_detect(cov_terms, "c_all")]
     q <- length(cov_terms_no_c)
-    xi_mat_y <- convert_ref_to_mix(K = K, q = q, est_beta = beta_vec_y)
+    xi_mat_y <- convert_ref_to_mix(K = K, q = q, est_beta = beta_vec_y)$est_xi
   }
   
   # Get vector of individual linear predictors
@@ -1078,7 +1097,7 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
   
   #================ Save and return output =====================================
   sim_samp <- list(samp_ind = samp_ind, sample_wt = sample_wt, 
-                   N = sim_pop$N, J = sim_pop$J, R = sim_pop$R, H = sim_pop$S, 
+                   N = sim_pop$N, J = sim_pop$J, R = sim_pop$R, H = sim_pop$H, 
                    N_s = sim_pop$N_s, true_K = sim_pop$true_K,
                    true_Ai = true_Ai, true_Bi = true_Bi, true_Si = true_Si,
                    true_Ci = true_Ci,  true_pi = sim_pop$true_pi, 
