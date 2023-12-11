@@ -220,7 +220,7 @@ init_probit <- function(K, n, q, V, mu0, Sig0, y_all, c_all) {
 #'   \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 #' }
 #'
-#' @seealso [post_process()] [get_estimates()] [var_adjust()] [swolca()] 
+#' @seealso [post_process()] [get_estimates()] [swolca_var_adjust()] [swolca()] 
 #' [solca()] [run_MCMC_Rcpp_wolca()]
 #' @importFrom gtools permute
 #' @importFrom LaplacesDemon rinvgamma
@@ -410,7 +410,7 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, 
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
 #' }
 #' 
-#' @seealso [run_MCMC_Rcpp()] [get_estimates()] [var_adjust()] [swolca()] [solca()]
+#' @seealso [run_MCMC_Rcpp()] [get_estimates()] [swolca_var_adjust()] [swolca()] [solca()]
 #' @importFrom stats median as.dist hclust cutree
 #' @importFrom e1071 hamming.distance
 #' @export
@@ -557,7 +557,8 @@ post_process <- function(MCMC_out, J, R, q, class_cutoff) {
 #' Returns list `estimates` containing:
 #' \describe{
 #'   \item{\code{K_red}}{Number of unique classes}
-#'   \item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+#'   \item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red), 
+#'   where M is the number of MCMC iterations after burn-in and thinning.}
 #'   \item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
 #'   \item{\code{xi_red}}{Array of final posterior samples for xi. Mx(K_red)xq}
 #'   \item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
@@ -569,7 +570,7 @@ post_process <- function(MCMC_out, J, R, q, class_cutoff) {
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1} 
 #' }
 #'
-#' @seealso [run_MCMC_Rcpp()] [post_process()] [var_adjust()] [swolca()] [solca()]
+#' @seealso [run_MCMC_Rcpp()] [post_process()] [swolca_var_adjust()] [swolca()] [solca()]
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
 #' @importFrom LaplacesDemon rcat

@@ -33,7 +33,7 @@ solca(
 \arguments{
 \item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
-\item{y_all}{Vector of outcomes. nx1}
+\item{y_all}{Vector of binary outcomes. nx1}
 
 \item{V_data}{Dataframe of additional regression covariates. nxq. Factor
 covariates must be converted to factors. If \code{NULL} (default), no additional
@@ -116,15 +116,27 @@ e.g., "~/Documents/run". Default is \code{NULL}.}
 If the fixed sampler is run, returns an object \code{res} of class \code{"solca"}; a
 list containing the following:
 \describe{
-\item{\code{estimates}}{List of posterior model results}
+\item{\code{estimates}}{List of posterior model results, resulting from a
+call to \code{\link[=get_estimates]{get_estimates()}}}
 \item{\code{runtime}}{Total runtime for model}
-\item{\code{data_vars}}{List of data variables used}
-\item{\code{MCMC_out}}{List of full MCMC output}
-\item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
+\item{\code{data_vars}}{List of data variables used, including:
+\code{n}: Sample size.
+\code{J}: Number of exposure items.
+\code{R_j}: Number vector of number of exposure categories for each item; Jx1.
+\code{R}: Maximum number of exposure categories across items.
+\code{q}: Number of regression covariates excluding class assignment.
+\code{x_mat}: Matrix of multivariate categorical exposures; nxJ.
+\code{y_all}: Vector of binary outcomes; nx1.
+\code{V_data}: Dataframe of additional regression covariates; nxq or NULL.
+\code{V}: Regression design matrix without class assignment; nxq.
+\code{glm_form}: String specifying formula for probit regression, excluding
+outcome and latent class.
+}
+\item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}
+\item{\code{post_MCMC_out}}{List of MCMC output after relabeling, resulting
+from a call to \code{\link[=post_process]{post_process()}}}
 \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-\item{\code{K_MCMC}}{If \code{K_fixed = NULL} and the adaptive sampler is run,
-output list also contains MCMC output for the number of classes with size
-greater than \code{class_cutoff} for each iteration}
 }
 
 If \code{save_res = TRUE} (default), also saves \code{res} as
@@ -133,10 +145,12 @@ If \code{save_res = TRUE} (default), also saves \code{res} as
 If only the adaptive sampler is run (i.e., \code{run_sampler} = \code{"adapt"}), returns
 list \code{res} containing:
 \describe{
-\item{\code{MCMC_out}}{List of full MCMC output}
+\item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}
 \item{\code{K_fixed}}{Number of classes used for the fixed sampler,
 obtained from the adaptive sampler}
-\item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
+\item{\code{K_MCMC}}{Adaptive sampler MCMC output for K; Mx1, where M is
+the number of MCMC iterations after burn-in and thinning.}
 }
 
 If \code{save_res = TRUE} (default), also saves \code{res} as

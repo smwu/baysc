@@ -4,7 +4,7 @@
 \alias{convert_to_probs}
 \title{Convert from mixture reference coding to P(Y=1|-) conditional probabilities}
 \usage{
-convert_to_probs(est_xi, glm_form, V, cov_name)
+convert_to_probs(est_xi, glm_form, V_data, cov_name)
 }
 \arguments{
 \item{est_xi}{Matrix of xi parameter estimates. Kxq}
@@ -14,6 +14,11 @@ outcome and latent class. For example, \code{"~ 1"} for the model with only
 latent class as covariates. All variables in \code{glm_form} must be found in \code{V_data}.
 Do not specify interaction terms for latent class by additional covariates,
 as these terms are already included.}
+
+\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If \code{NULL} (default), no additional
+covariates are to be included. All variables in \code{glm_form} must
+be found in \code{V_data}.}
 
 \item{cov_name}{String specifying name of covariate of interest. Must be
 included in \code{glm_form}.}

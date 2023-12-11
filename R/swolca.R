@@ -5,7 +5,7 @@
 #' and saves and returns the results.
 #'
 #' @param x_mat Matrix of multivariate categorical exposures. nxJ
-#' @param y_all Vector of outcomes. nx1
+#' @param y_all Vector of binary outcomes. nx1
 #' @param sampling_wt Vector of survey sampling weights. nx1. If no sampling 
 #' weights are available, set this to a vector of ones. 
 #' @param cluster_id Vector of individual cluster IDs. nx1. Default is `NULL`,
@@ -65,28 +65,24 @@
 #' @param n_runs Number of MCMC iterations. Default is 20000.
 #' @param burn Number of MCMC iterations to drop as a burn-in period. Default is 10000.
 #' @param thin Thinning factor for MCMC iterations. Default is 5.
-#' @param adjust_var Boolean for the fixed sampler specifying if the 
-#' post-processing variance adjustment for accurate interval coverage should be 
-#' applied. Default = `TRUE`.
-#' @param num_reps Number of bootstrap replicates to use for the variance 
-#' adjustment estimate. Default is 100.
 #' @param save_res Boolean specifying if results should be saved. Default = `TRUE`.
 #' @param save_path String specifying directory and file name to save results, 
 #' e.g., "~/Documents/run". Default is `NULL`.
 #' 
 #' @details 
-#' 
 #' By default, the function will run both samplers, running the adaptive sampler 
 #' first to determine the number of latent classes, and then using the determined 
 #' number of latent classes to run the fixed sampler for parameter estimation. 
 #' If the number of latent classes is already known and only the fixed sampler
 #' is to be run, specify `"fixed"` for the `run_sampler` argument and specify a 
 #' number for `K_fixed`. Id only the adaptive sampler is to be run, specify 
-#' `"adapt"` for the `run_sampler` argument. 
-#' Use `adapt_seed` (default is `NULL`) to specify a seed 
-#' for the adaptive sampler, and use `fixed_seed` (default is `NULL`) to specify 
-#' a separate seed for the fixed sampler. Specify `adjust_var = TRUE` (default)
-#' to adjust the estimates to prevent overly conservative interval estimates. 
+#' `"adapt"` for the `run_sampler` argument. Use `adapt_seed` (default is `NULL`) 
+#' to specify a seed for the adaptive sampler, and use `fixed_seed` (default is 
+#' `NULL`) to specify a separate seed for the fixed sampler. 
+#' 
+#' To run the post-processing variance adjustment to prevent underestimation of 
+#' posterior intervals, run the [swolca_var_adjust()] function after running 
+#' [swolca()] (see Examples). 
 #' 
 #' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
 #' categorical exposure for an individual. If there is no clustering present, 
@@ -124,14 +120,31 @@
 #' If the fixed sampler is run, returns an object `res` of class `"swolca"`; a 
 #' list containing the following:
 #' \describe{
-#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results}
+#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results, 
+#'   resulting from a call to [get_estimates()]}
 #'   \item{\code{runtime}}{Total runtime for model}
-#'   \item{\code{data_vars}}{List of data variables used}
-#'   \item{\code{MCMC_out}}{List of full MCMC output}
-#'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
+#'   \item{\code{data_vars}}{List of data variables used, including:
+#'   `n`: Sample size.
+#'   `J`: Number of exposure items.
+#'   `R_j`: Number vector of number of exposure categories for each item; Jx1.
+#'   `R`: Maximum number of exposure categories across items.
+#'   `q`: Number of regression covariates excluding class assignment.
+#'   `w_all`: Vector of sampling weights normalized to sum to n; nx1.
+#'   `sampling_wt`: Vector of survey sampling weights; nx1.
+#'   `x_mat`: Matrix of multivariate categorical exposures; nxJ.
+#'   `y_all`: Vector of binary outcomes; nx1.
+#'   `V_data`: Dataframe of additional regression covariates; nxq or NULL. 
+#'   `V`: Regression design matrix without class assignment; nxq.
+#'   `glm_form`: String specifying formula for probit regression, excluding 
+#' outcome and latent class.
+#'   `stratum_id`: Vector of individual stratum IDs; nx1 or NULL.
+#'   `cluster_id`: Vector of individual cluster IDs; nx1 or NULL. 
+#'   }
+#'   \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to 
+#'   [run_MCMC_Rcpp()]}
+#'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling, resulting 
+#'   from a call to [post_process()]}
 #'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-#'   \item{\code{estimates}}{If `adjust_var = TRUE` (default), list of adjusted 
-#'   posterior model results with correct uncertainty estimation}
 #' }
 #'
 #' If `save_res = TRUE` (default), also saves `res` as 
@@ -140,10 +153,12 @@
 #' If only the adaptive sampler is run (i.e., `run_sampler` = `"adapt"`), returns
 #' list `res` containing:
 #' \describe{
-#'   \item{\code{MCMC_out}}{List of full MCMC output}
+#'   \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to 
+#'   [run_MCMC_Rcpp()]}
 #'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler, 
 #' obtained from the adaptive sampler}
-#'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
+#'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K; Mx1, where M is 
+#'   the number of MCMC iterations after burn-in and thinning.}
 #' }
 #' 
 #' If `save_res = TRUE` (default), also saves `res` as 
@@ -172,10 +187,15 @@
 #' glm_form <- "~ 1"
 #' 
 #' # Run swolca
-#' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-#'        cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
-#'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
-#'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+#' res_unadj <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+#'                     cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
+#'                     run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
+#'                     n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+#'        
+#' # Run variance adjustment to prevent underestimation of posterior intervals
+#' res <- swolca_var_adjust(res = res_unadj, num_reps = 100, save_res = FALSE, 
+#'                          adjust_seed = 1)    
+#'
 #'    
 #' \dontrun{        
 #' # Run swolca on NHANES data
@@ -187,12 +207,14 @@
 #' sampling_wt <- data_nhanes$sample_wt
 #' V_data <- dplyr::select(data_nhanes, age_cat, racethnic, smoker, physactive)
 #' glm_form <- "~ age_cat + racethnic + smoker + physactive"
-#' res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+#' res_nhanes_unadj <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 #'                      cluster_id = cluster_id, stratum_id = stratum_id,
 #'                      V_data = V_data, run_sampler = "both",
 #'                      glm_form = glm_form, adapt_seed = 20230225,
 #'                      n_runs = 20000, burn = 19800, thin = 5, save_res = FALSE,
 #'                      save_path = "~/Documents/run")
+#' res_nhanes <- swolca_var_adjust(res = res_nhanes_unadj, num_reps = 100, 
+#'                                 save_res = FALSE, adjust_seed = 1) 
 #' }
 #'
 swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL, 
@@ -204,8 +226,8 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                    fixed_seed = NULL, K_fixed = NULL, 
                    alpha_fixed = NULL, eta_fixed = NULL,
                    mu0_fixed = NULL, Sig0_fixed = NULL,
-                   n_runs = 20000, burn = 10000, thin = 5, adjust_var = TRUE,
-                   num_reps = 100, save_res = TRUE, save_path = NULL) {
+                   n_runs = 20000, burn = 10000, thin = 5, 
+                   save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
   start_time <- Sys.time()
@@ -408,26 +430,6 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
     # Create output list. Replaces adaptive sampler output list
     res <- list(estimates_unadj = estimates, V = V, MCMC_out = MCMC_out,
                 post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
-    
-    #================= VARIANCE ADJUSTMENT =====================================
-    if (adjust_var) {
-      print("Running variance adjustment")
-      
-      # Stan model
-      mod_stan <- stanmodels$SWOLCA_main
-      
-      # Apply variance adjustment for correct coverage
-      # Obtain pi_red, theta_red, xi_red, pi_med, theta_med, xi_med, Phi_med, 
-      # c_all, pred_class_probs, log_lik_med
-      estimates_adj <- var_adjust(mod_stan = mod_stan, estimates = estimates,
-                                  K = estimates$K_red, J = J, R_j = R_j, R = R, 
-                                  n = n, q = q, x_mat = x_mat, y_all = y_all, 
-                                  V = V, w_all = w_all, alpha = alpha_fixed, 
-                                  eta = eta_fixed, mu0 = mu0_fixed, 
-                                  Sig0 = Sig0_fixed, stratum_id = stratum_id, 
-                                  cluster_id = cluster_id, num_reps = num_reps)
-      res$estimates <- estimates_adj 
-    }
   }  
 
   #================= SAVE AND RETURN OUTPUT ====================================
@@ -436,9 +438,10 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
   res$runtime <- runtime
 
   # Store data variables used
-  data_vars <- list(n = n, J = J, R = R, q = q, sample_wt = sampling_wt,
-                    X_data = x_mat, Y_data = y_all, V_data = V_data, glm_form = glm_form,
-                    true_Si = stratum_id, cluster_id = cluster_id)
+  data_vars <- list(n = n, J = J, R_j = R_j, R = R, q = q, w_all = w_all, 
+                    sampling_wt = sampling_wt, x_mat = x_mat, y_all = y_all, 
+                    V_data = V_data, V = V, glm_form = glm_form, 
+                    stratum_id = stratum_id, cluster_id = cluster_id)
   res$data_vars <- data_vars
   
   class(res) <- "swolca"

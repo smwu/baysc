@@ -52,15 +52,27 @@
 #' If the fixed sampler is run, returns an object `res` of class `"solca"`; a 
 #' list containing the following:
 #' \describe{
-#'   \item{\code{estimates}}{List of posterior model results}
+#'   \item{\code{estimates}}{List of posterior model results, resulting from a 
+#'   call to [get_estimates()]}
 #'   \item{\code{runtime}}{Total runtime for model}
-#'   \item{\code{data_vars}}{List of data variables used}
-#'   \item{\code{MCMC_out}}{List of full MCMC output}
-#'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
+#'   \item{\code{data_vars}}{List of data variables used, including:
+#'   `n`: Sample size.
+#'   `J`: Number of exposure items.
+#'   `R_j`: Number vector of number of exposure categories for each item; Jx1.
+#'   `R`: Maximum number of exposure categories across items.
+#'   `q`: Number of regression covariates excluding class assignment.
+#'   `x_mat`: Matrix of multivariate categorical exposures; nxJ.
+#'   `y_all`: Vector of binary outcomes; nx1.
+#'   `V_data`: Dataframe of additional regression covariates; nxq or NULL. 
+#'   `V`: Regression design matrix without class assignment; nxq.
+#'   `glm_form`: String specifying formula for probit regression, excluding 
+#' outcome and latent class.
+#'   }
+#'   \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to 
+#'   [run_MCMC_Rcpp()]}
+#'   \item{\code{post_MCMC_out}}{List of MCMC output after relabeling, resulting 
+#'   from a call to [post_process()]}
 #'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-#'   \item{\code{K_MCMC}}{If `K_fixed = NULL` and the adaptive sampler is run,
-#'   output list also contains MCMC output for the number of classes with size
-#'   greater than `class_cutoff` for each iteration}
 #' }
 #'
 #' If `save_res = TRUE` (default), also saves `res` as 
@@ -69,10 +81,12 @@
 #' If only the adaptive sampler is run (i.e., `run_sampler` = `"adapt"`), returns
 #' list `res` containing:
 #' \describe{
-#'   \item{\code{MCMC_out}}{List of full MCMC output}
+#'   \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to 
+#'   [run_MCMC_Rcpp()]}
 #'   \item{\code{K_fixed}}{Number of classes used for the fixed sampler, 
 #' obtained from the adaptive sampler}
-#'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K}
+#'   \item{\code{K_MCMC}}{Adaptive sampler MCMC output for K; Mx1, where M is 
+#'   the number of MCMC iterations after burn-in and thinning.}
 #' }
 #' 
 #' If `save_res = TRUE` (default), also saves `res` as 
@@ -319,8 +333,8 @@ solca <- function(x_mat, y_all, V_data = NULL, run_sampler = "both", glm_form,
   res$runtime <- runtime
   
   # Store data variables used
-  data_vars <- list(n = n, J = J, R = R, q = q, X_data = x_mat, Y_data = y_all, 
-                    V_data = V_data, glm_form = glm_form)
+  data_vars <- list(n = n, J = J, R_j = R_j, R = R, q = q, x_mat = x_mat, 
+                    y_all = y_all, V_data = V_data, V = V, glm_form = glm_form)
   res$data_vars <- data_vars
   
   class(res) <- "solca"

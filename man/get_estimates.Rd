@@ -40,7 +40,8 @@ get_estimates(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat)
 Returns list \code{estimates} containing:
 \describe{
 \item{\code{K_red}}{Number of unique classes}
-\item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red)}
+\item{\code{pi_red}}{Matrix of final posterior samples for pi. Mx(K_red),
+where M is the number of MCMC iterations after burn-in and thinning.}
 \item{\code{theta_red}}{Array of final posterior samples for theta. MxJx(K_red)xR}
 \item{\code{xi_red}}{Array of final posterior samples for xi. Mx(K_red)xq}
 \item{\code{pi_med}}{Vector of posterior median estimates for pi. (K_red)x1}
@@ -136,5 +137,5 @@ pseudo-bayesian inference under complex sampling. International Statistical
 Review 89, 72–107.
 }
 \seealso{
-\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process]{post_process()}} \code{\link[=var_adjust]{var_adjust()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process]{post_process()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
 }

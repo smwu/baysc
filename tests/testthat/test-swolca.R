@@ -20,8 +20,7 @@ res_adapt <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 res_fixed <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                     cluster_id = cluster_id, stratum_id = stratum_id, V = V,
                     run_sampler = "fixed", glm_form = glm_form, fixed_seed = 1, 
-                    K_fixed = 3, n_runs = 5, burn = 1, thin = 1,
-                    adjust_var = FALSE, save_res = FALSE)
+                    K_fixed = 3, n_runs = 5, burn = 1, thin = 1, save_res = FALSE)
 
 test_that("adaptive sampler works", {
   expect_equal(res_adapt$K_fixed, 5)
@@ -43,7 +42,7 @@ res_fixed_strat <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_w
                           cluster_id = cluster_id, stratum_id = stratum_id, V = V,
                           run_sampler = "fixed", glm_form = glm_form, 
                           fixed_seed = 1, K_fixed = 3, n_runs = 5, burn = 1, 
-                          thin = 1, adjust_var = FALSE, save_res = FALSE)
+                          thin = 1, save_res = FALSE)
 
 test_that("stratum covariate works", {
   expect_equal(round(res_fixed_strat$estimates_unadj$pi_med, 2), c(0.19, 0.24, 0.57))

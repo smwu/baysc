@@ -115,5 +115,5 @@ class_cutoff = 0.05)
 
 }
 \seealso{
-\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=var_adjust]{var_adjust()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
 }

@@ -163,6 +163,6 @@ classical and dynamic switching and mixture models. Journal of the American
 Statistical Association 96, 194–209.
 }
 \seealso{
-\code{\link[=post_process]{post_process()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=var_adjust]{var_adjust()}} \code{\link[=swolca]{swolca()}}
+\code{\link[=post_process]{post_process()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}}
 \code{\link[=solca]{solca()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}}
 }

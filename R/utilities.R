@@ -447,7 +447,7 @@ convert_mix_to_ref <- function(est_xi) {
 #' @keywords internal
 #' @export
 #' 
-convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
+convert_to_probs <- function(est_xi, glm_form, V_data, cov_name) {
   # check that cov_name is found in glm_form
   if (!grepl(cov_name, glm_form)) {
     stop("cov_name must be one of the variables specified in glm_form")
@@ -463,7 +463,7 @@ convert_to_probs <- function(est_xi, glm_form, V, cov_name) {
   select_cov <- which(cov_names == cov_name)
   
   # Get column indices for each variable in glm_form
-  cov_col_inds <- attr(model.matrix(as.formula(glm_form), data = V), "assign")
+  cov_col_inds <- attr(model.matrix(as.formula(glm_form), data = V_data), "assign")
   # Design matrix indices for covariate group, including intercept
   cols <- c(1, which(cov_col_inds == select_cov))
   

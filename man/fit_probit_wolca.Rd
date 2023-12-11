@@ -43,7 +43,7 @@ indicating each individual is their own cluster.}
 
 \item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
-\item{y_all}{Vector of outcomes. nx1}
+\item{y_all}{Vector of binary outcomes. nx1}
 
 \item{w_all}{Weights normalized to sum to n. nx1}
 

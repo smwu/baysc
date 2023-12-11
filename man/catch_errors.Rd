@@ -38,7 +38,7 @@ catch_errors(
 \arguments{
 \item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
-\item{y_all}{Vector of outcomes. nx1}
+\item{y_all}{Vector of binary outcomes. nx1}
 
 \item{sampling_wt}{Vector of survey sampling weights. nx1. If no sampling
 weights are available, set this to a vector of ones.}
@@ -120,13 +120,6 @@ number of regression covariates excluding latent class assignment.}
 \item{burn}{Number of MCMC iterations to drop as a burn-in period. Default is 10000.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
-
-\item{adjust_var}{Boolean for the fixed sampler specifying if the
-post-processing variance adjustment for accurate interval coverage should be
-applied. Default = \code{TRUE}.}
-
-\item{num_reps}{Number of bootstrap replicates to use for the variance
-adjustment estimate. Default is 100.}
 
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 

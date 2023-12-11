@@ -448,12 +448,12 @@ plot_Phi_line <- function(res, cov_name, ci_level = NULL,
   
   # Convert to Phi
   Phi_df <- convert_to_probs(est_xi = est_xi, glm_form = res$data_vars$glm_form,
-                             V = res$data_vars$V, cov_name = cov_name)
+                             V_data = res$data_vars$V_data, cov_name = cov_name)
   if (!is.null(ci_level)) {
     Phi_lb <- convert_to_probs(est_xi = est_lb, glm_form = res$data_vars$glm_form,
-                               V = res$data_vars$V, cov_name = cov_name)
+                               V_data = res$data_vars$V_data, cov_name = cov_name)
     Phi_ub <- convert_to_probs(est_xi = est_ub, glm_form = res$data_vars$glm_form,
-                               V = res$data_vars$V, cov_name = cov_name)
+                               V_data = res$data_vars$V_data, cov_name = cov_name)
   }
   
   # Set x_title to cov_name if not specified
@@ -636,7 +636,7 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
       full_glm_form <- paste0("y_all ~ c_all") 
     }
     full_data <- data.frame(c_all = as.factor(res$estimates$c_all), 
-                            y_all = res$data_vars$Y_data,
+                            y_all = res$data_vars$y_all,
                             res$data_vars$V_data)
     model_matrix <- model.matrix(as.formula(full_glm_form), data = full_data)
     
