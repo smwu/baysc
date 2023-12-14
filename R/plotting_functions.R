@@ -680,3 +680,81 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
   beta <- dplyr::mutate_if(beta, is.numeric, round, digits = digits)
   beta
 }
+
+
+
+#' Reorder latent classes
+#' 
+#' @description
+#' `reorder_classes` changes the order of the latent classes to help with 
+#' plotting and to allow visualization of a different reference class for the 
+#' regression coefficients.
+#' 
+#' @inheritParams plot_theta_modes
+#' @param new_order Numeric vector specifying the new ordering of the classes. 
+#' For example, if there are three classes and the new desired order is to have 
+#' class 2 as the reference, followed by class 3 and class 1, then `new_order` 
+#' would be `c(2, 3, 1)`.
+#' 
+#' @details
+#' Latent class assignment variable `c_all` is also changed, so that if 
+#' `new_order = c(2, 3, 1)`, then `c_all == 2` will become `c_all == 1`, 
+#' `c_all = 3` will become `c_all = 2`, and `c_all == 1` will become `c_all = 3`.
+#' 
+#' @return
+#' Returns object `res_new` that is identical to input `res` but has updated 
+#' latent class ordering for `pi_red`, `theta_red`, `xi_red`, `pi_med`, 
+#' `theta_med`, `xi_med`, and `c_all`.
+#' 
+#' @seealso [plot_Phi_line()] [plot_pi_boxplots()] 
+#' 
+#' @export
+#'
+#' @examples
+#' # Load NHANES data
+#' data(run_nhanes_swolca_results)
+#' # Reorder latent classes
+#' res_new <- reorder_classes(res = run_nhanes_swolca_results, 
+#'                            new_order = c(3, 2, 5, 4, 1))
+#' # Get posterior estimates for xi with class 3 as the reference
+#' get_regr_coefs(res = res_new, ci_level = 0.95, digits = 2)                           
+#' 
+reorder_classes <- function(res, new_order) {
+  # Check object class
+  if (!(class(res) %in% c("swolca", "solca", "wolca"))) {
+    stop("res must be an object of class `swolca`, `solca`, or `wolca`, resulting 
+         from a call to one of these functions")
+  }
+  
+  # Initialize res_new object
+  res_new <- res
+  if (!is.null(res$estimates)) {
+    # Estimates for `solca()` or `wolca()` or adjusted estimates for `swolca()` 
+    # Reorder classes for all estimates
+    res_new$estimates$pi_red <- res$estimates$pi_red[, new_order]
+    res_new$estimates$theta_red <- res$estimates$theta_red[, , new_order, ]
+    res_new$estimates$xi_red <- res$estimates$xi_red[, new_order, ]
+    res_new$estimates$pi_med <- res$estimates$pi_med[new_order]
+    res_new$estimates$theta_med <- res$estimates$theta_med[, new_order, ]
+    res_new$estimates$xi_med <- res$estimates$xi_med[new_order, ]
+    # Reorder latent class assignment
+    for (i in 1:5) {
+      res_new$estimates$c_all[res$estimates$c_all == new_order[i]] <- i
+    }
+  } else {
+    # Unadjusted estimates for `swolca()`
+    # Reorder classes for all estimates
+    res_new$estimates_unadj$pi_red <- res$estimates_unadj$pi_red[, new_order]
+    res_new$estimates_unadj$theta_red <- res$estimates_unadj$theta_red[, , new_order, ]
+    res_new$estimates_unadj$xi_red <- res$estimates_unadj$xi_red[, new_order, ]
+    res_new$estimates_unadj$pi_med <- res$estimates_unadj$pi_med[new_order]
+    res_new$estimates_unadj$theta_med <- res$estimates_unadj$theta_med[, new_order, ]
+    res_new$estimates_unadj$xi_med <- res$estimates_unadj$xi_med[new_order, ]
+    # Reorder latent class assignment
+    for (i in 1:5) {
+      res_new$estimates_unadj$c_all[res$estimates_unadj$c_all == new_order[i]] <- i
+    }
+  }
+  
+  return(res_new)
+}
