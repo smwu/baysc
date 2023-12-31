@@ -2,12 +2,13 @@
 #'
 #' @description
 #' `swolca` runs a supervised weighted overfitted latent class analysis (SWOLCA)
-#' and saves and returns the results.
+#' described in Wu et al. (2023) and saves and returns the results. For proper 
+#' variance estimation, please run [swolca_var_adjust()] after.
 #'
 #' @param x_mat Matrix of multivariate categorical exposures. nxJ
 #' @param y_all Vector of binary outcomes. nx1
-#' @param sampling_wt Vector of survey sampling weights. nx1. If no sampling 
-#' weights are available, set this to a vector of ones. 
+#' @param sampling_wt Vector of survey sampling weights. nx1. Default is `NULL`, 
+#' indicating no sampling weights and setting all weights to 1. 
 #' @param cluster_id Vector of individual cluster IDs. nx1. Default is `NULL`,
 #' indicating each individual is their own cluster.
 #' @param stratum_id Vector of individual stratum IDs. nx1. Default is `NULL`,
@@ -70,12 +71,15 @@
 #' e.g., "~/Documents/run". Default is `NULL`.
 #' 
 #' @details 
-#' By default, the function will run both samplers, running the adaptive sampler 
-#' first to determine the number of latent classes, and then using the determined 
-#' number of latent classes to run the fixed sampler for parameter estimation. 
-#' If the number of latent classes is already known and only the fixed sampler
-#' is to be run, specify `"fixed"` for the `run_sampler` argument and specify a 
-#' number for `K_fixed`. Id only the adaptive sampler is to be run, specify 
+#' If no survey sample adjustments are desired, leave `sampling_wt`, `stratum_id`, 
+#' and `cluster_id` to their default `NULL` values.
+#' 
+#' By default, the function will run two samplers: the adaptive sampler followed 
+#' by the fixed sampler. The adaptive sampler determines the number of latent 
+#' classes, which is then used in the fixed sampler for parameter estimation. 
+#' If the number of latent classes is already known and only the fixed sampler 
+#' needs to be run, specify `"fixed"` for the `run_sampler` argument and specify a 
+#' number for `K_fixed`. If only the adaptive sampler is to be run, specify 
 #' `"adapt"` for the `run_sampler` argument. Use `adapt_seed` (default is `NULL`) 
 #' to specify a seed for the adaptive sampler, and use `fixed_seed` (default is 
 #' `NULL`) to specify a separate seed for the fixed sampler. 
@@ -164,7 +168,12 @@
 #' If `save_res = TRUE` (default), also saves `res` as 
 #' `[save_path]_swolca_adapt.RData`. 
 #' 
-#' @seealso [solca()] [wolca()]
+#' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
+#' (2023). Derivation of outcome-dependent dietary patterns for low-income women 
+#' obtained from survey data using a Supervised Weighted Overfitted Latent Class 
+#' Analysis. arXiv preprint arXiv:2310.01575.
+#' 
+#' @seealso [swolca_var_adjust()] [wolca()]
 #' 
 #' @importFrom RcppTN rtn
 #' @importFrom LaplacesDemon rinvgamma
@@ -187,14 +196,14 @@
 #' glm_form <- "~ 1"
 #' 
 #' # Run swolca
-#' res_unadj <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+#' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 #'                     cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
 #'                     run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
 #'                     n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
 #'        
 #' # Run variance adjustment to prevent underestimation of posterior intervals
-#' res <- swolca_var_adjust(res = res_unadj, num_reps = 100, save_res = FALSE, 
-#'                          adjust_seed = 1)    
+#' res_adjust <- swolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
+#'                                 adjust_seed = 1)    
 #'
 #'    
 #' \dontrun{        
@@ -207,17 +216,17 @@
 #' sampling_wt <- data_nhanes$sample_wt
 #' V_data <- dplyr::select(data_nhanes, age_cat, racethnic, smoker, physactive)
 #' glm_form <- "~ age_cat + racethnic + smoker + physactive"
-#' res_nhanes_unadj <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+#' res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 #'                      cluster_id = cluster_id, stratum_id = stratum_id,
 #'                      V_data = V_data, run_sampler = "both",
 #'                      glm_form = glm_form, adapt_seed = 20230225,
 #'                      n_runs = 20000, burn = 19800, thin = 5, save_res = FALSE,
 #'                      save_path = "~/Documents/run")
-#' res_nhanes <- swolca_var_adjust(res = res_nhanes_unadj, num_reps = 100, 
-#'                                 save_res = FALSE, adjust_seed = 1) 
+#' res_nhanes_adjust <- swolca_var_adjust(res = res_nhanes, num_reps = 100, 
+#'                                        save_res = FALSE, adjust_seed = 1) 
 #' }
 #'
-swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL, 
+swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL, 
                    stratum_id = NULL, V_data = NULL, run_sampler = "both", 
                    glm_form,
                    K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
@@ -242,9 +251,16 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                function(x) length(unique(x)))  
   R <- max(R_j)             # Maximum number of exposure categories across items
   
-  # Obtain normalized weights
-  kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
-  w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
+  # If no sampling weights, set all weights to 1 
+  if (is.null(sampling_wt)) {
+    w_all <- rep(1, n)
+  # Otherwise, obtain normalized weights
+  } else {
+    # Weights norm. constant. If sum(weights)=N, this is 1/(sampling fraction)
+    kappa <- sum(sampling_wt) / n  
+    # Weights normalized to sum to n, nx1
+    w_all <- c(sampling_wt / kappa) 
+  }
   
   # If no additional covariates, set V_data to be a column of all ones
   if (is.null(V_data)) {
@@ -428,7 +444,7 @@ swolca <- function(x_mat, y_all, sampling_wt, cluster_id = NULL,
                                n = n, J = J, V = V, y_all = y_all, x_mat = x_mat)
     
     # Create output list. Replaces adaptive sampler output list
-    res <- list(estimates_unadj = estimates, V = V, MCMC_out = MCMC_out,
+    res <- list(estimates_unadj = estimates, MCMC_out = MCMC_out,
                 post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
   }  
 

@@ -1,36 +1,29 @@
 #' Run the WOLCA model
 #'
 #' @description
-#' `wolca` runs a two-step model with an unsupervised weighted overfitted latent 
-#' class analysis (WOLCA) in the first step and saves and returns the results.
+#' `wolca` runs an unsupervised weighted overfitted latent class analysis 
+#' (WOLCA) described in Wu et al. (2023) and Stephenson et al. (2023), then 
+#' saves and returns the results.
 #'
 #' @inheritParams swolca
-#' @param ci_level Confidence interval level for probit regression coefficient 
-#' estimates. Default is `0.95`.
 #' 
 #' @details 
-#' `wolca` is a two-step approach that runs an unsupervised WOLCA in the first
-#' step to derive latent class patterns and subsequently treats the class 
-#' assignments as fixed and includes them as covariates in a frequentist 
-#' survey-weighted probit regression model that uses an asymptotic sandwich 
-#' estimator for variance estimation. 
+#' If no survey sample adjustments are desired, leave `sampling_wt`, `stratum_id`, 
+#' and `cluster_id` to their default `NULL` values.
 #' 
-#' By default, the function will run both samplers for the WOLCA step, running 
-#' the adaptive sampler first to determine the number of latent classes, and 
-#' then using the determined number of latent classes to run the fixed sampler 
-#' for parameter estimation of the unsupervised WOLCA, followed by the 
-#' survey-weighted regression model. If the number of latent classes is already 
-#' known and only the fixed sampler is to be run, specify `"fixed"` for the 
-#' `run_sampler` argument and specify a number for `K_fixed`. Id only the 
-#' adaptive sampler is to be run, specify `"adapt"` for the `run_sampler` 
-#' argument. Use `adapt_seed` (default is `NULL`) to specify a seed 
-#' for the adaptive sampler, and use `fixed_seed` (default is `NULL`) to specify 
-#' a separate seed for the fixed sampler.
+#' By default, the function will run two samplers: the adaptive sampler followed 
+#' by the fixed sampler. The adaptive sampler determines the number of latent 
+#' classes, which is then used in the fixed sampler for parameter estimation. 
+#' If the number of latent classes is already known and only the fixed sampler 
+#' needs to be run, specify `"fixed"` for the `run_sampler` argument and specify a 
+#' number for `K_fixed`. If only the adaptive sampler is to be run, specify 
+#' `"adapt"` for the `run_sampler` argument. Use `adapt_seed` (default is `NULL`) 
+#' to specify a seed for the adaptive sampler, and use `fixed_seed` (default is 
+#' `NULL`) to specify a separate seed for the fixed sampler. 
 #' 
 #' `x_mat` is an nxJ matrix with each row corresponding to the J-dimensional 
 #' categorical exposure for an individual. If there is no clustering present, 
-#' `cluster_id` should be set to the individual IDs. `V_data` includes all 
-#' covariates to include in the probit regression other than latent class. 
+#' `cluster_id` should be set to the individual IDs. 
 #' `K_max` is the maximum number of latent classes allowable, to 
 #' be used for the overfitted latent class model if the adaptive sampler is run. 
 #' `class_cutoff` is the minimum size of each class as a proportion of the 
@@ -65,19 +58,11 @@
 #'   `J`: Number of exposure items.
 #'   `R_j`: Number vector of number of exposure categories for each item; Jx1.
 #'   `R`: Maximum number of exposure categories across items.
-#'   `q`: Number of regression covariates excluding class assignment.
 #'   `w_all`: Vector of sampling weights normalized to sum to n; nx1.
 #'   `sampling_wt`: Vector of survey sampling weights; nx1.
 #'   `x_mat`: Matrix of multivariate categorical exposures; nxJ.
-#'   `y_all`: Vector of binary outcomes; nx1.
-#'   `V_data`: Dataframe of additional regression covariates; nxq or NULL. 
-#'   `V`: Regression design matrix without class assignment; nxq.
-#'   `glm_form`: String specifying formula for probit regression, excluding 
-#' outcome and latent class.
 #'   `stratum_id`: Vector of individual stratum IDs; nx1 or NULL.
 #'   `cluster_id`: Vector of individual cluster IDs; nx1 or NULL. 
-#'   `ci_level`: Confidence interval level for probit regression coefficient 
-#' estimates.
 #'   }
 #'   \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to 
 #'   [run_MCMC_Rcpp()]}
@@ -106,36 +91,41 @@
 #' @importFrom stats rnorm median confint
 #' @importFrom survey svydesign svyglm
 #' @export
+#' 
+#' @references 
+#' Stephenson, B. J. K., Wu, S. M., Dominici, F. (2023). Identifying dietary 
+#' consumption patterns from survey data: a Bayesian nonparametric latent class 
+#' model. Journal of the Royal Statistical Society Series A: Statistics in 
+#' Society, qnad135.
+#' 
+#' Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
+#' (2023). Derivation of outcome-dependent dietary patterns for low-income women 
+#' obtained from survey data using a Supervised Weighted Overfitted Latent Class 
+#' Analysis. arXiv preprint arXiv:2310.01575.
 #'
 #' @examples
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
 #' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
-#' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 #' stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
 #' sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
-#' # Probit model only includes latent class
-#' V_data <- NULL # Additional regression covariates
-#' # Survey-weighted regression formula
-#' glm_form <- "~ 1"
-#' 
 #' # Run wolca
-#' res <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-#'        cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data, 
-#'        run_sampler = "both", glm_form = glm_form, adapt_seed = 1, 
-#'        n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+#' res <- wolca(x_mat = x_mat, sampling_wt = sampling_wt, 
+#'              cluster_id = cluster_id, stratum_id = stratum_id, 
+#'              run_sampler = "both", adapt_seed = 1, n_runs = 50, burn = 25, 
+#'              thin = 1, save_res = FALSE)
 #'
-wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id, 
-                  V_data = NULL, run_sampler = "both", glm_form, K_max = 30, 
+wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id, 
+                  run_sampler = "both", K_max = 30, 
                   adapt_seed = NULL, class_cutoff = 0.05,
                   alpha_adapt = NULL, eta_adapt = NULL,
                   alpha_fixed = NULL, eta_fixed = NULL,
                   K_fixed = NULL, fixed_seed = NULL,
-                  n_runs = 20000, burn = 10000, thin = 5, ci_level = 0.95,
+                  n_runs = 20000, burn = 10000, thin = 5, 
                   save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
@@ -155,26 +145,15 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
   kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
   w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
   
-  # If no additional covariates, set V_data to be a column of all ones
-  if (is.null(V_data)) {
-    V_data <- as.data.frame(matrix(1, nrow = n))
-  }
-  
   #================= Catch errors ==============================================
-  catch_errors(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-               cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
-               run_sampler = run_sampler, glm_form = glm_form,
-               K_max = K_max, class_cutoff = class_cutoff,
-               adapt_seed = adapt_seed, fixed_seed = fixed_seed,
-               alpha_adapt = alpha_adapt, eta_adapt = eta_adapt, 
-               K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
+  catch_errors(x_mat = x_mat, sampling_wt = sampling_wt, cluster_id = cluster_id, 
+               stratum_id = stratum_id, run_sampler = run_sampler, K_max = K_max, 
+               class_cutoff = class_cutoff, adapt_seed = adapt_seed, 
+               fixed_seed = fixed_seed, alpha_adapt = alpha_adapt, 
+               eta_adapt = eta_adapt, K_fixed = K_fixed, 
+               alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                n_runs = n_runs, burn = burn, thin = thin, 
                save_res = save_res, save_path = save_path)
-  
-  # Obtain probit regression design matrix without class assignment
-  V <- model.matrix(as.formula(glm_form), data = V_data)
-  # Number of regression covariates excluding class assignment 
-  q <- ncol(V_data)    
 
   #================= ADAPTIVE SAMPLER ==========================================
   if (run_sampler %in% c("both", "adapt")) { # Run adaptive sampler
@@ -280,16 +259,9 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
     estimates <- get_estimates_wolca(MCMC_out = MCMC_out, 
                                      post_MCMC_out = post_MCMC_out, n = n, J = J,
                                      x_mat = x_mat)
-  
-    #================= Fit probit model ==========================================
-    
-    estimates <- fit_probit_wolca(estimates = estimates, glm_form = glm_form, 
-                                  stratum_id = stratum_id, cluster_id = cluster_id, 
-                                  x_mat = x_mat, y_all = y_all, w_all = w_all, 
-                                  V_data = V_data, q = q, ci_level = ci_level)
     
     # Create output list. Replaces adaptive sampler output list
-    res <- list(estimates = estimates, V = V, MCMC_out = MCMC_out,
+    res <- list(estimates = estimates, MCMC_out = MCMC_out,
                 post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
   }
   
@@ -299,11 +271,9 @@ wolca <- function(x_mat, y_all, sampling_wt, cluster_id, stratum_id,
   res$runtime <- runtime
   
   # Store data variables used
-  data_vars <- list(n = n, J = J, R_j = R_j, R = R, q = q, w_all = w_all, 
-                    sampling_wt = sampling_wt, x_mat = x_mat, y_all = y_all, 
-                    V_data = V_data, V = V, glm_form = glm_form, 
-                    stratum_id = stratum_id, cluster_id = cluster_id,
-                    ci_level = ci_level)
+  data_vars <- list(n = n, J = J, R_j = R_j, R = R, w_all = w_all, 
+                    sampling_wt = sampling_wt, x_mat = x_mat,
+                    stratum_id = stratum_id, cluster_id = cluster_id)
   res$data_vars <- data_vars
   
   class(res) <- "wolca"

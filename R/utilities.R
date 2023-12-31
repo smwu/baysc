@@ -260,9 +260,7 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     }
     
     # Check MCMC parameters
-    if (any(is.null(c(n_runs, burn, thin)))) {
-      stop("n_runs, burn, and thin must be whole numbers")
-    } else {
+    if (!all(is.null(c(n_runs, burn, thin)))) {
       if (!all(c(n_runs, burn, thin) %% 1 == 0) | !all(c(n_runs, burn, thin) >= 0)) {
         stop("n_runs, burn, and thin must be whole numbers")
       }
@@ -469,7 +467,7 @@ convert_to_probs <- function(est_xi, glm_form, V_data, cov_name) {
   
   # Get conversions for each category of the covariate group 
   probs <- as.data.frame(matrix(NA, nrow = K, ncol = (length(cols) + 1)))
-  colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 1:length(cols[-1])))
+  colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 2:length(cols)))
   probs[, 1] <- 1:K
   for (categ in 1:length(cols)) {
     # Convert from mixture reference to probabilities
