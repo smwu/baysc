@@ -12,15 +12,24 @@ n <- dim(x_mat)[1]                   # Number of individuals
 V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 glm_form <- "~ 1"
 
-# Run swolca
-res_adapt <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                    cluster_id = cluster_id, stratum_id = stratum_id, V = V,
-                    run_sampler = "adapt", glm_form = glm_form, adapt_seed = 1,
+# Run wolca
+res_adapt <- wolca(x_mat = x_mat, sampling_wt = sampling_wt,
+                    cluster_id = cluster_id, stratum_id = stratum_id, 
+                    run_sampler = "adapt", adapt_seed = 1,
                     n_runs = 5, burn = 1, thin = 1, save_res = FALSE)
-res_fixed <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                    cluster_id = cluster_id, stratum_id = stratum_id, V = V,
-                    run_sampler = "fixed", glm_form = glm_form, fixed_seed = 1, 
-                    K_fixed = 3, n_runs = 50, burn = 46, thin = 1, save_res = FALSE)
+res_fixed <- wolca(x_mat = x_mat, sampling_wt = sampling_wt,
+                    cluster_id = cluster_id, stratum_id = stratum_id,
+                    run_sampler = "fixed", fixed_seed = 1, K_fixed = 3, 
+                   n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+
+# Apply variance adjustment to posterior estimates
+res_adjust <- wolca_var_adjust(res = res_fixed, num_reps = 100, save_res = FALSE,
+                               adjust_seed = 1)
+
+# Run weighted outcome regression model
+res_svyglm <- wolca_svyglm(res = res_adjust, y_all = y_all,
+                           glm_form = glm_form, ci_level = 0.95,
+                           V_data = V_data, save_res = FALSE)
 
 test_that("adaptive sampler works", {
   expect_equal(res_adapt$K_fixed, 2)
@@ -29,24 +38,32 @@ test_that("adaptive sampler works", {
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.51, 0.26, 0.23))
-  expect_equal(max(table(res_fixed$estimates$c_all)), 2156) 
-  expect_equal(min(table(res_fixed$estimates$c_all)), 842)  
+  expect_equal(round(res_fixed$estimates_unadj$pi_med, 2), c(0.51, 0.26, 0.23))
+  expect_equal(max(table(res_fixed$estimates_unadj$c_all)), 2156) 
+  expect_equal(min(table(res_fixed$estimates_unadj$c_all)), 842)  
 })
 
+test_that("variance adjustment works", {
+  expect_equal(round(res_adjust$estimates$pi_med, 2), c(0.51, 0.26, 0.22))
+  expect_equal(max(table(res_fixed$estimates_unadj$c_all)), 2156) 
+  expect_equal(min(table(res_fixed$estimates_unadj$c_all)), 842)  
+})
+
+test_that("wolca svyglm works", {
+  expect_equal(round(c(res_svyglm$estimates$xi_est), 2), c(-0.02, 0.74, -0.72))
+  expect_equal(res_svyglm$data_vars$q, 1)
+})
 
 # Run wolca with stratum covariate in probit model
-V <- data.frame(stratum_id = as.factor(stratum_id))
+V_data <- data.frame(stratum_id = as.factor(stratum_id))
 glm_form <- "~ stratum_id"
-res_fixed_strat <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                          cluster_id = cluster_id, stratum_id = stratum_id, V = V,
-                          run_sampler = "fixed", glm_form = glm_form, 
-                          fixed_seed = 1, K_fixed = 3, n_runs = 50, burn = 46, 
-                          thin = 1, save_res = FALSE)
+res_svyglm_strat <- wolca_svyglm(res = res_adjust, y_all = y_all,
+                                 glm_form = glm_form, ci_level = 0.95,
+                                 V_data = V_data, save_res = FALSE)
 
-test_that("stratum covariate works", {
-  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.51, 0.26, 0.23))
-  expect_equal(max(table(res_fixed_strat$estimates$c_all)), 2156) 
-  expect_equal(min(table(res_fixed_strat$estimates$c_all)), 842) 
+test_that("wolca svyglm with stratum covariate works", {
+  expect_equal(round(c(res_svyglm_strat$estimates$xi_est[, 1]), 2), 
+               c(0.28, 0.79, -0.49))
+  expect_equal(res_svyglm_strat$data_vars$q, 2)
 })
 

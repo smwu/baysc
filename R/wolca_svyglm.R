@@ -89,10 +89,15 @@
 #'              cluster_id = cluster_id, stratum_id = stratum_id, 
 #'              run_sampler = "both", adapt_seed = 1, n_runs = 50, burn = 25, 
 #'              thin = 1, save_res = FALSE)
+#'        
+#' # Apply variance adjustment to posterior estimates
+#' res_adjust <- wolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
+#'                                adjust_seed = 1) 
 #' 
 #' # Run weighted outcome regression model
-#' res_svyglm <- wolca_svyglm(res = res, y_all = y_all, glm_form = glm_form, 
-#'                            ci_level = 0.95, V_data = V_data, save_res = FALSE)
+#' res_svyglm <- wolca_svyglm(res = res_adjust, y_all = y_all, 
+#'                            glm_form = glm_form, ci_level = 0.95, 
+#'                            V_data = V_data, save_res = FALSE)
 #' 
 wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL, 
                          save_res = TRUE, save_path = NULL) {
@@ -127,7 +132,7 @@ wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL,
   # Obtain probit regression design matrix without class assignment
   V <- model.matrix(as.formula(glm_form), data = V_data)
   # Number of regression covariates excluding class assignment 
-  q <- ncol(V_data)  
+  q <- ncol(V)  
   
   #============== Create survey design =========================================
   if (!is.null(stratum_id)) {  # Include stratifying variable
@@ -158,7 +163,7 @@ wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL,
   #============== Fit probit model for the outcome =============================
   # Add outcome and latent class main and interaction terms to formula
   terms <- labels(stats::terms(stats::as.formula(glm_form)))
-  if (length(terms) > 1) {
+  if (length(terms) > 0) {
     full_glm_form <- paste0("y_all ~ ", 
                             paste0("c_all * ", terms, collapse = " + ")) 
   } else {

@@ -6,13 +6,10 @@
 \usage{
 wolca(
   x_mat,
-  y_all,
   sampling_wt,
   cluster_id,
   stratum_id,
-  V_data = NULL,
   run_sampler = "both",
-  glm_form,
   K_max = 30,
   adapt_seed = NULL,
   class_cutoff = 0.05,
@@ -25,7 +22,6 @@ wolca(
   n_runs = 20000,
   burn = 10000,
   thin = 5,
-  ci_level = 0.95,
   save_res = TRUE,
   save_path = NULL
 )
@@ -33,10 +29,8 @@ wolca(
 \arguments{
 \item{x_mat}{Matrix of multivariate categorical exposures. nxJ}
 
-\item{y_all}{Vector of binary outcomes. nx1}
-
-\item{sampling_wt}{Vector of survey sampling weights. nx1. If no sampling
-weights are available, set this to a vector of ones.}
+\item{sampling_wt}{Vector of survey sampling weights. nx1. Default is \code{NULL},
+indicating no sampling weights and setting all weights to 1.}
 
 \item{cluster_id}{Vector of individual cluster IDs. nx1. Default is \code{NULL},
 indicating each individual is their own cluster.}
@@ -44,19 +38,8 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
-covariates must be converted to factors. If \code{NULL} (default), no additional
-covariates are to be included. All variables in \code{glm_form} must
-be found in \code{V_data}.}
-
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
 one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
-
-\item{glm_form}{String specifying formula for probit regression, excluding
-outcome and latent class. For example, \code{"~ 1"} for the model with only
-latent class as covariates. All variables in \code{glm_form} must be found in \code{V_data}.
-Do not specify interaction terms for latent class by additional covariates,
-as these terms are already included.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -96,9 +79,6 @@ running the fixed sampler directly, need to specify a value here.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
-\item{ci_level}{Confidence interval level for probit regression coefficient
-estimates. Default is \code{0.95}.}
-
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results,
@@ -116,19 +96,11 @@ call to \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}
 \code{J}: Number of exposure items.
 \code{R_j}: Number vector of number of exposure categories for each item; Jx1.
 \code{R}: Maximum number of exposure categories across items.
-\code{q}: Number of regression covariates excluding class assignment.
 \code{w_all}: Vector of sampling weights normalized to sum to n; nx1.
 \code{sampling_wt}: Vector of survey sampling weights; nx1.
 \code{x_mat}: Matrix of multivariate categorical exposures; nxJ.
-\code{y_all}: Vector of binary outcomes; nx1.
-\code{V_data}: Dataframe of additional regression covariates; nxq or NULL.
-\code{V}: Regression design matrix without class assignment; nxq.
-\code{glm_form}: String specifying formula for probit regression, excluding
-outcome and latent class.
 \code{stratum_id}: Vector of individual stratum IDs; nx1 or NULL.
 \code{cluster_id}: Vector of individual cluster IDs; nx1 or NULL.
-\code{ci_level}: Confidence interval level for probit regression coefficient
-estimates.
 }
 \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to
 \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}
@@ -153,32 +125,27 @@ If \code{save_res = TRUE} (default), also saves \code{res} as
 \verb{[save_path]_wolca_adapt.RData}.
 }
 \description{
-\code{wolca} runs a two-step model with an unsupervised weighted overfitted latent
-class analysis (WOLCA) in the first step and saves and returns the results.
+\code{wolca} runs an unsupervised weighted overfitted latent class analysis
+(WOLCA) described in Wu et al. (2023) and Stephenson et al. (2023), then
+saves and returns the results.
 }
 \details{
-\code{wolca} is a two-step approach that runs an unsupervised WOLCA in the first
-step to derive latent class patterns and subsequently treats the class
-assignments as fixed and includes them as covariates in a frequentist
-survey-weighted probit regression model that uses an asymptotic sandwich
-estimator for variance estimation.
+If no survey sample adjustments are desired, leave \code{sampling_wt}, \code{stratum_id},
+and \code{cluster_id} to their default \code{NULL} values.
 
-By default, the function will run both samplers for the WOLCA step, running
-the adaptive sampler first to determine the number of latent classes, and
-then using the determined number of latent classes to run the fixed sampler
-for parameter estimation of the unsupervised WOLCA, followed by the
-survey-weighted regression model. If the number of latent classes is already
-known and only the fixed sampler is to be run, specify \code{"fixed"} for the
-\code{run_sampler} argument and specify a number for \code{K_fixed}. Id only the
-adaptive sampler is to be run, specify \code{"adapt"} for the \code{run_sampler}
-argument. Use \code{adapt_seed} (default is \code{NULL}) to specify a seed
-for the adaptive sampler, and use \code{fixed_seed} (default is \code{NULL}) to specify
-a separate seed for the fixed sampler.
+By default, the function will run two samplers: the adaptive sampler followed
+by the fixed sampler. The adaptive sampler determines the number of latent
+classes, which is then used in the fixed sampler for parameter estimation.
+If the number of latent classes is already known and only the fixed sampler
+needs to be run, specify \code{"fixed"} for the \code{run_sampler} argument and specify a
+number for \code{K_fixed}. If only the adaptive sampler is to be run, specify
+\code{"adapt"} for the \code{run_sampler} argument. Use \code{adapt_seed} (default is \code{NULL})
+to specify a seed for the adaptive sampler, and use \code{fixed_seed} (default is
+\code{NULL}) to specify a separate seed for the fixed sampler.
 
 \code{x_mat} is an nxJ matrix with each row corresponding to the J-dimensional
 categorical exposure for an individual. If there is no clustering present,
-\code{cluster_id} should be set to the individual IDs. \code{V_data} includes all
-covariates to include in the probit regression other than latent class.
+\code{cluster_id} should be set to the individual IDs.
 \code{K_max} is the maximum number of latent classes allowable, to
 be used for the overfitted latent class model if the adaptive sampler is run.
 \code{class_cutoff} is the minimum size of each class as a proportion of the
@@ -206,21 +173,26 @@ fixed sampler directly, bypassing the adaptive sampler.
 data("sim_data")
 data_vars <- sim_data
 x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
-y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
 sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
-# Probit model only includes latent class
-V_data <- NULL # Additional regression covariates
-# Survey-weighted regression formula
-glm_form <- "~ 1"
-
 # Run wolca
-res <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-       cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data, 
-       run_sampler = "both", glm_form = glm_form, adapt_seed = 1, 
-       n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+res <- wolca(x_mat = x_mat, sampling_wt = sampling_wt, 
+             cluster_id = cluster_id, stratum_id = stratum_id, 
+             run_sampler = "both", adapt_seed = 1, n_runs = 50, burn = 25, 
+             thin = 1, save_res = FALSE)
 
+}
+\references{
+Stephenson, B. J. K., Wu, S. M., Dominici, F. (2023). Identifying dietary
+consumption patterns from survey data: a Bayesian nonparametric latent class
+model. Journal of the Royal Statistical Society Series A: Statistics in
+Society, qnad135.
+
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
+(2023). Derivation of outcome-dependent dietary patterns for low-income women
+obtained from survey data using a Supervised Weighted Overfitted Latent Class
+Analysis. arXiv preprint arXiv:2310.01575.
 }

@@ -50,8 +50,8 @@
 #' If the fixed sampler is run, returns an object `res` of class `"wolca"`; a 
 #' list containing the following:
 #' \describe{
-#'   \item{\code{estimates}}{List of posterior model results, resulting from a 
-#'   call to [run_MCMC_Rcpp()]}
+#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results, 
+#'   resulting from a call to [get_estimates_wolca()]}
 #'   \item{\code{runtime}}{Total runtime for model}
 #'   \item{\code{data_vars}}{List of data variables used, including:
 #'   `n`: Sample size.
@@ -261,7 +261,7 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
                                      x_mat = x_mat)
     
     # Create output list. Replaces adaptive sampler output list
-    res <- list(estimates = estimates, MCMC_out = MCMC_out,
+    res <- list(estimates_unadj = estimates, MCMC_out = MCMC_out,
                 post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
   }
   

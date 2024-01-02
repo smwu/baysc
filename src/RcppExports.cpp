@@ -197,6 +197,7 @@ END_RCPP
 }
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4SWOLCA_main_mod();
+RcppExport SEXP _rcpp_module_boot_stan_fit4WOLCA_main_mod();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_baysc_rdirichlet_cpp", (DL_FUNC) &_baysc_rdirichlet_cpp, 1},
@@ -212,6 +213,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_baysc_update_z", (DL_FUNC) &_baysc_update_z, 6},
     {"_baysc_update_loglik", (DL_FUNC) &_baysc_update_loglik, 11},
     {"_rcpp_module_boot_stan_fit4SWOLCA_main_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4SWOLCA_main_mod, 0},
+    {"_rcpp_module_boot_stan_fit4WOLCA_main_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4WOLCA_main_mod, 0},
     {NULL, NULL, 0}
 };
 

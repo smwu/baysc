@@ -7,7 +7,7 @@
 swolca(
   x_mat,
   y_all,
-  sampling_wt,
+  sampling_wt = NULL,
   cluster_id = NULL,
   stratum_id = NULL,
   V_data = NULL,
@@ -38,8 +38,8 @@ swolca(
 
 \item{y_all}{Vector of binary outcomes. nx1}
 
-\item{sampling_wt}{Vector of survey sampling weights. nx1. If no sampling
-weights are available, set this to a vector of ones.}
+\item{sampling_wt}{Vector of survey sampling weights. nx1. Default is \code{NULL},
+indicating no sampling weights and setting all weights to 1.}
 
 \item{cluster_id}{Vector of individual cluster IDs. nx1. Default is \code{NULL},
 indicating each individual is their own cluster.}
@@ -174,15 +174,19 @@ If \code{save_res = TRUE} (default), also saves \code{res} as
 }
 \description{
 \code{swolca} runs a supervised weighted overfitted latent class analysis (SWOLCA)
-and saves and returns the results.
+described in Wu et al. (2023) and saves and returns the results. For proper
+variance estimation, please run \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} after.
 }
 \details{
-By default, the function will run both samplers, running the adaptive sampler
-first to determine the number of latent classes, and then using the determined
-number of latent classes to run the fixed sampler for parameter estimation.
+If no survey sample adjustments are desired, leave \code{sampling_wt}, \code{stratum_id},
+and \code{cluster_id} to their default \code{NULL} values.
+
+By default, the function will run two samplers: the adaptive sampler followed
+by the fixed sampler. The adaptive sampler determines the number of latent
+classes, which is then used in the fixed sampler for parameter estimation.
 If the number of latent classes is already known and only the fixed sampler
-is to be run, specify \code{"fixed"} for the \code{run_sampler} argument and specify a
-number for \code{K_fixed}. Id only the adaptive sampler is to be run, specify
+needs to be run, specify \code{"fixed"} for the \code{run_sampler} argument and specify a
+number for \code{K_fixed}. If only the adaptive sampler is to be run, specify
 \code{"adapt"} for the \code{run_sampler} argument. Use \code{adapt_seed} (default is \code{NULL})
 to specify a seed for the adaptive sampler, and use \code{fixed_seed} (default is
 \code{NULL}) to specify a separate seed for the fixed sampler.
@@ -239,14 +243,14 @@ V_data <- NULL # Additional regression covariates
 glm_form <- "~ 1"
 
 # Run swolca
-res_unadj <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                     cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                     run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
                     n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
        
 # Run variance adjustment to prevent underestimation of posterior intervals
-res <- swolca_var_adjust(res = res_unadj, num_reps = 100, save_res = FALSE, 
-                         adjust_seed = 1)    
+res_adjust <- swolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
+                                adjust_seed = 1)    
 
    
 \dontrun{        
@@ -259,17 +263,23 @@ cluster_id <- data_nhanes$cluster_id
 sampling_wt <- data_nhanes$sample_wt
 V_data <- dplyr::select(data_nhanes, age_cat, racethnic, smoker, physactive)
 glm_form <- "~ age_cat + racethnic + smoker + physactive"
-res_nhanes_unadj <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                      cluster_id = cluster_id, stratum_id = stratum_id,
                      V_data = V_data, run_sampler = "both",
                      glm_form = glm_form, adapt_seed = 20230225,
                      n_runs = 20000, burn = 19800, thin = 5, save_res = FALSE,
                      save_path = "~/Documents/run")
-res_nhanes <- swolca_var_adjust(res = res_nhanes_unadj, num_reps = 100, 
-                                save_res = FALSE, adjust_seed = 1) 
+res_nhanes_adjust <- swolca_var_adjust(res = res_nhanes, num_reps = 100, 
+                                       save_res = FALSE, adjust_seed = 1) 
 }
 
 }
+\references{
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
+(2023). Derivation of outcome-dependent dietary patterns for low-income women
+obtained from survey data using a Supervised Weighted Overfitted Latent Class
+Analysis. arXiv preprint arXiv:2310.01575.
+}
 \seealso{
-\code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=wolca]{wolca()}}
 }

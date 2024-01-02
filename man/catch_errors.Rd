@@ -40,8 +40,8 @@ catch_errors(
 
 \item{y_all}{Vector of binary outcomes. nx1}
 
-\item{sampling_wt}{Vector of survey sampling weights. nx1. If no sampling
-weights are available, set this to a vector of ones.}
+\item{sampling_wt}{Vector of survey sampling weights. nx1. Default is \code{NULL},
+indicating no sampling weights and setting all weights to 1.}
 
 \item{cluster_id}{Vector of individual cluster IDs. nx1. Default is \code{NULL},
 indicating each individual is their own cluster.}

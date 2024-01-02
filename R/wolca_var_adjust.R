@@ -1,6 +1,6 @@
-#' Unconstrain parameters
+#' Unconstrain parameters for WOLCA
 #'
-#' `unconstrain` is a helper function that converts each row of an input array 
+#' `unconstrain_wolca` is a helper function that converts each row of an input array 
 #' of MCMC parameter output from constrained space to unconstrained space in Stan
 #' 
 #' @param i Row index
@@ -8,102 +8,36 @@
 #' @param stan_model Stan model
 #' @param pi MCMC matrix output for pi; MxK
 #' @param theta MCMC array output for theta; MxJxKxR
-#' @param xi: MCMC matrix output for xi; MxKxS
 #' 
 #' @return Outputs vector of unconstrained parameters
 #' @importFrom rstan unconstrain_pars
 #' @keywords internal
 #' @export
-unconstrain <- function(i, K, stan_model, pi, theta, xi) {
-  # Be careful with dimension of xi when latent class is only covariate, as R
-  # will automatically drop dimensions of size 1
+unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
   u_pars <- rstan::unconstrain_pars(stan_model, 
-                             list("pi" = pi[i,], "theta" = theta[i,,,], 
-                                  "xi" = as.matrix(xi[i,,])))
+                                    list("pi" = pi[i,], "theta" = theta[i,,,]))
   return(u_pars)
 }
 
-#' Adjust estimates
-#'
-#' @description
-#' `DEadj` is a helper function to apply the matrix rotation
-#' 
-#' @param par Unadjusted parameter estimates
-#' @param par_hat Unadjusted median parameter estimates
-#' @param R2R1 Adjustment matrix
-#' 
-#' @return Outputs adjusted parameter estimates
-#' @keywords internal
-#' @export
-DEadj <- function(par, par_hat, R2R1) {
-  par_adj <- (par - par_hat) %*% R2R1 + par_hat
-  par_adj <- as.vector(par_adj)
-  return(par_adj)
-}
-
-#' Get gradient of log posterior from the unconstrained parameter space
-#' 
-#' @description
-#' `grad_par` is a helper function nested in `withReplicates()` to obtain the 
-#' gradient with the replicate weights
-#' 
-#' @param pwts Replicate weights from `svyrepdesign` object
-#' @param svydata Data frame containing all variables from `svyrepdesign` object
-#' @param stan_mod Stan model object
-#' @param stan_data Stan data input
-#' @param par_stan Parameters with respect to which gradient should be computed
-#' @param u_pars Unconstrained parameters estimates for evaluating gradient
-#' 
-#' @importFrom rstan sampling grad_log_prob
-#' @return Outputs `gradpar` gradient evaluated at `u_pars` using replicate weights
-#' @keywords internal
-#' @export
-grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
-  stan_data$weights <- pwts
-  out_stan <- rstan::sampling(object = stan_mod, data = stan_data, pars = par_stan,
-                       chains = 0, iter = 0, refresh = 0)
-  gradpar <- rstan::grad_log_prob(out_stan, u_pars)
-  return(gradpar)
-}
 
 
 #' Post-processing variance adjustment
 #' 
 #' @description 
-#' `swolca_var_adj` applies applies the post-processing variance adjustment after 
-#' a call to [swolca()] to correct for underestimation of posterior intervals.
+#' `wolca_var_adj` applies applies the post-processing variance adjustment after 
+#' a call to [wolca()] to correct for underestimation of posterior intervals.
 #' 
-#' @param res An object of class `"swolca"`, resulting from a call to [swolca()],
+#' @inheritParams swolca_var_adjust
+#' @param res An object of class `"wolca"`, resulting from a call to [wolca()],
 #' containing the unadjusted estimates
-#' @param alpha Hyperparameter for prior for class membership probabilities 
-#' \eqn{\pi}. Default is `NULL` and default values are used (see Details below). 
-#' If specified, must be (`K_max`)x1. 
-#' @param eta Hyperparameter for prior for item consumption level probabilities 
-#' \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k}, assumed to be 
-#' the same across classes. Default is `NULL` and default values are used (see 
-#' Details below). If specified, must be JxR, where J is the number of exposure 
-#' items and R is the maximum number of categories for the exposure.
-#' @param mu0 Mean hyperparameters for regression coefficients \eqn{\xi_{k\cdot}} 
-#' for each class \eqn{k}. Default is `NULL` and default values are used (see 
-#' Details below). If specified, must be a list of `K_max` vectors of dimension 
-#' qx1, where q is the number of regression covariates excluding latent class assignment.  
-#' @param Sig0 Variance hyperparameters for regression coefficients 
-#' \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is `NULL` and default 
-#' values are used (see Details below). If specified, must be a list of `K_max` 
-#' qxq matrices, where q is the number of regression covariates excluding latent 
-#' class assignment. 
-#' @param num_reps Number of bootstrap replicates to use for the variance 
-#' adjustment estimate. Default is 100.
-#' @param save_res Boolean specifying if results should be saved. Default = `TRUE`.
 #' @param save_path String specifying directory and file name to save results, 
 #' e.g., "~/Documents/run". Default is `NULL`. If this is the same as the file 
-#' name specified in [swolca()], the unadjusted results are overwritten with the 
+#' name specified in [wolca()], the unadjusted results are overwritten with the 
 #' adjusted results.
-#' @param adjust_seed Numeric seed for variance adjustment. Default is `NULL`.
 #' 
 #' @details
-#' `var_adjust` applies a post-processing variance adjustment that rescales the
-#' variance to obtain correct coverage of posterior intervals, adapted from 
+#' `wolca_var_adjust` applies a post-processing variance adjustment that rescales 
+#' the variance to obtain correct coverage of posterior intervals, adapted from 
 #' Williams and Savitsky (2021). To obtain the rescaling, a sandwich-type 
 #' variance is estimated. To estimate the Hessian that composes the "bread" of 
 #' the sandwich, the mixture model is specified in Stan and the parameters are 
@@ -117,49 +51,41 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' 
 #' To save results, set `save_res = TRUE` (default) and `save_path` to a string
 #' that specifies both the location and the beginning of the file name 
-#' (e.g., "~/Documents/run"). The file name will have "_swolca_results.RData" 
+#' (e.g., "~/Documents/run"). The file name will have "_wolca_results.RData" 
 #' appended to it, overwriting the unadjusted results if the file names are the 
 #' same.
 #' 
 #' If hyperparameters are left as `NULL` (default), the following default 
 #' values are used. Let \eqn{K} refer to the final number of latent class 
-#' obtained from running [swolca()], available at `res$estimates_unadj$K_red`.
+#' obtained from running [wolca()], available at `res$estimates_unadj$K_red`.
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
 #' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
 #' of categories for exposure item j. If `R_j < R`, the remaining categories have
 #' hyperparameter set to 0.01. This is done independently for each exposure item j
-#' and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a 
-#' Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0} 
-#' drawn from a Normal(0,1) hyperprior for each component, and variance matrix 
-#' hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn 
-#' from InvGamma(shape=3.5, scale=6.25) distributions. 
+#' and is assumed to be the same across latent classes. 
 #' 
 #' @return 
-#' Returns an object `res` of class `"swolca"`, which includes all outputs from 
-#' [swolca()] as well as a list `estimates` containing:
+#' Returns an object `res` of class `"wolca"`, which includes all outputs from 
+#' [wolca()] as well as a list `estimates` containing:
 #' \describe{
 #'   \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red), 
 #'   where M is the number of MCMC iterations after burn-in and thinning.}
 #'   \item{\code{theta_red}}{Array of adjusted posterior samples for theta. MxJx(K_red)xR}
-#'   \item{\code{xi_red}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
 #'   \item{\code{pi_med}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
 #'   \item{\code{theta_med}}{Array of adjusted posterior median estimates for theta. px(K_red)xR}
-#'   \item{\code{xi_med}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
-#'   \item{\code{Phi_med}}{Vector of adjusted individual outcome probabilities. nx1}
-#'   \item{\code{c_all}}{Vector of final individual class assignments from `swolca()`. nx1}
+#'   \item{\code{c_all}}{Vector of final individual class assignments from `wolca()`. nx1}
 #'   \item{\code{pred_class_probs}}{Matrix of individual posterior class 
-#'   probabilities from `swolca()`. nx(K_red)}
-#'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods from `swolca()`. nx1} 
+#'   probabilities from `wolca()`. nx(K_red)}
 #' }
 #' The `runtime` output for `res` is also updated to include the runtime for the 
-#' variance adjustment in addition to the runtime for the main `swolca()` model.
+#' variance adjustment in addition to the runtime for the main `wolca()` model.
 #' 
 #' If `save_res = TRUE` (default), the updated `res` object is saved as 
-#' `[save_path]_swolca_results.RData`, overwriting the unadjusted results if the 
+#' `[save_path]_wolca_results.RData`, overwriting the unadjusted results if the 
 #' file names are the same. 
 #'
-#' @seealso [swolca()]
+#' @seealso [wolca()]
 #' @importFrom stats rnorm pnorm optimHess vcov median
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom rstan sampling unconstrain_pars grad_log_prob constrain_pars
@@ -177,29 +103,24 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' data("sim_data")
 #' data_vars <- sim_data
 #' x_mat <- data_vars$X_data            # Categorical exposure matrix, nxJ
-#' y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
 #' cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
 #' stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
 #' sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 #' n <- dim(x_mat)[1]                   # Number of individuals
 #' 
-#' # Probit model only includes latent class
-#' V_data <- NULL # Additional regression covariates
-#' glm_form <- "~ 1"
-#' 
-#' # Run swolca
-#' res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-#'               cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
-#'               run_sampler = "both", glm_form = glm_form, adapt_seed = 1,
-#'               n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
+#' # Run wolca
+#' res <- wolca(x_mat = x_mat, sampling_wt = sampling_wt, 
+#'              cluster_id = cluster_id, stratum_id = stratum_id, 
+#'              run_sampler = "both", adapt_seed = 1, n_runs = 50, burn = 25, 
+#'              thin = 1, save_res = FALSE)
 #'        
 #' # Apply variance adjustment to posterior estimates
-#' res_adjust <- swolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
-#'                                 adjust_seed = 1)                        
+#' res_adjust <- wolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
+#'                                adjust_seed = 1)                        
 #' 
-swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL, 
-                              Sig0 = NULL, num_reps = 100, save_res = TRUE,
-                              save_path = NULL, adjust_seed = NULL) {
+wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100, 
+                             save_res = TRUE, save_path = NULL, 
+                             adjust_seed = NULL) {
   
   # Begin runtime tracker
   start_time <- Sys.time()
@@ -211,11 +132,11 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   
   #================= Extract dimensions and catch errors =======================
   # Check object class and estimates
-  if (!inherits(res, "swolca")) {
-    stop("res must be an object of class `swolca`, resulting from a call to the 
-         `swolca()` function that includes results from the fixed sampler")
+  if (!inherits(res, "wolca")) {
+    stop("res must be an object of class `wolca`, resulting from a call to the 
+         `wolca()` function that includes results from the fixed sampler")
   } else if (is.null(res$estimates_unadj)) {
-    stop("res must include results from the fixed sampler in the `swolca()` function")
+    stop("res must include results from the fixed sampler in the `wolca()` function")
   }
   # Check variance adjustment has not already been performed
   if ("estimates" %in% names(res)) {
@@ -228,10 +149,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   R_j <- res$data_vars$R_j
   R <- res$data_vars$R
   n <- res$data_vars$n
-  q <- res$data_vars$q  # prevent stats::rnorm error
   x_mat <- res$data_vars$x_mat
-  y_all <- res$data_vars$y_all
-  V <- res$data_vars$V
   w_all <- res$data_vars$w_all
   stratum_id <- res$data_vars$stratum_id
   cluster_id <- res$data_vars$cluster_id
@@ -254,20 +172,6 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
                 during the Hessian calculation in the var_adjust() function")
     }
   }
-  if (any(!is.null(c(mu0, Sig0)))) {
-    if (length(mu0) != K | !is.list(mu0) | 
-        !(all(lapply(mu0, length) == q))) {
-      stop("mu0 must be a list of length K where each element is a 
-           vector of length q (number of regression covariates excluding latent class)")
-    }
-    if (length(Sig0) != K | !is.list(Sig0) | 
-        !(all(lapply(Sig0, nrow) == q)) | 
-        !(all(lapply(Sig0, ncol) == q))) {
-      stop("Sig0 must be a list of length K where each element is a 
-            qxq matrix, where q is the number of regression covariates excluding 
-           latent class)")
-    }
-  }
   
   # Check saving parameters
   if (!is.null(save_res)) {
@@ -285,7 +189,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
         if (last_slash_ind == length(save_path)) {
           stop("please append the start of a file name to the end of save_path. 
             For example, '~/Documents/run' can produce a saved file named 
-            'run_swolca_results.RData'")
+            'run_wolca_results.RData'")
         }
       }
     }
@@ -304,37 +208,19 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
       eta[j, 1:R_j[j]] <- rep(1, R_j[j]) 
     }
   }
-  # Default hyperparameters for xi
-  if (is.null(mu0)) {
-    mu0 <- vector("list", K)
-    for (k in 1:K) {
-      # MVN(0,1) hyperprior for prior mean of xi
-      mu0[[k]] <- stats::rnorm(n = q)
-    }
-  }
-  if (is.null(Sig0)) {
-    Sig0 <- vector("list", K)
-    for (k in 1:K) {
-      # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
-      # components and mean variance 2.5 for a weakly informative prior on xi
-      Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25),
-                        nrow = q, ncol = q)
-    }
-  }
   
   #=============== Run Stan model ==============================================
   print("Running variance adjustment")
   
   # Define data for Stan model
-  data_stan <- list(K = K, J = J, R = R, n = n, q = q, X = x_mat, y = y_all, 
-                    V = V, weights = w_all, alpha = alpha, eta = eta, mu0 = mu0, 
-                    Sig0 = Sig0)
+  data_stan <- list(K = K, J = J, R = R, n = n, X = x_mat, weights = w_all, 
+                    alpha = alpha, eta = eta)
   
   # Stan parameters of interest
-  par_stan <- c('pi', 'theta', 'xi')  # subset of parameters interested in
+  par_stan <- c('pi', 'theta')  # subset of parameters interested in
   
   # Stan model
-  mod_stan <- stanmodels$SWOLCA_main
+  mod_stan <- stanmodels$WOLCA_main
   
   # Run Stan model
   # Stan will pass warnings from calling 0 chains, but will still create an 
@@ -346,14 +232,12 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   # Convert params from constrained space to unconstrained space
   unc_par_hat <- rstan::unconstrain_pars(out_stan, 
                                          list("pi" = res$estimates_unadj$pi_med,
-                                              "theta" = res$estimates_unadj$theta_med,
-                                              "xi" = res$estimates_unadj$xi_med))
+                                              "theta" = res$estimates_unadj$theta_med))
   # Get posterior MCMC samples in unconstrained space for all parameters
   M <- dim(res$estimates_unadj$pi_red)[1]
-  unc_par_samps <- lapply(1:M, unconstrain, stan_model = out_stan, K = K, 
+  unc_par_samps <- lapply(1:M, unconstrain_wolca, stan_model = out_stan, K = K, 
                           pi = res$estimates_unadj$pi_red, 
-                          theta = res$estimates_unadj$theta_red, 
-                          xi = res$estimates_unadj$xi_red)
+                          theta = res$estimates_unadj$theta_red)
   unc_par_samps <- matrix(unlist(unc_par_samps), byrow = TRUE, nrow = M)
   
   #=============== Post-processing adjustment in unconstrained space ===========
@@ -365,14 +249,13 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   if (!is.null(stratum_id)) {  # Include stratifying variable
     # Survey data frame for specifying survey design
     svy_data <- data.frame(stratum_id = stratum_id, cluster_id = cluster_id,
-                           x_mat = x_mat, y_all = y_all, w_all = w_all)
+                           x_mat = x_mat, w_all = w_all)
     # Specify survey design
     svydes <- survey::svydesign(ids = ~cluster_id, strata = ~factor(stratum_id), 
                                 weights = ~w_all, data = svy_data)
   } else { # No stratifying variable
     # Survey data frame for specifying survey design
-    svy_data <- data.frame(cluster_id = cluster_id, x_mat = x_mat, 
-                           y_all = y_all, w_all = w_all)
+    svy_data <- data.frame(cluster_id = cluster_id, x_mat = x_mat, w_all = w_all)
     # Specify survey design
     svydes <- survey::svydesign(ids = ~cluster_id, weights = ~w_all, 
                                 data = svy_data)    
@@ -436,13 +319,11 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   # Constrained adjusted parameters for all MCMC samples
   pi_red_adj <- matrix(NA, nrow=M, ncol=K)
   theta_red_adj <- array(NA, dim=c(M, J, K, R))
-  xi_red_adj <- array(NA, dim=c(M, K, q))
   for (i in 1:M) {
     ##### FIX WITH CUSTOMIZED ERROR
     constr_pars <- rstan::constrain_pars(out_stan, par_adj[i,])
     pi_red_adj[i, ] <- constr_pars$pi
     theta_red_adj[i,,,] <- constr_pars$theta
-    xi_red_adj[i,,] <- constr_pars$xi
   }
   
   #=============== Output adjusted parameters ==================================
@@ -454,22 +335,11 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   # Get posterior median estimates
   pi_med_adj <- apply(pi_red_adj, 2, stats::median)
   theta_med_adj <- apply(theta_red_adj, c(2,3,4), stats::median)
-  xi_med_adj <- apply(xi_red_adj, c(2,3), stats::median)
   
   # Renormalize posterior median estimates for pi and theta to sum to 1
   pi_med_adj <- pi_med_adj / sum(pi_med_adj)  
   theta_med_adj <- plyr::aaply(theta_med_adj, c(1, 2), function(x) x / sum(x),
                                .drop = FALSE)  # Re-normalize
-  
-  # Update Phi_med using adjusted xi estimate
-  c_all <- res$estimates_unadj$c_all
-  Phi_med_all_c <- stats::pnorm(V %*% t(xi_med_adj))  # Outcome probabilities for all classes
-  Phi_med_adj <- numeric(n)                    # Initialize individual outcome probabilities
-  # Calculate posterior class membership, p(c_i=k|-), for each class k
-  for (i in 1:n) {
-    # Calculate outcome probabilities P(Y=1|-) using updated class assignment
-    Phi_med_adj[i] <- Phi_med_all_c[i, c_all[i]] 
-  }
   
   #================= Save and return output ====================================
   # Stop runtime tracker
@@ -479,18 +349,16 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   res$runtime <- sum_runtime
   
   estimates_adj <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
-                        xi_red = xi_red_adj, pi_med = pi_med_adj, 
-                        theta_med = theta_med_adj, xi_med = xi_med_adj, 
-                        Phi_med = Phi_med_adj, c_all = c_all,
-                        pred_class_probs = res$estimates_unadj$pred_class_probs,
-                        log_lik_med = res$estimates_unadj$loglik_med)
+                        pi_med = pi_med_adj, theta_med = theta_med_adj, 
+                        c_all = res$estimates_unadj$c_all,
+                        pred_class_probs = res$estimates_unadj$pred_class_probs)
   
   res$estimates <- estimates_adj
-  class(res) <- "swolca"
+  class(res) <- "wolca"
   
   # Save output
   if (save_res) {
-    save(res, file = paste0(save_path, "_swolca_results.RData"))
+    save(res, file = paste0(save_path, "_wolca_results.RData"))
   }
   
   return(res)

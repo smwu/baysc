@@ -168,17 +168,17 @@
 #' If `save_res = TRUE` (default), also saves `res` as 
 #' `[save_path]_swolca_adapt.RData`. 
 #' 
-#' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
-#' (2023). Derivation of outcome-dependent dietary patterns for low-income women 
-#' obtained from survey data using a Supervised Weighted Overfitted Latent Class 
-#' Analysis. arXiv preprint arXiv:2310.01575.
-#' 
 #' @seealso [swolca_var_adjust()] [wolca()]
 #' 
 #' @importFrom RcppTN rtn
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats rnorm median model.matrix as.formula
 #' @export
+#' 
+#' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
+#' (2023). Derivation of outcome-dependent dietary patterns for low-income women 
+#' obtained from survey data using a Supervised Weighted Overfitted Latent Class 
+#' Analysis. arXiv preprint arXiv:2310.01575.
 #'
 #' @examples
 #' # Load simulated data and obtain relevant variables
