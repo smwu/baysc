@@ -2,7 +2,7 @@
 % Please edit documentation in R/wolca_var_adjust.R
 \name{unconstrain_wolca}
 \alias{unconstrain_wolca}
-\title{Unconstrain parameters}
+\title{Unconstrain parameters for WOLCA}
 \usage{
 unconstrain_wolca(i, K, stan_model, pi, theta)
 }

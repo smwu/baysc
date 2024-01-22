@@ -96,5 +96,5 @@ post_MCMC_out = post_MCMC_out, n = n, J = J, x_mat = x_mat)
 }
 \seealso{
 \code{\link[=get_estimates]{get_estimates()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}} \code{\link[=post_process_wolca]{post_process_wolca()}}
-\code{\link[=fit_probit_wolca]{fit_probit_wolca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=wolca_svyglm]{wolca_svyglm()}} \code{\link[=wolca]{wolca()}}
 }

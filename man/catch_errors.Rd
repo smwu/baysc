@@ -29,6 +29,7 @@ catch_errors(
   n_runs = NULL,
   burn = NULL,
   thin = NULL,
+  update = NULL,
   adjust_var = NULL,
   num_reps = NULL,
   save_res = NULL,
@@ -121,13 +122,16 @@ number of regression covariates excluding latent class assignment.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
+\item{update}{Number specifying that MCMC progress updates should be printed
+every \code{update} iterations. Default is 10.}
+
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results,
 e.g., "~/Documents/run". Default is \code{NULL}.}
 
 \item{model}{String specifying which model is used. Must be one of \code{swolca}
-(default), \code{solca}, or \code{wolca}}
+(default) or \code{wolca}}
 }
 \value{
 The function stops and an error message is displayed if the input

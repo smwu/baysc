@@ -7,7 +7,7 @@
 post_process(MCMC_out, J, R, q, class_cutoff)
 }
 \arguments{
-\item{MCMC_out}{Output from \code{run_MCMC_Rcpp} containing:
+\item{MCMC_out}{Output from \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} containing:
 \describe{
 \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
@@ -115,5 +115,5 @@ class_cutoff = 0.05)
 
 }
 \seealso{
-\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}}
 }

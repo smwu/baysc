@@ -2,82 +2,70 @@
 % Please edit documentation in R/simulate_data.R
 \name{get_betas_x}
 \alias{get_betas_x}
-\title{Obtain beta matrices for generating multivariate categorical exposures}
+\title{Obtain list of beta matrices for generating multivariate categorical exposure X}
 \usage{
-get_betas_x(thetas, modal_theta_prob = 0.85, R, design_mat, depends_s = FALSE)
+get_betas_x(profiles, R, modal_theta_prob = 0.85, formula_x, V_unique)
 }
 \arguments{
-\item{thetas}{Matrix of exposure category probabilities, \eqn{\theta}. JxK,
-where J is the number of exposure items and K is the number of latent classes.}
-
-\item{modal_theta_prob}{Probability of true exposure level. Default is 0.85.}
+\item{profiles}{Matrix where each column is a latent class pattern profile
+and each row is the item level for all classes. JxK, where J is the number of
+exposure items and K is the number of latent classes. The item levels must
+range from 1 to R, where R is the number of levels for all items.}
 
 \item{R}{Number of exposure levels. Fixed across exposure items.}
 
-\item{design_mat}{Design matrix of unique combinations of covariate variable
-values, or full design matrix for all individuals.}
+\item{modal_theta_prob}{Probability of true exposure level. Default is 0.85.}
 
-\item{depends_s}{Boolean specifying whether X should also have an association
-with S. If true, level R (i.e., the last level) has an additional 0.02*(R-1)
-probability added to it among those with S=H, where H is the number of levels
-of S.}
+\item{formula_x}{String specifying formula for multinomial logistic
+regression to create multivariate categorical exposure X.}
+
+\item{V_unique}{Dataframe with one column containing the unique values of
+the categorical covariate specified in \code{formula_x}.}
 }
 \value{
-Returns list \code{beta_mat_x} of length J with each element a matrix of betas to
+Returns list \code{beta_list_x} of length J with each element a matrix of betas to
 be used in a multinomial logistic regression to generate a categorical
 exposure variable for that item. Each matrix of betas has R rows and number
 of columns equal to the number of columns in the design matrix.
 }
 \description{
 Obtain list of beta matrices that can be used to generate the multivariate
-categorical exposure variable X using a multinomial logistic regression
-covariates categorical latent class C and, if desired, categorical variable S,
-using the specified matrix of exposure category probabilities, \eqn{\theta},
-and an input design matrix.
+categorical exposure variable X using a multinomial logistic regression where
+X depends on categorical covariate composed of latent class assignment C.
 }
 \examples{
 ## Example 1: X ~ C
-# Function to get beta's from a set of theta's
-J <- 30
-thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
-                                      rep(3, times = 0.5 * J)),
-                               C2 = c(rep(4, times = 0.2 * J), 
-                                      rep(2, times = 0.8 * J)),
-                               C3 = c(rep(3, times = 0.3 * J), 
-                                      rep(4, times = 0.4 * J),
-                                      rep(1, times = 0.3 * J))))
+# Number of items, exposure levels, latent classes
+J <- 30; R <- 4; K <- 3
+# Formula specifying that X depends on C
+formula_x <- "~ c_all"
+# Dataframe with unique values of C
+V_unique <- data.frame(c_all = as.factor(1:K))
+# Matrix of pattern profiles for each latent class
+profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
+                                        rep(3, times = 0.5 * J)),
+                                 C2 = c(rep(4, times = 0.2 * J), 
+                                        rep(2, times = 0.8 * J)),
+                                 C3 = c(rep(3, times = 0.3 * J), 
+                                        rep(4, times = 0.4 * J),
+                                        rep(1, times = 0.3 * J))))
+# True level probability
 modal_theta_prob <- 0.85
-R <- 4
-# Dataframe of unique values of covariates
-V_unique <- data.frame(c_all = as.factor(1:3))
-formula <- "~ c_all"  
-# Design matrix of unique combinations of covariate variable values
-design_mat_unique <- model.matrix(as.formula(formula), data = V_unique)
-beta_mat_x <- get_betas_x(thetas = thetas, 
-                          modal_theta_prob = modal_theta_prob, R = R, 
-                          design_mat = design_mat_unique)
-
+# Get matrix of betas for generating C
+beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+                           modal_theta_prob = modal_theta_prob, 
+                           formula_x = formula_x, V_unique = V_unique)
+# Beta matrix for item j=1
+beta_list_x[[1]]     
+                      
 ## Example 2: X ~ C + S
-J <- 30
-thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
-                                      rep(3, times = 0.5 * J)),
-                               C2 = c(rep(4, times = 0.2 * J), 
-                                      rep(2, times = 0.8 * J)),
-                               C3 = c(rep(3, times = 0.3 * J), 
-                                      rep(4, times = 0.4 * J),
-                                      rep(1, times = 0.3 * J))))
-# Dataframe of unique values of covariates                                   
-V_unique <- expand.grid(factor(1:3), factor(1:2))  
-colnames(V_unique) <- c("c_all", "s_all")                                
-modal_theta_prob <- 0.85
-R <- 4
-formula <- "~ c_all + s_all"  
-# Design matrix of unique combinations of covariate variable values
-design_mat_unique <- model.matrix(as.formula(formula), data = V_unique)
-beta_mat_x <- get_betas_x(thetas = thetas, 
-                          modal_theta_prob = modal_theta_prob, R = R, 
-                          design_mat = design_mat_unique, depends_s = TRUE)
-                          
+# Update formula_x
+formula_x <- "~ c_all + s_all"
+# Update beta_list_x by adding in coefficients for S to each j matrix
+beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
+                                             s_all = c(0, 0.5, 0, 0)))
+beta_list_x[[1]]  
+                     
 }
 \seealso{
 \code{\link[=simulate_pop]{simulate_pop()}}

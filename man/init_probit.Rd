@@ -94,5 +94,5 @@ Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
 
 }
 \seealso{
-\code{\link[=init_OLCA]{init_OLCA()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
+\code{\link[=init_OLCA]{init_OLCA()}} \code{\link[=swolca]{swolca()}}
 }

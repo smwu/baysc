@@ -16,11 +16,12 @@ run_MCMC_Rcpp_wolca(
   w_all,
   x_mat,
   alpha,
-  eta
+  eta,
+  update = 10
 )
 }
 \arguments{
-\item{OLCA_params}{Output list from \code{init_OLCA()} containing:
+\item{OLCA_params}{Output list from \code{\link[=init_OLCA]{init_OLCA()}} containing:
 \describe{
 \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
 \item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
@@ -51,6 +52,9 @@ probabilities \eqn{\pi}}
 \item{eta}{JxR matrix of hyperparameters for prior for item consumption
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
 \eqn{k}, assumed to be the same across classes.}
+
+\item{update}{Number specifying that MCMC progress updates should be printed
+every \code{update} iterations. Default is 10.}
 }
 \value{
 Returns list \code{MCMC_out} containing:
@@ -107,5 +111,5 @@ alpha = alpha, eta = eta)
 }
 \seealso{
 \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process_wolca]{post_process_wolca()}} \code{\link[=get_estimates_wolca]{get_estimates_wolca()}}
-\code{\link[=fit_probit_wolca]{fit_probit_wolca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=wolca_svyglm]{wolca_svyglm()}} \code{\link[=wolca]{wolca()}}
 }

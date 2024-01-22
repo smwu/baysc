@@ -20,17 +20,18 @@ covariates must be converted to factors. If \code{NULL} (default), no additional
 covariates are to be included. All variables in \code{glm_form} must
 be found in \code{V_data}.}
 
-\item{cov_name}{String specifying name of covariate of interest. Must be
-included in \code{glm_form}.}
+\item{cov_name}{String vector of length 1 or 2 specifying the key covariate(s)
+for which to obtain the outcome probabilities. All covariate names must be
+included in \code{glm_form} and \code{V_data}.}
 }
 \value{
-Returns dataframe \code{probs} of the converted probabilities for the
-covariate specified in \code{cov_name}, with number of rows equal to K and number
-of columns equal to the number of categories for the covariate (including the
-baseline category) plus one. The first column specifies the latent class,
-the second column corresponds to the baseline category intercept for all K
-latent classes, and the remaining columns correspond to the other categories
-for the covariate.
+Returns dataframe \code{Phi_df} of the converted outcome probabilities
+(i.e., \eqn{\Phi} values) for the categories of the covariate(s) specified in
+\code{cov_name}. Number of rows is equal to the number of category combinations of
+the key covariate(s). The first K columns include the \eqn{\Phi} values
+for the K latent classes, evaluated at the covariate values listed in the
+remaining q columns. The key covariate(s) are evaluated at all levels and
+the other covariates are evaluated at their reference levels.
 }
 \description{
 Convert regression estimates \eqn{\xi} from mixture reference coding to

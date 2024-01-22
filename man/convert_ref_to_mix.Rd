@@ -33,6 +33,6 @@ factor variable and reference cell coding, referred to as mixture reference
 coding.
 }
 \seealso{
-\code{\link[=fit_probit_wolca]{fit_probit_wolca()}}
+\code{\link[=wolca_svyglm]{wolca_svyglm()}}
 }
 \keyword{internal}

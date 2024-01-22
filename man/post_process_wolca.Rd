@@ -87,5 +87,5 @@ class_cutoff = 0.05)
 }
 \seealso{
 \code{\link[=post_process]{post_process()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}} \code{\link[=get_estimates_wolca]{get_estimates_wolca()}}
-\code{\link[=fit_probit_wolca]{fit_probit_wolca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=wolca_svyglm]{wolca_svyglm()}} \code{\link[=wolca]{wolca()}}
 }

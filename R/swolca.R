@@ -66,6 +66,8 @@
 #' @param n_runs Number of MCMC iterations. Default is 20000.
 #' @param burn Number of MCMC iterations to drop as a burn-in period. Default is 10000.
 #' @param thin Thinning factor for MCMC iterations. Default is 5.
+#' @param update Number specifying that MCMC progress updates should be printed 
+#' every `update` iterations. Default is 10.
 #' @param save_res Boolean specifying if results should be saved. Default = `TRUE`.
 #' @param save_path String specifying directory and file name to save results, 
 #' e.g., "~/Documents/run". Default is `NULL`.
@@ -124,8 +126,8 @@
 #' If the fixed sampler is run, returns an object `res` of class `"swolca"`; a 
 #' list containing the following:
 #' \describe{
-#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results, 
-#'   resulting from a call to [get_estimates()]}
+#'   \item{\code{estimates}}{List of posterior model results, resulting from a 
+#'.  call to [get_estimates()]}
 #'   \item{\code{runtime}}{Total runtime for model}
 #'   \item{\code{data_vars}}{List of data variables used, including:
 #'   `n`: Sample size.
@@ -228,14 +230,13 @@
 #'
 swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL, 
                    stratum_id = NULL, V_data = NULL, run_sampler = "both", 
-                   glm_form,
-                   K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
+                   glm_form, K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
                    alpha_adapt = NULL, eta_adapt = NULL,
                    mu0_adapt = NULL, Sig0_adapt = NULL,
                    fixed_seed = NULL, K_fixed = NULL, 
                    alpha_fixed = NULL, eta_fixed = NULL,
                    mu0_fixed = NULL, Sig0_fixed = NULL,
-                   n_runs = 20000, burn = 10000, thin = 5, 
+                   n_runs = 20000, burn = 10000, thin = 5, update = 10,
                    save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
@@ -277,7 +278,7 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
                mu0_adapt = mu0_adapt, Sig0_adapt = Sig0_adapt, 
                K_fixed = K_fixed, alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
-               n_runs = n_runs, burn = burn, thin = thin, 
+               n_runs = n_runs, burn = burn, thin = thin, update = update,
                save_res = save_res, save_path = save_path)
 
   # Obtain probit regression design matrix without class assignment
@@ -344,7 +345,7 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
                               K = K_max, J = J, R = R, n = n, q = q,
                               w_all = w_all, x_mat = x_mat, y_all = y_all, V = V,
                               alpha = alpha_adapt, eta = eta_adapt,
-                              Sig0 = Sig0_adapt, mu0 = mu0_adapt)
+                              Sig0 = Sig0_adapt, mu0 = mu0_adapt, update = update)
     
     #================= Post-processing for adaptive sampler ====================
     # Get median number of classes with >= cutoff% of individuals, over all iterations
@@ -374,7 +375,7 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
                  mu0_fixed = mu0_fixed, Sig0_fixed = Sig0_fixed,
-                 n_runs = n_runs, burn = burn, thin = thin)
+                 n_runs = n_runs, burn = burn, thin = thin, update = update)
     
     # Set seed
     if (!is.null(fixed_seed)) {
@@ -430,7 +431,7 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
                               K = K_fixed, J = J, R = R, n = n, q = q,
                               w_all = w_all, x_mat = x_mat, y_all = y_all, V = V,
                               alpha = alpha_fixed, eta = eta_fixed,
-                              Sig0 = Sig0_fixed, mu0 = mu0_fixed)
+                              Sig0 = Sig0_fixed, mu0 = mu0_fixed, update = update)
     
     # Post-processing to recalibrate labels and remove extraneous empty classes
     # Obtain K_med, pi, theta, xi, loglik_MCMC
@@ -444,7 +445,7 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
                                n = n, J = J, V = V, y_all = y_all, x_mat = x_mat)
     
     # Create output list. Replaces adaptive sampler output list
-    res <- list(estimates_unadj = estimates, MCMC_out = MCMC_out,
+    res <- list(estimates = estimates, MCMC_out = MCMC_out,
                 post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
   }  
 

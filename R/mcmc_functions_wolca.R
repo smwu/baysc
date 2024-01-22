@@ -5,6 +5,7 @@
 #' obtain posterior samples for the two-step unsupervised WOLCA model.
 #'
 #' @inheritParams run_MCMC_Rcpp
+#' @inheritParams wolca
 #' 
 #' @details
 #' A Gibbs sampler updates the parameters and variables in the following order:
@@ -20,7 +21,7 @@
 #' }
 #'
 #' @seealso [run_MCMC_Rcpp()] [post_process_wolca()] [get_estimates_wolca()] 
-#' [fit_probit_wolca()] [wolca()] 
+#' [wolca_svyglm()] [wolca()] 
 #' @importFrom gtools permute
 #' @export
 #'
@@ -60,7 +61,7 @@
 #' # MCMC_out
 #' 
 run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
-                                w_all, x_mat, alpha, eta) {
+                                w_all, x_mat, alpha, eta, update = 10) {
   # Number of MCMC iterations to store
   n_storage <- ceiling(n_runs / thin)  
   
@@ -100,6 +101,10 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
       c_all <- new_c_all             # Relabel class assignments
       pi <- pi[new_order]            # Relabel class probabilities
       theta <- theta[, new_order, ]  # Relabel item category probabilities
+    }
+    
+    # Print out progress 
+    if (m %% update == 0) {
       print(paste0("Iteration ", m, " completed!"))
     }
   }
@@ -152,7 +157,7 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
 #' }
 #' 
 #' @seealso [post_process()] [run_MCMC_Rcpp_wolca()] [get_estimates_wolca()] 
-#' [fit_probit_wolca()] [wolca()] 
+#' [wolca_svyglm()] [wolca()] 
 #' @importFrom stats median as.dist hclust cutree
 #' @importFrom e1071 hamming.distance
 #' @export
@@ -278,7 +283,7 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
 #' }
 #'
 #' @seealso [get_estimates()] [run_MCMC_Rcpp_wolca()] [post_process_wolca()] 
-#' [fit_probit_wolca()] [wolca()] 
+#' [wolca_svyglm()] [wolca()] 
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
 #' @importFrom LaplacesDemon rcat

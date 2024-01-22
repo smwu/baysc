@@ -4,27 +4,25 @@
 \alias{get_categ_probs}
 \title{Get unique categorical probabilities for multinomial logistic regresion}
 \usage{
-get_categ_probs(beta_mat, formula, V)
+get_categ_probs(beta_mat, formula, V_unique)
 }
 \arguments{
-\item{beta_mat}{Coefficient parameters for the linear predictor terms of a
-multinomial logistic regression. KxQ, where Q is the number of covariate
-terms in the regression}
+\item{beta_mat}{Matrix of coefficient parameters for the linear predictor
+terms of a multinomial logistic regression for generating a categorical
+variable. Number of rows is equal to the number of levels in the categorical
+variable. Number of columns is equal to the number of covariate terms in the
+regression.}
 
 \item{formula}{Formula for multinomial logistic regression. Should start with
-\code{"~ c_all"} if generating exposure X. All variables must be found in \code{V}.}
+\code{"~ c_all"} if generating exposure X. All variables must be found in \code{V_unique}.}
 
-\item{V}{Dataframe of variables}
+\item{V_unique}{Dataframe with containing the unique values of the variables
+specified in \code{formula}.}
 }
 \value{
-List \code{categ_probs} containing:
-\describe{
-\item{\code{unique_comb}}{Matrix of unique covariate combinations in the
-design matrix created using the specified formula. mxQ, where m is the
-number of unique covariate combinations.}
-\item{\code{unique_prob_mat}}{Matrix of category probabilities for all
-unique covariate cominations. mxQ}
-}
+Matrix \code{categ_probs} where the first columns are the values of the covariates
+for the multinomial logistic regression, and the remaining columns are the
+corresponding probability of each category of the categorical outcome variable.
 }
 \description{
 Get categorical probabilities for a unique design matrix corresponding to
@@ -32,33 +30,43 @@ specified multinomial logistic regression formula and coefficient parameters
 }
 \examples{
 # Get pi probabilities for C ~ S
-V_unique <- data.frame(s_all = as.factor(1:2))
-formula_lc <- "~ s_all"
-beta_mat <- matrix(c(0, 0,  # Kx2 (first row is all 0's)
-                     0.5, 1.3,
-                     -0.4, 1.5), byrow = TRUE, nrow = 3, ncol = 2)
-categ_probs_pi <- get_categ_probs(beta_mat = beta_mat, formula = formula_lc, 
-                               V = V_unique)
+K <- 3; H <- 2
+formula_c <- "~ s_all"
+V_unique <- data.frame(s_all = as.factor(1:H))
+pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
+                   0.1, 0.6, 0.3),  # class membership probs for S=2
+                 byrow = TRUE, nrow = H, ncol = K)
+beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
+                          V_unique = V_unique)
+categ_probs_pi <- get_categ_probs(beta_mat = beta_mat_c, formula = formula_c, 
+                                  V_unique = V_unique)
+categ_probs_pi
+
+# Get theta probabilities for X ~ C 
+J <- 30; R <- 4; K <- 3
+formula_x <- "~ c_all"
+V_unique <- data.frame(c_all = as.factor(1:K))
+profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
+                                        rep(3, times = 0.5 * J)),
+                                 C2 = c(rep(4, times = 0.2 * J), 
+                                        rep(2, times = 0.8 * J)),
+                                 C3 = c(rep(3, times = 0.3 * J), 
+                                        rep(4, times = 0.4 * J),
+                                        rep(1, times = 0.3 * J))))
+modal_theta_prob <- 0.85
+beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+                           modal_theta_prob = modal_theta_prob, 
+                           formula_x = formula_x, V_unique = V_unique)
+categ_probs_theta <- get_categ_probs(beta_mat = beta_list_x[[1]], 
+                                     formula = formula_x, V_unique = V_unique)
+categ_probs_theta                                     
 
 # Get theta probabilities for X ~ C + S
-V_unique <- expand.grid(factor(1:3), factor(1:2))  
-colnames(V_unique) <- c("c_all", "s_all")    
-formula <- "~ c_all + s_all"
-non_div_mode <- log(0.05 / 0.85)
-mode_div_non <- log(0.85 / 0.05)
-# r=1: 0.85, 0.05, 0.05; None, High, Med
-beta_mat <- matrix(c(0,            0,              0,              0,
-                     non_div_mode, mode_div_non,   mode_div_non,   0,
-                     non_div_mode, mode_div_non,   2*mode_div_non, 0,
-                     non_div_mode, 2*mode_div_non, mode_div_non,   0),
-                   nrow = 4, byrow = TRUE)
-categ_probs_theta <- get_categ_probs(beta_mat = beta_mat, formula = formula, 
-                                     V = V_unique)
-
-# Add in association with S where categ High has prob 0.91 for S=1
-beta_mat[-1, 4] <- c(0, 0, log(0.91/0.03) - mode_div_non)
-categ_probs_theta_s <- get_categ_probs(beta_mat = beta_mat, formula = formula, 
-                                       V = V_unique)
+formula_x <- "~ c_all + s_all"
+beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
+                                             s_all = c(0, 0.5, 0, 0)))
+categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]], 
+                                       formula = formula_x, V_unique = V_unique)
+categ_probs_theta
 
 }
-\keyword{internal}

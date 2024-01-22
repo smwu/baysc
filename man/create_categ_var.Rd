@@ -57,7 +57,9 @@ beta_mat_c <- matrix(c(0, 0,
 out_vars <- create_categ_var(beta_mat = beta_mat_c, design_mat = design_mat_c,
                              split_dim = "s_all", V = V)
 out_vars$categ_var
+
 }
 \seealso{
 \code{\link[=simulate_pop]{simulate_pop()}}
 }
+\keyword{internal}

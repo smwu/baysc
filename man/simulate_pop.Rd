@@ -6,6 +6,7 @@
 \usage{
 simulate_pop(
   N = 80000,
+  H = 2,
   J = 30,
   K = 3,
   R = 4,
@@ -15,7 +16,7 @@ simulate_pop(
   formula_x = "~ c_all",
   formula_y = "~ c_all * s_all",
   beta_mat_c = NULL,
-  beta_mat_x = NULL,
+  beta_list_x = NULL,
   beta_vec_y = NULL,
   xi_mat_y = NULL,
   V_additional = NULL,
@@ -63,7 +64,7 @@ regression to generate latent class assignment C. KxQ, where K is the
 number of categories and Q is the number of covariate terms in the regression.
 Default is \code{NULL} and default values are used. See details.}
 
-\item{beta_mat_x}{Coefficient parameters for a multinomial logistic
+\item{beta_list_x}{Coefficient parameters for a multinomial logistic
 regression to generate multivariate exposure X. List of J matrices,
 each of dimension KxQ. Default is \code{NULL} and default values are used. See details.}
 
@@ -133,10 +134,10 @@ If \code{save_res = TRUE} (default), also saves \code{sim_pop} as
 specifications
 }
 \details{
-If \code{NULL} (default) is used for \code{beta_mat_c}, \code{beta_mat_x}, or \code{beta_mat_y},
+If \code{NULL} (default) is used for \code{beta_mat_c}, \code{beta_list_x}, or \code{beta_mat_y},
 the following default values are used, corresponding to the scenario with K=3
 latent class and H=2 levels for variable S: \code{beta_mat_c} is a 3x2 matrix with
-values \code{c(0, 0, 0.5, 1.3, -0.4, 1.5)} by row; \code{beta_mat_x} is a list of J=30
+values \code{c(0, 0, 0.5, 1.3, -0.4, 1.5)} by row; \code{beta_list_x} is a list of J=30
 4x4 matrices as in Example 1 provided below; and \code{beta_vec_y} is a vector
 of length \eqn{3*2=6} with values \code{c(1, -0.7, -1.5, -0.5, -0.5, -0.3)}. The
 generation of default values is demonstrated in Example 1 provided below.
@@ -148,66 +149,69 @@ have "sim_pop.RData" appended to it.
 }
 \examples{
 ### Example 1: Default values
-# Default dimensions
-N = 80000; J = 30; K = 3; R = 4; N_s = c(60000, 20000)
-H <- length(N_s); modal_theta_prob = 0.85; cluster_size = 80; pop_seed <- 1
+sim_pop <- simulate_pop(save_res = FALSE)
+
+### Example 2: Similar to default but smaller population size
+# Population size and strata dimensions
+N = 800; H = 2; N_s = c(600, 200)
 
 # Generate C ~ S
+K <- 3  
 formula_c <- "~ s_all"
-beta_mat_c <- matrix(c(0, 0, 0.5, 1.3, -0.4, 1.5), 
-                     byrow = TRUE, nrow = K, ncol = H)
+V_unique <- data.frame(s_all = as.factor(1:H))
+pi_mat <- matrix(c(0.3, 0.5, 0.2,   
+                   0.1, 0.6, 0.3), 
+                 byrow = TRUE, nrow = H, ncol = K)
+beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
+                          V_unique = V_unique)
 
 # Generate X ~ C
+J <- 30; R <- 4
 formula_x <- "~ c_all"
-V_unique <- data.frame(c_all = factor(1:K)) # Df of unique cov values
-design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
-                                         data = V_unique)
-thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
-                                      rep(3, times = 0.5 * J)),
-                               C2 = c(rep(4, times = 0.2 * J),
-                                      rep(2, times = 0.8 * J)),
-                               C3 = c(rep(3, times = 0.3 * J),
-                                      rep(4, times = 0.4 * J),
-                                      rep(1, times = 0.3 * J))))
-beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
-                          R = R, design_mat = design_mat_unique)
+V_unique <- data.frame(c_all = as.factor(1:K))
+profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
+                                        rep(3, times = 0.5 * J)),
+                                 C2 = c(rep(4, times = 0.2 * J), 
+                                        rep(2, times = 0.8 * J)),
+                                 C3 = c(rep(3, times = 0.3 * J), 
+                                        rep(4, times = 0.4 * J),
+                                        rep(1, times = 0.3 * J))))
+modal_theta_prob <- 0.85
+beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+                           modal_theta_prob = modal_theta_prob, 
+                           formula_x = formula_x, V_unique = V_unique)
 
 # Generate Y ~ C + S + C:S
 formula_y <- "~ c_all * s_all"
 beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3)
+cluster_size <- 80
 
-# Create population
+# Simulate population
+pop_seed <- 1  # Set seed
 sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
-                        modal_theta_prob = modal_theta_prob, 
-                        formula_c = formula_c, formula_x = formula_x, 
-                        formula_y = formula_y, beta_mat_c = beta_mat_c, 
-                        beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
-                        cluster_size = cluster_size, 
-                        pop_seed = pop_seed, save_res = FALSE)
-                        
-\dontrun{
+                         modal_theta_prob = modal_theta_prob, 
+                         formula_c = formula_c, formula_x = formula_x, 
+                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
+                         beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
+                         cluster_size = cluster_size, 
+                         pop_seed = pop_seed, save_res = FALSE)    
+                                              
 ### Example 2: Selection-dependent pattern profiles     
 # Generate X ~ C + S
-formula_x <- "~ c_all + s_all"
-V_unique <- expand.grid(factor(1:K), factor(1:H)) # Df of unique cov values
-colnames(V_unique) <- c("c_all", "s_all")
-design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
-                                         data = V_unique)
-beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
-                          R = R, design_mat = design_mat_unique, depends_s = TRUE)
+ formula_x <- "~ c_all + s_all"
+ beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
+                                              s_all = c(0, 0.5, 0, 0)))
 
 # Create population
-sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
+sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
                         modal_theta_prob = modal_theta_prob, 
                         formula_c = formula_c, formula_x = formula_x, 
                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
-                        beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
+                        beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
                         cluster_size = cluster_size, 
                         pop_seed = pop_seed, save_res = FALSE)
-}
 
-\dontrun{
-### Example 2: Additional effect modifiers for Y      
+### Example 3: Additional effect modifiers for Y and no clustering      
 # Continuous variable A for age centered about 0
 a_all <- stats::rnorm(n = N, mean = 0, sd = 5)
 # Binary variable B for physically inactive or active
@@ -219,16 +223,17 @@ V_additional <- data.frame(a_all, b_all)
 formula_y <- "~ c_all * (s_all + a_all + b_all)"
 beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3, -0.04, 0.09, 0.08, 0.4, 
                 -0.7, -0.6)
+cluster_size <- 1
                 
 # Create population
-sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
+sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
                         modal_theta_prob = modal_theta_prob, 
                         formula_c = formula_c, formula_x = formula_x, 
                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
-                        beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
+                        beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
                         V_additional = V_additional, cluster_size = cluster_size, 
                         pop_seed = pop_seed, save_res = FALSE)
-}
+
 }
 \seealso{
 \code{\link[=simulate_samp]{simulate_samp()}} \code{\link[=create_categ_var]{create_categ_var()}} \code{\link[=get_betas_x]{get_betas_x()}}

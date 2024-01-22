@@ -55,7 +55,7 @@ adjusted results.}
 }
 \value{
 Returns an object \code{res} of class \code{"swolca"}, which includes all outputs from
-\code{\link[=swolca]{swolca()}} as well as a list \code{estimates} containing:
+\code{\link[=swolca]{swolca()}} as well as a list \code{estimates_adjust} containing:
 \describe{
 \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red),
 where M is the number of MCMC iterations after burn-in and thinning.}
@@ -103,7 +103,7 @@ same.
 
 If hyperparameters are left as \code{NULL} (default), the following default
 values are used. Let \eqn{K} refer to the final number of latent class
-obtained from running \code{\link[=swolca]{swolca()}}, available at \code{res$estimates_unadj$K_red}.
+obtained from running \code{\link[=swolca]{swolca()}}, available at \code{res$estimates$K_red}.
 For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
 each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
 hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the number
@@ -114,6 +114,12 @@ Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0}
 drawn from a Normal(0,1) hyperprior for each component, and variance matrix
 hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn
 from InvGamma(shape=3.5, scale=6.25) distributions.
+
+If the following warning message appears, please run the sampler for more
+iterations as there is instability in the parameter estimates, usually in the
+form of large positive or negative values for \eqn{\xi}):
+"Error in svrVar(thetas, scale, rscales, mse = design$mse, coef = full) :
+All replicates contained NAs".
 }
 \examples{
 # Load simulated data and obtain relevant variables

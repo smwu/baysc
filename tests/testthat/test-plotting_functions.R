@@ -44,3 +44,13 @@ expect_error(plot_Phi_line(res = res, cov_name = "racethnic",
 expect_error(plot_Phi_line(res = res, cov_name = "test"),
              "cov_name must be one of the variables specified in glm_form",
              fixed = TRUE)
+
+# Test errors for plot_outcome_probs
+expect_error(plot_outcome_probs(res = res, cov_name = c("age_cat", "racethnic"),
+                                cov_labels = c("[20,40)", "[40,60)", ">=60")),
+             "cov_name has length 2 but cov_labels has length 1. The two must match.",
+             fixed = TRUE)
+# plot_outcome_probs(res = res_wolca_svyglm, cov_name = c("age_cat", "racethnic"),
+#                    cov_labels = list(age_cat_categs, racethnic_categs), 
+#                    class_labels = class_labels, x_title = "Age Group", 
+#                    ci_level = NULL, add_lines = TRUE)

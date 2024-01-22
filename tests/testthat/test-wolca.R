@@ -38,19 +38,19 @@ test_that("adaptive sampler works", {
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates_unadj$pi_med, 2), c(0.51, 0.26, 0.23))
-  expect_equal(max(table(res_fixed$estimates_unadj$c_all)), 2156) 
-  expect_equal(min(table(res_fixed$estimates_unadj$c_all)), 842)  
+  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.51, 0.26, 0.23))
+  expect_equal(max(table(res_fixed$estimates$c_all)), 2156) 
+  expect_equal(min(table(res_fixed$estimates$c_all)), 842)  
 })
 
 test_that("variance adjustment works", {
-  expect_equal(round(res_adjust$estimates$pi_med, 2), c(0.51, 0.26, 0.22))
-  expect_equal(max(table(res_fixed$estimates_unadj$c_all)), 2156) 
-  expect_equal(min(table(res_fixed$estimates_unadj$c_all)), 842)  
+  expect_equal(round(res_adjust$estimates_adjust$pi_med, 2), c(0.51, 0.26, 0.22))
+  expect_equal(max(table(res_adjust$estimates_adjust$c_all)), 2156) 
+  expect_equal(min(table(res_adjust$estimates_adjust$c_all)), 842)  
 })
 
 test_that("wolca svyglm works", {
-  expect_equal(round(c(res_svyglm$estimates$xi_est), 2), c(-0.02, 0.74, -0.72))
+  expect_equal(round(c(res_svyglm$estimates_adjust$xi_est), 2), c(-0.02, 0.74, -0.72))
   expect_equal(res_svyglm$data_vars$q, 1)
 })
 
@@ -62,7 +62,7 @@ res_svyglm_strat <- wolca_svyglm(res = res_adjust, y_all = y_all,
                                  V_data = V_data, save_res = FALSE)
 
 test_that("wolca svyglm with stratum covariate works", {
-  expect_equal(round(c(res_svyglm_strat$estimates$xi_est[, 1]), 2), 
+  expect_equal(round(c(res_svyglm_strat$estimates_adjust$xi_est[, 1]), 2), 
                c(0.28, 0.79, -0.49))
   expect_equal(res_svyglm_strat$data_vars$q, 2)
 })

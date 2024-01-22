@@ -7,7 +7,7 @@
 get_estimates(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat)
 }
 \arguments{
-\item{MCMC_out}{Output from \code{run_MCMC_Rcpp} containing:
+\item{MCMC_out}{Output from \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} containing:
 \describe{
 \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
@@ -17,7 +17,7 @@ get_estimates(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat)
 \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 }}
 
-\item{post_MCMC_out}{output from \code{post_process} containing:
+\item{post_MCMC_out}{output from \code{\link[=post_process]{post_process()}} containing:
 \describe{
 \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
 \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
@@ -137,5 +137,5 @@ pseudo-bayesian inference under complex sampling. International Statistical
 Review 89, 72–107.
 }
 \seealso{
-\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process]{post_process()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}}
+\code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}} \code{\link[=post_process]{post_process()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}}
 }

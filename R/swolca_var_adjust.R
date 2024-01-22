@@ -123,7 +123,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' 
 #' If hyperparameters are left as `NULL` (default), the following default 
 #' values are used. Let \eqn{K} refer to the final number of latent class 
-#' obtained from running [swolca()], available at `res$estimates_unadj$K_red`.
+#' obtained from running [swolca()], available at `res$estimates$K_red`.
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
 #' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
@@ -135,9 +135,15 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn 
 #' from InvGamma(shape=3.5, scale=6.25) distributions. 
 #' 
+#' If the following warning message appears, please run the sampler for more 
+#' iterations as there is instability in the parameter estimates, usually in the 
+#' form of large positive or negative values for \eqn{\xi}): 
+#' "Error in svrVar(thetas, scale, rscales, mse = design$mse, coef = full) : 
+#' All replicates contained NAs".
+#' 
 #' @return 
 #' Returns an object `res` of class `"swolca"`, which includes all outputs from 
-#' [swolca()] as well as a list `estimates` containing:
+#' [swolca()] as well as a list `estimates_adjust` containing:
 #' \describe{
 #'   \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red), 
 #'   where M is the number of MCMC iterations after burn-in and thinning.}
@@ -214,16 +220,16 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   if (!inherits(res, "swolca")) {
     stop("res must be an object of class `swolca`, resulting from a call to the 
          `swolca()` function that includes results from the fixed sampler")
-  } else if (is.null(res$estimates_unadj)) {
+  } else if (is.null(res$estimates)) {
     stop("res must include results from the fixed sampler in the `swolca()` function")
   }
   # Check variance adjustment has not already been performed
-  if ("estimates" %in% names(res)) {
+  if ("estimates_adjust" %in% names(res)) {
     stop("variance adjustment has already been performed, since res$estimates is not NULL")
   }
   
   # Extract data elements into the global environment
-  K <- res$estimates_unadj$K_red
+  K <- res$estimates$K_red
   J <- res$data_vars$J
   R_j <- res$data_vars$R_j
   R <- res$data_vars$R
@@ -235,9 +241,6 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   w_all <- res$data_vars$w_all
   stratum_id <- res$data_vars$stratum_id
   cluster_id <- res$data_vars$cluster_id
-  
-  # Get final number of classes (usually fewer classes than K_fixed)
-  K <- res$estimates_unadj$K_red
   
   # Check hyperparameter dimensions match K
   if (any(!is.null(c(alpha, eta)))) {
@@ -345,15 +348,15 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   #=============== Convert to unconstrained parameters =========================
   # Convert params from constrained space to unconstrained space
   unc_par_hat <- rstan::unconstrain_pars(out_stan, 
-                                         list("pi" = res$estimates_unadj$pi_med,
-                                              "theta" = res$estimates_unadj$theta_med,
-                                              "xi" = res$estimates_unadj$xi_med))
+                                         list("pi" = res$estimates$pi_med,
+                                              "theta" = res$estimates$theta_med,
+                                              "xi" = res$estimates$xi_med))
   # Get posterior MCMC samples in unconstrained space for all parameters
-  M <- dim(res$estimates_unadj$pi_red)[1]
+  M <- dim(res$estimates$pi_red)[1]
   unc_par_samps <- lapply(1:M, unconstrain, stan_model = out_stan, K = K, 
-                          pi = res$estimates_unadj$pi_red, 
-                          theta = res$estimates_unadj$theta_red, 
-                          xi = res$estimates_unadj$xi_red)
+                          pi = res$estimates$pi_red, 
+                          theta = res$estimates$theta_red, 
+                          xi = res$estimates$xi_red)
   unc_par_samps <- matrix(unlist(unc_par_samps), byrow = TRUE, nrow = M)
   
   #=============== Post-processing adjustment in unconstrained space ===========
@@ -462,7 +465,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
                                .drop = FALSE)  # Re-normalize
   
   # Update Phi_med using adjusted xi estimate
-  c_all <- res$estimates_unadj$c_all
+  c_all <- res$estimates$c_all
   Phi_med_all_c <- stats::pnorm(V %*% t(xi_med_adj))  # Outcome probabilities for all classes
   Phi_med_adj <- numeric(n)                    # Initialize individual outcome probabilities
   # Calculate posterior class membership, p(c_i=k|-), for each class k
@@ -478,14 +481,14 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   sum_runtime <- runtime + res$runtime
   res$runtime <- sum_runtime
   
-  estimates_adj <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
-                        xi_red = xi_red_adj, pi_med = pi_med_adj, 
-                        theta_med = theta_med_adj, xi_med = xi_med_adj, 
-                        Phi_med = Phi_med_adj, c_all = c_all,
-                        pred_class_probs = res$estimates_unadj$pred_class_probs,
-                        log_lik_med = res$estimates_unadj$loglik_med)
+  estimates_adjust <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
+                          xi_red = xi_red_adj, pi_med = pi_med_adj, 
+                          theta_med = theta_med_adj, xi_med = xi_med_adj, 
+                          Phi_med = Phi_med_adj, c_all = c_all,
+                          pred_class_probs = res$estimates$pred_class_probs,
+                          log_lik_med = res$estimates$loglik_med)
   
-  res$estimates <- estimates_adj
+  res$estimates_adjust <- estimates_adjust
   class(res) <- "swolca"
   
   # Save output

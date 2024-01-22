@@ -52,5 +52,5 @@ OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 }
 \seealso{
-\code{\link[=init_probit]{init_probit()}} \code{\link[=swolca]{swolca()}} \code{\link[=solca]{solca()}} \code{\link[=wolca]{wolca()}}
+\code{\link[=init_probit]{init_probit()}} \code{\link[=swolca]{swolca()}} \code{\link[=wolca]{wolca()}}
 }

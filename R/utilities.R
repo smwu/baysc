@@ -1,5 +1,5 @@
 #===================================================
-## Helper functions for WSOLCA, SOLCA, and WOLCA
+## Helper functions for SWOLCA and WOLCA
 ## Programmer: SM Wu   
 ## Data: Simulations and application   
 #===================================================
@@ -54,7 +54,7 @@ manual_CI <- function(model_object, svy_df, ci = 0.95){
 #' 
 #' @inheritParams swolca
 #' @param model String specifying which model is used. Must be one of `swolca` 
-#' (default), `solca`, or `wolca`
+#' (default) or `wolca`
 #' @return The function stops and an error message is displayed if the input 
 #' variables are not acceptable
 #' @details All parameters are set to `NULL` by default so that error checks 
@@ -72,7 +72,7 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
                          eta_adapt = NULL, mu0_adapt = NULL, 
                          Sig0_adapt = NULL, K_fixed = NULL, alpha_fixed = NULL, 
                          eta_fixed = NULL, mu0_fixed = NULL, Sig0_fixed = NULL,
-                         n_runs = NULL, burn = NULL, thin = NULL, 
+                         n_runs = NULL, burn = NULL, thin = NULL, update = NULL,
                          adjust_var = NULL, num_reps = NULL,
                          save_res = NULL, save_path = NULL) {
   if (is.null(x_mat)) {
@@ -260,9 +260,10 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     }
     
     # Check MCMC parameters
-    if (!all(is.null(c(n_runs, burn, thin)))) {
-      if (!all(c(n_runs, burn, thin) %% 1 == 0) | !all(c(n_runs, burn, thin) >= 0)) {
-        stop("n_runs, burn, and thin must be whole numbers")
+    if (!all(is.null(c(n_runs, burn, thin, update)))) {
+      if (!all(c(n_runs, burn, thin, update) %% 1 == 0) | 
+          !all(c(n_runs, burn, thin, update) >= 0)) {
+        stop("n_runs, burn, thin, and update must be whole numbers")
       }
       if (burn > n_runs) {
         stop("n_runs must be larger than burn")
@@ -331,7 +332,7 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
 #' reference coding.
 #' 
 #' @keywords internal
-#' @seealso [fit_probit_wolca()]
+#' @seealso [wolca_svyglm()]
 #' @export
 convert_ref_to_mix <- function(K, q, est_beta, ci_beta = NULL) {
   est_xi <- matrix(NA, nrow = K, ncol = q)
@@ -431,52 +432,67 @@ convert_mix_to_ref <- function(est_xi) {
 #' 
 #' @inheritParams swolca
 #' @param est_xi Matrix of xi parameter estimates. Kxq
-#' @param cov_name String specifying name of covariate of interest. Must be 
-#' included in `glm_form`.
-#' @return Returns dataframe `probs` of the converted probabilities for the 
-#' covariate specified in `cov_name`, with number of rows equal to K and number
-#' of columns equal to the number of categories for the covariate (including the
-#' baseline category) plus one. The first column specifies the latent class,
-#' the second column corresponds to the baseline category intercept for all K 
-#' latent classes, and the remaining columns correspond to the other categories 
-#' for the covariate. 
+#' @param cov_name String vector of length 1 or 2 specifying the key covariate(s) 
+#' for which to obtain the outcome probabilities. All covariate names must be 
+#' included in `glm_form` and `V_data`. 
 #' 
-#' @importFrom stats terms as.formula pnorm
+#' @return Returns dataframe `Phi_df` of the converted outcome probabilities 
+#' (i.e., \eqn{\Phi} values) for the categories of the covariate(s) specified in 
+#' `cov_name`. Number of rows is equal to the number of category combinations of 
+#' the key covariate(s). The first K columns include the \eqn{\Phi} values 
+#' for the K latent classes, evaluated at the covariate values listed in the 
+#' remaining q columns. The key covariate(s) are evaluated at all levels and 
+#' the other covariates are evaluated at their reference levels. 
+#' 
+#' @importFrom stats terms as.formula model.matrix pnorm
 #' @keywords internal
 #' @export
 #' 
 convert_to_probs <- function(est_xi, glm_form, V_data, cov_name) {
   # check that cov_name is found in glm_form
-  if (!grepl(cov_name, glm_form)) {
-    stop("cov_name must be one of the variables specified in glm_form")
+  if (!all(sapply(cov_name, function(x) grepl(x, glm_form)))) {
+    stop("all variables in cov_name must be specified in glm_form")
+  } else if (!all(sapply(cov_name, function(x) x %in% colnames(V_data)))) {
+    stop("all variables in cov_name must be found in V_data")
   } else if (grepl("c_all", glm_form)) {
     stop("glm_form must not contain the latent class variable c_all")
   }
   
   # Number of latent classes
   K <- nrow(est_xi)
-  # Get covariate names
-  cov_names <- labels(terms(as.formula(glm_form)))
-  # Get index of covariate names corresponding to the covariate of interest
-  select_cov <- which(cov_names == cov_name)
+  # Get all covariate names
+  cov_names <- labels(stats::terms(stats::as.formula(glm_form)))
+  # Get names of other covariates not highlighted in the plot
+  oth_names <- cov_names[cov_names != cov_name]
   
-  # Get column indices for each variable in glm_form
-  cov_col_inds <- attr(model.matrix(as.formula(glm_form), data = V_data), "assign")
-  # Design matrix indices for covariate group, including intercept
-  cols <- c(1, which(cov_col_inds == select_cov))
+  # Get levels for the key covariate(s)
+  cov_levels <- lapply(cov_name, function(x) levels(V_data[[x]]))
+  num_cov_levels <- nrow(expand.grid(cov_levels))
+  # Get levels for the other covariates
+  oth_levels <- lapply(oth_names, function(x) levels(V_data[[x]]))
+  all_levels <- append(cov_levels, oth_levels)
+  # All combinations of the levels of all covariates
+  all_level_comb <- expand.grid(all_levels)
+  colnames(all_level_comb) <- c(cov_name, oth_names)
   
-  # Get conversions for each category of the covariate group 
-  probs <- as.data.frame(matrix(NA, nrow = K, ncol = (length(cols) + 1)))
-  colnames(probs) <- c("Class", "Intercept", paste0(cov_name, 2:length(cols)))
-  probs[, 1] <- 1:K
-  for (categ in 1:length(cols)) {
-    # Convert from mixture reference to probabilities
-    probs[, categ + 1] <- stats::pnorm(est_xi[, 1] + 
-                                         (categ > 1) * est_xi[, cols[categ]])
-  }
-  return(probs)
-}
+  # Create design matrix from glm formula with new covariate level combinations
+  all_model_mat <- stats::model.matrix(stats::as.formula(glm_form), all_level_comb)
+  # Obtain Phi values corresponding to the new covariate level combinations
+  all_Phi_df <- as.data.frame(sapply(1:K, function(k) 
+    stats::pnorm(all_model_mat %*% est_xi[k, ])))
+  colnames(all_Phi_df) <- paste0("Class", 1:K)
+  # Rename the key covariate(s) for ease with plotting
+  colnames(all_level_comb)[1:length(cov_name)] <- paste0("Cov", 1:length(cov_name))
 
+  # Create new df of desired covariate combinations and corresponding Phi values
+  Phi_df <- cbind(all_Phi_df, all_level_comb)
+  # Restrict to levels of the key covariate(s) and key only the reference level 
+  # values for the remaining covariates 
+  Phi_df <- Phi_df[1:num_cov_levels, ]
+  
+  return(Phi_df)
+  
+}
 
 
 #' Get confidence or credible interval
@@ -488,14 +504,22 @@ convert_to_probs <- function(est_xi, glm_form, V_data, cov_name) {
 #' @param ub Upper bound quantile of interval estimate. Default is 0.975 
 #' corresponding to a 95% interval
 #' @param digits Number of digits to round to. Default is 2.
+#' @param string Boolean indicating if the interval should be returned as a 
+#' string with parentheses. Default is `FALSE`, which returns the interval as a 
+#' vector.
 #' @importFrom stats quantile
 #' @return Outputs string `ci` with formatted interval
 #' @keywords internal
 #' @export
-get_ci <- function(post_samp, quant_lb = 0.025, quant_ub = 0.975, digits = 2) {
+get_ci <- function(post_samp, quant_lb = 0.025, quant_ub = 0.975, digits = 2, 
+                   string = FALSE) {
   quantiles <- format(round(stats::quantile(post_samp, c(quant_lb, quant_ub)), 
                             digits), nsmall = digits)
-  ci <- paste0("(", quantiles[1], ", ", quantiles[2], ")")
+  if (string) {
+    ci <- paste0("(", quantiles[1], ", ", quantiles[2], ")")
+  } else {
+    ci <- as.numeric(quantiles)
+  }
   return(ci)
 }
 

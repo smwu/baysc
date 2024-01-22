@@ -4,12 +4,22 @@
 \alias{get_ci}
 \title{Get confidence or credible interval}
 \usage{
-get_ci(post_samp, quant_lb = 0.025, quant_ub = 0.975, digits = 2)
+get_ci(
+  post_samp,
+  quant_lb = 0.025,
+  quant_ub = 0.975,
+  digits = 2,
+  string = FALSE
+)
 }
 \arguments{
 \item{post_samp}{Numeric vector of posterior samples}
 
 \item{digits}{Number of digits to round to. Default is 2.}
+
+\item{string}{Boolean indicating if the interval should be returned as a
+string with parentheses. Default is \code{FALSE}, which returns the interval as a
+vector.}
 
 \item{lb}{Lower bound quantile of interval estimate. Default is 0.025
 corresponding to a 95\% interval}

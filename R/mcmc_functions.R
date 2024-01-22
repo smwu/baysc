@@ -31,7 +31,7 @@
 #'   \item{\code{c_all}}{Vector of random initial class assignments. nx1}
 #' }
 #' 
-#' @seealso [init_probit()] [swolca()] [solca()] [wolca()]
+#' @seealso [init_probit()] [swolca()] [wolca()]
 #' 
 #' @importFrom LaplacesDemon rdirichlet rcat
 #' @export
@@ -98,7 +98,7 @@ init_OLCA <- function(K, n, J, R, alpha, eta) {
 #'   \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
 #' }
 #'
-#' @seealso [init_OLCA()] [swolca()] [solca()]
+#' @seealso [init_OLCA()] [swolca()] 
 #' 
 #' @importFrom LaplacesDemon rmvn rinvgamma
 #' @importFrom truncnorm rtruncnorm
@@ -190,13 +190,13 @@ init_probit <- function(K, n, q, V, mu0, Sig0, y_all, c_all) {
 #' @inheritParams init_OLCA
 #' @inheritParams init_probit
 #' @inheritParams swolca
-#' @param OLCA_params Output list from `init_OLCA()` containing:
+#' @param OLCA_params Output list from [init_OLCA()] containing:
 #' \describe{
 #'   \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
 #'   \item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
 #'   \item{\code{c_all}}{Vector of random initial class assignments. nx1}
 #' }
-#' @param probit_params Output list from `init_probit()` containing:
+#' @param probit_params Output list from [init_probit()] containing:
 #' \describe{
 #'   \item{\code{xi}}{Matrix parameter xi for probit regression coefficients. Kxq}
 #'   \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
@@ -221,7 +221,7 @@ init_probit <- function(K, n, q, V, mu0, Sig0, y_all, c_all) {
 #' }
 #'
 #' @seealso [post_process()] [get_estimates()] [swolca_var_adjust()] [swolca()] 
-#' [solca()] [run_MCMC_Rcpp_wolca()]
+#' [run_MCMC_Rcpp_wolca()]
 #' @importFrom gtools permute
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom stats rnorm
@@ -291,10 +291,11 @@ init_probit <- function(K, n, q, V, mu0, Sig0, y_all, c_all) {
 #' y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 #' # MCMC_out
 #' 
-run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, R, n, 
-                          q, w_all, x_mat, y_all, V, alpha, eta, mu0, Sig0) {
+run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, 
+                          R, n, q, w_all, x_mat, y_all, V, alpha, eta, mu0, Sig0, 
+                          update = 10) {
   # Number of MCMC iterations to store
-  n_storage <- ceiling(n_runs / thin) 
+  n_storage <- floor(n_runs / thin) 
   
   # Initialize variables
   pi_MCMC <- matrix(NA, nrow = n_storage, ncol = K)
@@ -350,12 +351,16 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, 
       pi <- pi[new_order]               # Relabel class probabilities
       theta <- theta[, new_order, , drop = FALSE]     # Relabel item category probabilities
       xi <- xi[new_order, , drop = FALSE]  # Relabel probit coefficients
+    }
+    
+    # Print out progress 
+    if (m %% update == 0) {
       print(paste0("Iteration ", m, " completed!"))
     }
   }
   
   # Discard burn-in
-  warmup <- ceiling(burn / thin)
+  warmup <- floor(burn / thin)
   pi_MCMC <- pi_MCMC[-(1:warmup), ]
   theta_MCMC <- theta_MCMC[-(1:warmup), , , ]
   xi_MCMC <- xi_MCMC[-(1:warmup), , , drop = FALSE]
@@ -381,7 +386,7 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, 
 #'
 #' @inheritParams run_MCMC_Rcpp
 #' @inheritParams swolca
-#' @param MCMC_out Output from `run_MCMC_Rcpp` containing:
+#' @param MCMC_out Output from [run_MCMC_Rcpp()] containing:
 #' \describe{
 #'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 #'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
@@ -410,7 +415,7 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J, 
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
 #' }
 #' 
-#' @seealso [run_MCMC_Rcpp()] [get_estimates()] [swolca_var_adjust()] [swolca()] [solca()]
+#' @seealso [run_MCMC_Rcpp()] [get_estimates()] [swolca_var_adjust()] [swolca()] 
 #' @importFrom stats median as.dist hclust cutree
 #' @importFrom e1071 hamming.distance
 #' @export
@@ -527,7 +532,7 @@ post_process <- function(MCMC_out, J, R, q, class_cutoff) {
 #' variance adjustment
 #'
 #' @inheritParams run_MCMC_Rcpp
-#' @param MCMC_out Output from `run_MCMC_Rcpp` containing:
+#' @param MCMC_out Output from [run_MCMC_Rcpp()] containing:
 #' \describe{
 #'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 #'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
@@ -536,7 +541,7 @@ post_process <- function(MCMC_out, J, R, q, class_cutoff) {
 #'   \item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
 #'   \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 #' }
-#' @param post_MCMC_out output from `post_process` containing:
+#' @param post_MCMC_out output from [post_process()] containing:
 #' \describe{
 #'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
 #'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
@@ -570,7 +575,7 @@ post_process <- function(MCMC_out, J, R, q, class_cutoff) {
 #'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1} 
 #' }
 #'
-#' @seealso [run_MCMC_Rcpp()] [post_process()] [swolca_var_adjust()] [swolca()] [solca()]
+#' @seealso [run_MCMC_Rcpp()] [post_process()] [swolca_var_adjust()] [swolca()] 
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
 #' @importFrom LaplacesDemon rcat

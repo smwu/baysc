@@ -22,18 +22,19 @@ run_MCMC_Rcpp(
   alpha,
   eta,
   mu0,
-  Sig0
+  Sig0,
+  update = 10
 )
 }
 \arguments{
-\item{OLCA_params}{Output list from \code{init_OLCA()} containing:
+\item{OLCA_params}{Output list from \code{\link[=init_OLCA]{init_OLCA()}} containing:
 \describe{
 \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
 \item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
 \item{\code{c_all}}{Vector of random initial class assignments. nx1}
 }}
 
-\item{probit_params}{Output list from \code{init_probit()} containing:
+\item{probit_params}{Output list from \code{\link[=init_probit]{init_probit()}} containing:
 \describe{
 \item{\code{xi}}{Matrix parameter xi for probit regression coefficients. Kxq}
 \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
@@ -75,6 +76,9 @@ coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 
 \item{Sig0}{List of K qxq matrices of variance hyperparameters for regression
 coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
+
+\item{update}{Number specifying that MCMC progress updates should be printed
+every \code{update} iterations. Default is 10.}
 }
 \value{
 Returns list \code{MCMC_out} containing:
@@ -164,5 +168,5 @@ Statistical Association 96, 194–209.
 }
 \seealso{
 \code{\link[=post_process]{post_process()}} \code{\link[=get_estimates]{get_estimates()}} \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=swolca]{swolca()}}
-\code{\link[=solca]{solca()}} \code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}}
+\code{\link[=run_MCMC_Rcpp_wolca]{run_MCMC_Rcpp_wolca()}}
 }

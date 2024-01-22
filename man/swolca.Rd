@@ -29,6 +29,7 @@ swolca(
   n_runs = 20000,
   burn = 10000,
   thin = 5,
+  update = 10,
   save_res = TRUE,
   save_path = NULL
 )
@@ -119,6 +120,9 @@ number of regression covariates excluding latent class assignment.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
+\item{update}{Number specifying that MCMC progress updates should be printed
+every \code{update} iterations. Default is 10.}
+
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results,
@@ -128,8 +132,8 @@ e.g., "~/Documents/run". Default is \code{NULL}.}
 If the fixed sampler is run, returns an object \code{res} of class \code{"swolca"}; a
 list containing the following:
 \describe{
-\item{\code{estimates_unadj}}{List of unadjusted posterior model results,
-resulting from a call to \code{\link[=get_estimates]{get_estimates()}}}
+\item{\code{estimates}}{List of posterior model results, resulting from a
+.  call to \code{\link[=get_estimates]{get_estimates()}}}
 \item{\code{runtime}}{Total runtime for model}
 \item{\code{data_vars}}{List of data variables used, including:
 \code{n}: Sample size.
