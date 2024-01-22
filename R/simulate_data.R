@@ -17,57 +17,66 @@
 #' Get categorical probabilities for a unique design matrix corresponding to 
 #' specified multinomial logistic regression formula and coefficient parameters
 #' 
-#' @param beta_mat Coefficient parameters for the linear predictor terms of a 
-#' multinomial logistic regression. KxQ, where Q is the number of covariate 
-#' terms in the regression
+#' @param beta_mat Matrix of coefficient parameters for the linear predictor 
+#' terms of a multinomial logistic regression for generating a categorical 
+#' variable. Number of rows is equal to the number of levels in the categorical
+#' variable. Number of columns is equal to the number of covariate terms in the 
+#' regression.
 #' @param formula Formula for multinomial logistic regression. Should start with
-#' `"~ c_all"` if generating exposure X. All variables must be found in `V`.
-#' @param V Dataframe of variables 
+#' `"~ c_all"` if generating exposure X. All variables must be found in `V_unique`.
+#' @param V_unique Dataframe with containing the unique values of the variables 
+#' specified in `formula`.
 #' @return
-#' List `categ_probs` containing:
-#' \describe{
-#'   \item{\code{unique_comb}}{Matrix of unique covariate combinations in the
-#'   design matrix created using the specified formula. mxQ, where m is the 
-#'   number of unique covariate combinations.}
-#'   \item{\code{unique_prob_mat}}{Matrix of category probabilities for all 
-#'   unique covariate cominations. mxQ}
-#' }
+#' Matrix `categ_probs` where the first columns are the values of the covariates 
+#' for the multinomial logistic regression, and the remaining columns are the 
+#' corresponding probability of each category of the categorical outcome variable.  
+#' 
 #' @importFrom stats model.matrix as.formula
-#' @keywords internal
 #' @export
 #' @examples
 #' # Get pi probabilities for C ~ S
-#' V_unique <- data.frame(s_all = as.factor(1:2))
-#' formula_lc <- "~ s_all"
-#' beta_mat <- matrix(c(0, 0,  # Kx2 (first row is all 0's)
-#'                      0.5, 1.3,
-#'                      -0.4, 1.5), byrow = TRUE, nrow = 3, ncol = 2)
-#' categ_probs_pi <- get_categ_probs(beta_mat = beta_mat, formula = formula_lc, 
-#'                                V = V_unique)
+#' K <- 3; H <- 2
+#' formula_c <- "~ s_all"
+#' V_unique <- data.frame(s_all = as.factor(1:H))
+#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
+#'                    0.1, 0.6, 0.3),  # class membership probs for S=2
+#'                  byrow = TRUE, nrow = H, ncol = K)
+#' beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
+#'                           V_unique = V_unique)
+#' categ_probs_pi <- get_categ_probs(beta_mat = beta_mat_c, formula = formula_c, 
+#'                                   V_unique = V_unique)
+#' categ_probs_pi
+#' 
+#' # Get theta probabilities for X ~ C 
+#' J <- 30; R <- 4; K <- 3
+#' formula_x <- "~ c_all"
+#' V_unique <- data.frame(c_all = as.factor(1:K))
+#' profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
+#'                                         rep(3, times = 0.5 * J)),
+#'                                  C2 = c(rep(4, times = 0.2 * J), 
+#'                                         rep(2, times = 0.8 * J)),
+#'                                  C3 = c(rep(3, times = 0.3 * J), 
+#'                                         rep(4, times = 0.4 * J),
+#'                                         rep(1, times = 0.3 * J))))
+#' modal_theta_prob <- 0.85
+#' beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+#'                            modal_theta_prob = modal_theta_prob, 
+#'                            formula_x = formula_x, V_unique = V_unique)
+#' categ_probs_theta <- get_categ_probs(beta_mat = beta_list_x[[1]], 
+#'                                      formula = formula_x, V_unique = V_unique)
+#' categ_probs_theta                                     
 #' 
 #' # Get theta probabilities for X ~ C + S
-#' V_unique <- expand.grid(factor(1:3), factor(1:2))  
-#' colnames(V_unique) <- c("c_all", "s_all")    
-#' formula <- "~ c_all + s_all"
-#' non_div_mode <- log(0.05 / 0.85)
-#' mode_div_non <- log(0.85 / 0.05)
-#' # r=1: 0.85, 0.05, 0.05; None, High, Med
-#' beta_mat <- matrix(c(0,            0,              0,              0,
-#'                      non_div_mode, mode_div_non,   mode_div_non,   0,
-#'                      non_div_mode, mode_div_non,   2*mode_div_non, 0,
-#'                      non_div_mode, 2*mode_div_non, mode_div_non,   0),
-#'                    nrow = 4, byrow = TRUE)
-#' categ_probs_theta <- get_categ_probs(beta_mat = beta_mat, formula = formula, 
-#'                                      V = V_unique)
+#' formula_x <- "~ c_all + s_all"
+#' beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
+#'                                              s_all = c(0, 0.5, 0, 0)))
+#' categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]], 
+#'                                        formula = formula_x, V_unique = V_unique)
+#' categ_probs_theta
 #' 
-#' # Add in association with S where categ High has prob 0.91 for S=1
-#' beta_mat[-1, 4] <- c(0, 0, log(0.91/0.03) - mode_div_non)
-#' categ_probs_theta_s <- get_categ_probs(beta_mat = beta_mat, formula = formula, 
-#'                                        V = V_unique)
-#' 
-get_categ_probs <- function(beta_mat, formula, V) {
+get_categ_probs <- function(beta_mat, formula, V_unique) {
   # Create design matrix
-  design_mat <- stats::model.matrix(stats::as.formula(formula), data = V)
+  design_mat <- stats::model.matrix(stats::as.formula(formula), data = V_unique)
   # Get unique covariate combinations in design matrix
   unique_comb <- unique(design_mat)
   
@@ -77,10 +86,13 @@ get_categ_probs <- function(beta_mat, formula, V) {
   unique_numer <- exp(unique_lin_preds)
   unique_denom <- rowSums(unique_numer)
   unique_prob_mat <- unique_numer / unique_denom
+  if (!is.null(colnames(unique_prob_mat))) {
+    colnames(unique_prob_mat) <- paste0("prob ", colnames(unique_prob_mat))
+  }
   
-  # Return unique design matrix covariate combos and multinomial category probs
-  categ_probs <- list(unique_comb = unique_comb, 
-                      unique_prob_mat = unique_prob_mat)
+  # Return multinomial category probs for the unique design matrix covariates
+  categ_probs <- cbind(unique_comb[, -1], unique_prob_mat)
+
   return(categ_probs)
 }
 
@@ -88,56 +100,122 @@ get_categ_probs <- function(beta_mat, formula, V) {
 #' 
 #' @description
 #' Obtain matrix of betas that can be used to generate the categorical latent 
-#' class assignment variable C, depending on binary variable S, using the 
-#' specified matrix of assignment probabilities, \eqn{\pi}, and multinomial 
-#' logistic regression formula \eqn{C ~ S}
-#' @param pi_mat Matrix of class assignment probabilities, pi. SxK
-#' @param design_mat Design matrix containing s_all
+#' class assignment variable C using a multinomial logistic regression where C 
+#' may depend on a categorical covariate such as the stratum variable S. 
+#' 
+#' @param pi_mat Matrix where each row is the class assignment probabilities for 
+#' a level of the categorical covariate. HxK, where H is the number of levels of 
+#' the categorical covariate and K is the number of latent classes. Rows of 
+#' `pi_mat` must sum to 1.
+#' @param formula_c String specifying formula for multinomial logistic 
+#' regression to create category latent class assignment C.
+#' @param V_unique Dataframe with one column containing the unique values of 
+#' the categorical covariate specified in `formula_c`. If `formula_c = "~1"`, 
+#' set `V_unique = NULL`.
+#' 
 #' @return 
 #' Returns `beta_mat` matrix of betas to be used in a multinomial logistic 
-#' regression to generate a categorical variable C. `beta_mat` has R rows and 
-#' number of columns equal to the number of columns in the design matrix
-#' @keywords internal
+#' regression to generate a categorical variable C. `beta_mat` has K rows and 
+#' number of columns equal to the number of levels in the categorical covariate.
+#' 
+#' @importFrom stats terms as.formula model.matrix
 #' @export
 #' @examples
-#' pi_mat <- matrix(c(0.3, 0.5, 0.2, 
-#'                    0.1, 0.6, 0.3), byrow = TRUE, nrow = 2)
-#' formula_lc <- "~ s_all"
-#' V <- data.frame(s_all = as.factor(c(rep(0, times = 60000),
-#'                                     rep(1, times = 20000))))
-#' design_mat <- model.matrix(as.formula(formula_lc), data = V)
-#' get_betas_c(pi_mat = pi_mat, design_mat = design_mat)
-get_betas_c <- function(pi_mat, design_mat) {
-  K <- ncol(pi_mat)
-  beta_mat <- matrix(0, nrow = K, ncol = ncol(design_mat))
-  for (k in 2:K) {
-    beta_mat[k, 1] <- log(pi_mat[1, k] / pi_mat[1, 1])
-    beta_mat[k, 2] <- log(pi_mat[2, k] / pi_mat[2, 1]) - beta_mat[k, 1]
+#' ## Example 1: latent class C depends on stratum variable S
+#' # Number of latent classes and number of levels of S
+#' K <- 3; H <- 2
+#' # Formula specifying that C depends on S
+#' formula_c <- "~ s_all"
+#' # Dataframe with unique values of S
+#' V_unique <- data.frame(s_all = as.factor(1:H))
+#' # Matrix of class assignment probabilities for each level of S
+#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
+#'                    0.1, 0.6, 0.3),  # class membership probs for S=2
+#'                  byrow = TRUE, nrow = H, ncol = K)
+#' # Get matrix of betas for generating C
+#' beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
+#'                           V_unique = V_unique)
+#' beta_mat_c
+#' 
+#' ## Example 2: latent class is generated independently of other variables
+#' # Matrix of class assignment probabilities
+#' pi_mat <- matrix(c(0.3, 0.5, 0.2), nrow = 1)
+#' formula_c <- "~ 1"
+#' V_unique <- NULL
+#' get_betas_c(pi_mat = pi_mat, formula_c = formula_c, V_unique = V_unique)
+#' 
+get_betas_c <- function(pi_mat, formula_c, V_unique) {
+  # Check errors
+  if (!all(rowSums(pi_mat) == 1)) {
+    stop("rows of pi_mat must sum to 1")
   }
+  var_terms <- labels(stats::terms(stats::as.formula(formula_c)))
+  # Only one variable allowed
+  if (length(var_terms) > 1) {
+    stop("formula_c cannot have more than one variable")
+  }
+  if (any(grepl(":", var_terms))) {
+    stop("please do not specify interactions in formula_c")
+  }
+  
+  # Number of latent classes
+  K <- ncol(pi_mat)
+  
+  # If C is independent of other variables
+  if (length(var_terms) == 0) {
+    # Get beta matrix
+    beta_mat <- matrix(0, nrow = K, ncol = 1)
+    for (k in 2:K) {
+      beta_mat[k, 1] <- log(pi_mat[1, k] / pi_mat[1, 1])
+    }
+    colnames(beta_mat) <- "(Intercept)"
+    rownames(beta_mat) <- 1:K
+  # If C depends on other variables
+  } else {
+    # Variable must be categorical and found in V_unique
+    if (!is.factor(V_unique[[var_terms]])) {
+      stop("V_unique must contain the unique values of a factor variable in formula_c")
+    }
+    # Create design matrix with unique values
+    design_mat_unique <- stats::model.matrix(stats::as.formula(formula_c), 
+                                             data = V_unique)
+    # Number of levels of categorical covariate 
+    H <- ncol(design_mat_unique)
+    # Get beta matrix
+    beta_mat <- matrix(0, nrow = K, ncol = H)
+    for (k in 2:K) {
+      beta_mat[k, 1] <- log(pi_mat[1, k] / pi_mat[1, 1])
+      for (h in 2:H) {
+        beta_mat[k, h] <- log(pi_mat[h, k] / pi_mat[h, 1]) - beta_mat[k, 1]
+      }
+    }
+    colnames(beta_mat) <- colnames(design_mat_unique)
+    rownames(beta_mat) <- 1:K
+  }
+  
   return(beta_mat)
 }
 
-#' Obtain beta matrices for generating multivariate categorical exposures
+#' Obtain list of beta matrices for generating multivariate categorical exposure X
 #' 
 #' @description
 #' Obtain list of beta matrices that can be used to generate the multivariate 
-#' categorical exposure variable X using a multinomial logistic regression 
-#' covariates categorical latent class C and, if desired, categorical variable S, 
-#' using the specified matrix of exposure category probabilities, \eqn{\theta}, 
-#' and an input design matrix. 
+#' categorical exposure variable X using a multinomial logistic regression where 
+#' X depends on categorical covariate composed of latent class assignment C. 
 #' 
-#' @param thetas Matrix of exposure category probabilities, \eqn{\theta}. JxK, 
-#' where J is the number of exposure items and K is the number of latent classes.
-#' @param modal_theta_prob Probability of true exposure level. Default is 0.85.
+#' @param profiles Matrix where each column is a latent class pattern profile 
+#' and each row is the item level for all classes. JxK, where J is the number of 
+#' exposure items and K is the number of latent classes. The item levels must 
+#' range from 1 to R, where R is the number of levels for all items. 
 #' @param R Number of exposure levels. Fixed across exposure items.
-#' @param design_mat Design matrix of unique combinations of covariate variable 
-#' values, or full design matrix for all individuals.
-#' @param depends_s Boolean specifying whether X should also have an association
-#' with S. If true, level R (i.e., the last level) has an additional 0.02*(R-1)
-#' probability added to it among those with S=H, where H is the number of levels 
-#' of S. 
+#' @param modal_theta_prob Probability of true exposure level. Default is 0.85.
+#' @param formula_x String specifying formula for multinomial logistic 
+#' regression to create multivariate categorical exposure X.
+#' @param V_unique Dataframe with one column containing the unique values of 
+#' the categorical covariate specified in `formula_x`. 
+#' 
 #' @return 
-#' Returns list `beta_mat_x` of length J with each element a matrix of betas to 
+#' Returns list `beta_list_x` of length J with each element a matrix of betas to 
 #' be used in a multinomial logistic regression to generate a categorical 
 #' exposure variable for that item. Each matrix of betas has R rows and number 
 #' of columns equal to the number of columns in the design matrix.
@@ -145,62 +223,71 @@ get_betas_c <- function(pi_mat, design_mat) {
 #' @export
 #' @examples
 #' ## Example 1: X ~ C
-#' # Function to get beta's from a set of theta's
-#' J <- 30
-#' thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
-#'                                       rep(3, times = 0.5 * J)),
-#'                                C2 = c(rep(4, times = 0.2 * J), 
-#'                                       rep(2, times = 0.8 * J)),
-#'                                C3 = c(rep(3, times = 0.3 * J), 
-#'                                       rep(4, times = 0.4 * J),
-#'                                       rep(1, times = 0.3 * J))))
+#' # Number of items, exposure levels, latent classes
+#' J <- 30; R <- 4; K <- 3
+#' # Formula specifying that X depends on C
+#' formula_x <- "~ c_all"
+#' # Dataframe with unique values of C
+#' V_unique <- data.frame(c_all = as.factor(1:K))
+#' # Matrix of pattern profiles for each latent class
+#' profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
+#'                                         rep(3, times = 0.5 * J)),
+#'                                  C2 = c(rep(4, times = 0.2 * J), 
+#'                                         rep(2, times = 0.8 * J)),
+#'                                  C3 = c(rep(3, times = 0.3 * J), 
+#'                                         rep(4, times = 0.4 * J),
+#'                                         rep(1, times = 0.3 * J))))
+#' # True level probability
 #' modal_theta_prob <- 0.85
-#' R <- 4
-#' # Dataframe of unique values of covariates
-#' V_unique <- data.frame(c_all = as.factor(1:3))
-#' formula <- "~ c_all"  
-#' # Design matrix of unique combinations of covariate variable values
-#' design_mat_unique <- model.matrix(as.formula(formula), data = V_unique)
-#' beta_mat_x <- get_betas_x(thetas = thetas, 
-#'                           modal_theta_prob = modal_theta_prob, R = R, 
-#'                           design_mat = design_mat_unique)
-#' 
+#' # Get matrix of betas for generating C
+#' beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+#'                            modal_theta_prob = modal_theta_prob, 
+#'                            formula_x = formula_x, V_unique = V_unique)
+#' # Beta matrix for item j=1
+#' beta_list_x[[1]]     
+#'                       
 #' ## Example 2: X ~ C + S
-#' J <- 30
-#' thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
-#'                                       rep(3, times = 0.5 * J)),
-#'                                C2 = c(rep(4, times = 0.2 * J), 
-#'                                       rep(2, times = 0.8 * J)),
-#'                                C3 = c(rep(3, times = 0.3 * J), 
-#'                                       rep(4, times = 0.4 * J),
-#'                                       rep(1, times = 0.3 * J))))
-#' # Dataframe of unique values of covariates                                   
-#' V_unique <- expand.grid(factor(1:3), factor(1:2))  
-#' colnames(V_unique) <- c("c_all", "s_all")                                
-#' modal_theta_prob <- 0.85
-#' R <- 4
-#' formula <- "~ c_all + s_all"  
-#' # Design matrix of unique combinations of covariate variable values
-#' design_mat_unique <- model.matrix(as.formula(formula), data = V_unique)
-#' beta_mat_x <- get_betas_x(thetas = thetas, 
-#'                           modal_theta_prob = modal_theta_prob, R = R, 
-#'                           design_mat = design_mat_unique, depends_s = TRUE)
-#'                           
-get_betas_x <- function(thetas, modal_theta_prob = 0.85, R, design_mat, 
-                        depends_s = FALSE) {
+#' # Update formula_x
+#' formula_x <- "~ c_all + s_all"
+#' # Update beta_list_x by adding in coefficients for S to each j matrix
+#' beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
+#'                                              s_all = c(0, 0.5, 0, 0)))
+#' beta_list_x[[1]]  
+#'                      
+get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_unique) {
+  # Check errors
+  var_terms <- labels(stats::terms(stats::as.formula(formula_x)))
+  if (!any(grepl("c_all", var_terms))) {
+    stop("formula_x must contain 'c_all' as a covariate so that the exposure is generated from the latent classes")
+  } else if (!is.factor(V_unique[["c_all"]])) {
+    stop("V_unique must contain the unique values of factor variable c_all")
+  }
+  if (any(grepl(":", var_terms))) {
+    stop("please do not specify interactions in formula_x")
+  }
+  if (!all(unique(c(profiles)) %in% 1:R)) {
+    stop("The item levels in profiles must range from 1 to R, where R is the number of levels for all items")
+  }
+  
+  # Create design matrix with unique values
+  design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
+                                           data = V_unique)
+  
   # Get dimensions and initialize values
-  K <- ncol(thetas)
-  J <- nrow(thetas)
+  K <- ncol(profiles)
+  J <- nrow(profiles)
+  Q <- ncol(design_mat_unique)
   non_mode <- (1 - modal_theta_prob) / K
   mode_div_non <- log(modal_theta_prob / non_mode)
   non_div_mode <- log(non_mode / modal_theta_prob)
-  beta_mat_x <- vector(mode = "list", length = J)
-  Q <- ncol(design_mat)
+  beta_list_x <- vector(mode = "list", length = J)
   
   # For each exposure item j, get beta matrix
   for (j in 1:J) {
     beta_mat_j <- matrix(0, nrow = R, ncol = Q)
-    theta_j <- thetas[j, ]  # thetas for item j
+    colnames(beta_mat_j) <- colnames(design_mat_unique)
+    rownames(beta_mat_j) <- 1:R
+    theta_j <- profiles[j, ]  # profiles for item j
     # Case when mode for C=1 is category 1
     if (theta_j[1] == 1) {  
       # C = 1
@@ -235,21 +322,13 @@ get_betas_x <- function(thetas, modal_theta_prob = 0.85, R, design_mat,
       }
     }
     
-    if (depends_s) {
-      # If desired, add in association with S where categ R has prob 0.02*(R-1)
-      # higher probability for those with S=H
-      new_non_mode <- non_mode - 0.02
-      new_mode <- 1 - (new_non_mode * (R - 1))
-      beta_mat_j[-1, Q] <- c(0, 0, log(new_mode/new_non_mode) - mode_div_non)
-    }
-    
     # Add beta matrix to list of betas for all items
-    beta_mat_x[[j]] <- beta_mat_j
+    beta_list_x[[j]] <- beta_mat_j
   }
   # Return list of beta matrices
-  return(beta_mat_x)
+  return(beta_list_x)
+  
 }
-
 
 
 #' Create a categorical variable using multinomial logistic regression
@@ -277,6 +356,7 @@ get_betas_x <- function(thetas, modal_theta_prob = 0.85, R, design_mat,
 #'   specified by `beta_mat`. Otherwise, `NULL` if `split_dim` is `NULL`.}
 #' }
 #' @seealso [simulate_pop()]
+#' @keywords internal
 #' @export
 #' @examples
 #' # Define multinomial logistic regression formula to depend on s_all
@@ -298,6 +378,7 @@ get_betas_x <- function(thetas, modal_theta_prob = 0.85, R, design_mat,
 #' out_vars <- create_categ_var(beta_mat = beta_mat_c, design_mat = design_mat_c,
 #'                              split_dim = "s_all", V = V)
 #' out_vars$categ_var
+#' 
 create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
   if (!is.matrix(design_mat)) {
     stop("design_mat must be a dataframe")
@@ -328,7 +409,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
   # Obtain multinomial logistic regression linear predictors for each individual
   # and each category
   for (k in 1:K) {
-    lin_preds[, k] <- design_mat %*% beta_mat[k, ] 
+    lin_preds[, k] <- design_mat %*% as.matrix(beta_mat[k, ]) 
   }
   denom <- exp(lin_preds) %*% rep(1, K)
   # Obtain matrix of category probabilities for each individual
@@ -412,7 +493,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' regression to generate latent class assignment C. KxQ, where K is the 
 #' number of categories and Q is the number of covariate terms in the regression. 
 #' Default is `NULL` and default values are used. See details.
-#' @param beta_mat_x Coefficient parameters for a multinomial logistic 
+#' @param beta_list_x Coefficient parameters for a multinomial logistic 
 #' regression to generate multivariate exposure X. List of J matrices, 
 #' each of dimension KxQ. Default is `NULL` and default values are used. See details.
 #' @param beta_vec_y Coefficient parameters for a logistic regression to 
@@ -434,10 +515,10 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' e.g., "~/Documents/stratified_classes". Default is `NULL`.
 #' 
 #' @details
-#' If `NULL` (default) is used for `beta_mat_c`, `beta_mat_x`, or `beta_mat_y`, 
+#' If `NULL` (default) is used for `beta_mat_c`, `beta_list_x`, or `beta_mat_y`, 
 #' the following default values are used, corresponding to the scenario with K=3 
 #' latent class and H=2 levels for variable S: `beta_mat_c` is a 3x2 matrix with
-#' values `c(0, 0, 0.5, 1.3, -0.4, 1.5)` by row; `beta_mat_x` is a list of J=30
+#' values `c(0, 0, 0.5, 1.3, -0.4, 1.5)` by row; `beta_list_x` is a list of J=30
 #' 4x4 matrices as in Example 1 provided below; and `beta_vec_y` is a vector 
 #' of length \eqn{3*2=6} with values `c(1, -0.7, -1.5, -0.5, -0.5, -0.3)`. The 
 #' generation of default values is demonstrated in Example 1 provided below.
@@ -491,66 +572,69 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' @export
 #' @examples 
 #' ### Example 1: Default values
-#' # Default dimensions
-#' N = 80000; J = 30; K = 3; R = 4; N_s = c(60000, 20000)
-#' H <- length(N_s); modal_theta_prob = 0.85; cluster_size = 80; pop_seed <- 1
+#' sim_pop <- simulate_pop(save_res = FALSE)
+#' 
+#' ### Example 2: Similar to default but smaller population size
+#' # Population size and strata dimensions
+#' N = 800; H = 2; N_s = c(600, 200)
 #' 
 #' # Generate C ~ S
+#' K <- 3  
 #' formula_c <- "~ s_all"
-#' beta_mat_c <- matrix(c(0, 0, 0.5, 1.3, -0.4, 1.5), 
-#'                      byrow = TRUE, nrow = K, ncol = H)
+#' V_unique <- data.frame(s_all = as.factor(1:H))
+#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   
+#'                    0.1, 0.6, 0.3), 
+#'                  byrow = TRUE, nrow = H, ncol = K)
+#' beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
+#'                           V_unique = V_unique)
 #' 
 #' # Generate X ~ C
+#' J <- 30; R <- 4
 #' formula_x <- "~ c_all"
-#' V_unique <- data.frame(c_all = factor(1:K)) # Df of unique cov values
-#' design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
-#'                                          data = V_unique)
-#' thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
-#'                                       rep(3, times = 0.5 * J)),
-#'                                C2 = c(rep(4, times = 0.2 * J),
-#'                                       rep(2, times = 0.8 * J)),
-#'                                C3 = c(rep(3, times = 0.3 * J),
-#'                                       rep(4, times = 0.4 * J),
-#'                                       rep(1, times = 0.3 * J))))
-#' beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
-#'                           R = R, design_mat = design_mat_unique)
+#' V_unique <- data.frame(c_all = as.factor(1:K))
+#' profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
+#'                                         rep(3, times = 0.5 * J)),
+#'                                  C2 = c(rep(4, times = 0.2 * J), 
+#'                                         rep(2, times = 0.8 * J)),
+#'                                  C3 = c(rep(3, times = 0.3 * J), 
+#'                                         rep(4, times = 0.4 * J),
+#'                                         rep(1, times = 0.3 * J))))
+#' modal_theta_prob <- 0.85
+#' beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+#'                            modal_theta_prob = modal_theta_prob, 
+#'                            formula_x = formula_x, V_unique = V_unique)
 #' 
 #' # Generate Y ~ C + S + C:S
 #' formula_y <- "~ c_all * s_all"
 #' beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3)
+#' cluster_size <- 80
 #' 
-#' # Create population
+#' # Simulate population
+#' pop_seed <- 1  # Set seed
 #' sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
-#'                         modal_theta_prob = modal_theta_prob, 
-#'                         formula_c = formula_c, formula_x = formula_x, 
-#'                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
-#'                         beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
-#'                         cluster_size = cluster_size, 
-#'                         pop_seed = pop_seed, save_res = FALSE)
-#'                         
-#' \dontrun{
+#'                          modal_theta_prob = modal_theta_prob, 
+#'                          formula_c = formula_c, formula_x = formula_x, 
+#'                          formula_y = formula_y, beta_mat_c = beta_mat_c, 
+#'                          beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
+#'                          cluster_size = cluster_size, 
+#'                          pop_seed = pop_seed, save_res = FALSE)    
+#'                                               
 #' ### Example 2: Selection-dependent pattern profiles     
 #' # Generate X ~ C + S
-#' formula_x <- "~ c_all + s_all"
-#' V_unique <- expand.grid(factor(1:K), factor(1:H)) # Df of unique cov values
-#' colnames(V_unique) <- c("c_all", "s_all")
-#' design_mat_unique <- stats::model.matrix(stats::as.formula(formula_x), 
-#'                                          data = V_unique)
-#' beta_mat_x <- get_betas_x(thetas = thetas, modal_theta_prob = modal_theta_prob,
-#'                           R = R, design_mat = design_mat_unique, depends_s = TRUE)
+#'  formula_x <- "~ c_all + s_all"
+#'  beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
+#'                                               s_all = c(0, 0.5, 0, 0)))
 #' 
 #' # Create population
-#' sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
+#' sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
 #'                         modal_theta_prob = modal_theta_prob, 
 #'                         formula_c = formula_c, formula_x = formula_x, 
 #'                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
-#'                         beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
+#'                         beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
 #'                         cluster_size = cluster_size, 
 #'                         pop_seed = pop_seed, save_res = FALSE)
-#' }
 #' 
-#' \dontrun{
-#' ### Example 2: Additional effect modifiers for Y      
+#' ### Example 3: Additional effect modifiers for Y and no clustering      
 #' # Continuous variable A for age centered about 0
 #' a_all <- stats::rnorm(n = N, mean = 0, sd = 5)
 #' # Binary variable B for physically inactive or active
@@ -562,22 +646,23 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' formula_y <- "~ c_all * (s_all + a_all + b_all)"
 #' beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3, -0.04, 0.09, 0.08, 0.4, 
 #'                 -0.7, -0.6)
+#' cluster_size <- 1
 #'                 
 #' # Create population
-#' sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
+#' sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
 #'                         modal_theta_prob = modal_theta_prob, 
 #'                         formula_c = formula_c, formula_x = formula_x, 
 #'                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
-#'                         beta_mat_x = beta_mat_x, beta_vec_y = beta_vec_y, 
+#'                         beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
 #'                         V_additional = V_additional, cluster_size = cluster_size, 
 #'                         pop_seed = pop_seed, save_res = FALSE)
-#' }
-simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4, 
+#' 
+simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4, 
                          N_s = c(60000, 20000),  modal_theta_prob = 0.85, 
                          formula_c = "~ s_all", 
                          formula_x = "~ c_all", 
                          formula_y = "~ c_all * s_all", 
-                         beta_mat_c = NULL, beta_mat_x = NULL,
+                         beta_mat_c = NULL, beta_list_x = NULL,
                          beta_vec_y = NULL, xi_mat_y = NULL, 
                          V_additional = NULL, 
                          cluster_size = 80, pop_seed = 1, 
@@ -588,6 +673,10 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
   #================== Check errors =============================================
   
   # Catch errors
+  # Check number of strata
+  if (length(N_s) != H) {
+    stop("N_s must be a numeric vector of length H")
+  }
   # Check modal_theta_prob is between 0 and 1
   if (modal_theta_prob < 0 | modal_theta_prob > 1) {
     stop("modal_theta_prob must be a probability between 0 and 1")
@@ -634,8 +723,6 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
   non_mode <- (1 - clust_mode) / K
   
   #================ Create S variable ==========================================
-  # Number of strata
-  H <- length(N_s)
   # Create strata
   s_all <- unlist(sapply(1:H, function(x) rep(x, times = N_s[x])))
   # Dataframe of strata and additional variables
@@ -653,11 +740,13 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
       stop("If default for beta_mat_c is to be used, K must be equal to 3 and H 
            must be equal to 2.")
     }
-    # Corresponds to pi = (0.3, 0.5, 0.2) for S=1 and (0.1, 0.6, 0.3) for S=2
-    # for an overall true_pi ~= (0.253, 0.522, 0.225)
-    beta_mat_c <- matrix(c(0, 0,  # Kx2 (first row is all 0's)
-                         0.5, 1.3,
-                         -0.4, 1.5), byrow = TRUE, nrow = K, ncol = H)
+    # Corresponds to an overall true_pi ~= (0.253, 0.522, 0.225)
+    # Matrix of class assignment probabilities for each level of S
+    pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
+                       0.1, 0.6, 0.3),  # class membership probs for S=2
+                     byrow = TRUE, nrow = H, ncol = K)
+    beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
+                              V_unique = V)
   } else if (!is.matrix(beta_mat_c)) {
     # Check that beta_mat_c is a matrix
     stop("beta_mat_c must be a matrix")
@@ -695,26 +784,26 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
   design_mat_x <- stats::model.matrix(stats::as.formula(formula_x), data = V)
   
   # Set defaults for generating exposure X dependent on C and S and check
-  # beta_mat_x for errors
-  if (is.null(beta_mat_x)) {
+  # beta_list_x for errors
+  if (is.null(beta_list_x)) {
     if (K != 3) {
-      stop("If default for beta_mat_x is to be used, K must be equal to 3.")
+      stop("If default for beta_list_x is to be used, K must be equal to 3.")
     }
-    thetas <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
+    profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
                                           rep(3, times = 0.5 * J)),
                                    C2 = c(rep(4, times = 0.2 * J),
                                           rep(2, times = 0.8 * J)),
                                    C3 = c(rep(3, times = 0.3 * J),
                                           rep(4, times = 0.4 * J),
                                           rep(1, times = 0.3 * J))))
-    beta_mat_x <- get_betas_x(thetas = thetas,
-                              modal_theta_prob = modal_theta_prob, R = R,
-                              design_mat = design_mat_x, depends_s = FALSE)
-  } else if (!is.list(beta_mat_x) | !is.matrix(beta_mat_x[[1]])) {
-    # Check that beta_mat_x is a list of matrices
-    stop("beta_mat_x must be a list of matrices")
-  } else if (ncol(beta_mat_x[[1]]) != ncol(design_mat_x)) {
-    stop(paste0("Each matrix in beta_mat_x must have columns corresponding to '", 
+    beta_list_x <- get_betas_x(profiles = profiles, R = R, 
+                              modal_theta_prob = modal_theta_prob, 
+                              formula_x = formula_x, V_unique = V)
+  } else if (!is.list(beta_list_x) | !is.matrix(beta_list_x[[1]])) {
+    # Check that beta_list_x is a list of matrices
+    stop("beta_list_x must be a list of matrices")
+  } else if (ncol(beta_list_x[[1]]) != ncol(design_mat_x)) {
+    stop(paste0("Each matrix in beta_list_x must have columns corresponding to '", 
                 paste0(colnames(design_mat_x), collapse = ", "),
                 "' in the design matrix resulting from formula_x"))
   }
@@ -734,7 +823,7 @@ simulate_pop <- function(N = 80000, J = 30, K = 3, R = 4,
   # Obtain underlying modal patterns for each item and class
   true_global_patterns <- matrix(NA, nrow = J, ncol = K)
   for (j in 1:J) {
-    out_vars_x <- create_categ_var(beta_mat = beta_mat_x[[j]], 
+    out_vars_x <- create_categ_var(beta_mat = beta_list_x[[j]], 
                                    design_mat = design_mat_x, 
                                    split_dim = "c_all", V = V)
     X_data[, j] <- out_vars_x$categ_var
@@ -971,7 +1060,7 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
   set.seed(samp_seed)
   #================ Check errors ===============================================
   # Check clustering
-  if (sim_pop$cluster_size == 1) {
+  if (sim_pop$cluster_size == 1 & clust) {
     warning("cluster sampling is requested but population does not contain 
                 clustered data")
   }
@@ -1115,157 +1204,3 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
 }
 
 
-
-
-#==================== Additional Sanity checks =================================
-# table(true_Si)
-# prop.table(table(true_Ci))
-# all(apply(true_global_thetas, c(1, 2), sum) == 1)
-# apply(X_data[true_Ci == 1, ], 2, median)
-# apply(X_data[true_Ci == 1, ], 2, mean)
-# for (k in 1:K) {print(mean(Y_data[true_Ci == k]))}
-# for (s in 1:S) {print(mean(Y_data[true_Si == s]))}
-# sum(beta[c(1,2)]) == xi_vec[2]
-# sum(beta[c(1,2,4,5)]) == xi_vec[5]
-# sum(beta[c(1,3,4,6)]) == xi_vec[6]
-# mean(sim_binary$simdata[sim_binary$simdata$C2S2 == 1, "y"])
-# mean(sim_binary$simdata[sim_binary$simdata$C3S2 == 1, "y"])
-# mean(sim_binary$simdata[sim_binary$simdata$S2 == 1, "y"])
-# table(sim_binary$simdata$time)
-
-# # Check that no cluster is in both strata
-# intersect(unique(cluster_id[true_Si == 1]), unique(cluster_id[true_Si == 2]))
-# table(sim_data$sample_wt)
-# prop.table(table(sim_data$true_Si))
-# prop.table(table(sim_data$true_Ci))
-
-# # Check true outcome probabilities
-# prop.table(table(round(true_Phi, 2)))
-# mean(Y_data)
-
-# # Check correlations between variables
-# chisq.test(table(true_Ai, true_Ci))
-# chisq.test(table(true_Ai, true_Si))
-# chisq.test(table(true_Si, true_Ci))
-# cor(true_Bi, true_Ci)
-
-# # Plot density of B
-# x_temp <- seq(-10,10,by=0.01)
-# hist(true_Bi, breaks=30, freq = FALSE)
-# lines(x_temp, dnorm(x_temp, mean=-5, sd=2)*(N_s[1]/N), col="red")
-# lines(x_temp, dnorm(x_temp, mean=5, sd=2)*(N_s[2]/N), col="blue")
-
-#================== Miscellaneous Old Code =====================================
-### Code used to test `get_betas()` and `get_categ_probs()`
-# # r=1: 0.05, 0.05, 0.05; Med, Low, Med
-# beta_mat <- matrix(c(0,            0,              0,              0,  
-#                      0,            mode_div_non,   0,              0,
-#                      mode_div_non, non_div_mode,   0,              0,
-#                      0,            0,              0,              0), 
-#                    nrow = 4, byrow = TRUE)
-# # r=1: 0.85, 0.85, 0.05; None, None, Med
-# beta_mat <- matrix(c(0,            0,              0,              0,  
-#                      non_div_mode, 0,              mode_div_non,   0,
-#                      non_div_mode, 0,              2*mode_div_non, 0,
-#                      non_div_mode, 0,              mode_div_non,   0), 
-#                    nrow = 4, byrow = TRUE)
-# # r=1: 0.05, 0.05, 0.85; Low, Low, None
-# beta_mat <- matrix(c(0,            0,              0,              0,  
-#                      mode_div_non, 0,              2*non_div_mode, 0,
-#                      0,            0,              non_div_mode,   0,
-#                      0,            0,              non_div_mode,   0), 
-#                    nrow = 4, byrow = TRUE)
-#
-# # Population sanity checks
-# prop.table(table(sim_pop$true_Ci[sim_pop$true_Si == 1]))
-# prop.table(table(sim_pop$true_Ci[sim_pop$true_Si == 2]))
-# prop.table(table(sim_pop$true_Ci))
-# mean(sim_pop$Y_data)
-# sim_pop$true_Phi_mat
-# hist(sim_pop$true_Phi, breaks = 30)
-# sim_pop$true_global_patterns
-# 
-# # Sample sanity Checks
-# prop.table(table(sim_samp$true_Si))
-# prop.table(table(sim_samp$true_Ci))
-# prop.table(table(sim_samp$true_Ci[sim_samp$true_Si == 1]))
-# prop.table(table(sim_samp$true_Ci[sim_samp$true_Si == 2]))
-# K <- 3
-# S <- 2
-# samp_Phi_mat <- matrix(NA, nrow=K, ncol=S)
-# for (k in 1:K) {
-#   for (s in 1:S) {
-#     samp_Phi_mat[k, s] <- sum(sim_samp$Y_data==1 & sim_samp$true_Si==s &
-#                                 sim_samp$true_Ci==k) /
-#       sum(sim_samp$true_Si==s & sim_samp$true_Ci==k)
-#   }
-# }
-# samp_Phi_mat
-# prop.table(table(sim_samp$X_data[sim_samp$true_Ci == 3,1] == 4))
-# length(sim_samp$true_Phi)
-# 
-# #==================== Plot simulated theta modes ===============================
-# # plot true modal theta patterns
-# # Input:
-# #   est_item_probs: JxKxR numeric matrix of true theta probabilities
-# #   x_lab: String specifying x-axis label
-# # Output: Plot of modal theta values for the K latent classes
-# plot_sim_theta <- function(est_item_probs, x_lab) {
-#   mode_item_probs <- as.data.frame(apply(est_item_probs, c(1, 2), which.max))
-#   food_items <- 1:30
-#   class_names <- 1:(dim(est_item_probs)[2])
-#   rownames(mode_item_probs) <- food_items
-#   colnames(mode_item_probs) <- class_names
-#   mode_item_probs$Item <- rownames(mode_item_probs)
-#   mode_plot <- mode_item_probs %>% gather("Class", "Level", -Item)
-#   mode_plot %>% ggplot(aes(x=Class, y=factor(Item, levels = rev(food_items)),
-#                            fill=factor(Level))) +
-#     geom_tile(color="black", linewidth = 0.3) +
-#     scale_fill_brewer(type="seq", palette="RdYlBu", direction = -1,
-#                       name = "Consumption Level",
-#                       labels = c("None", "Low", "Med", "High")) +
-#     xlab(x_lab) + ylab("Item") +
-#     theme_classic() +
-#     theme(text = element_text(size = 15),
-#           axis.text.x = element_text(size = 11, color = "black"),
-#           axis.text.y = element_text(size = 11, color = "black"),
-#           axis.title.x = element_text(size = 13, color = "black", face = "bold"),
-#           axis.title.y = element_text(size = 13, color = "black", face = "bold"),
-#           legend.title = element_text(size = 13, color = "black", face = "bold"),
-#           legend.text = element_text(size = 11, color = "black"),
-#           legend.position = "right", legend.box.spacing = unit(0.2, "pt"))
-# }
-# 
-# # Default setting
-# samp_data_path <- paste0(wd, data_dir, "simdata_scen", 111211, "_iter",
-#                          1, "_samp", 1, ".RData")
-# load(samp_data_path)
-# est_item_probs_default <- sim_data$true_global_thetas
-# p_default <- plot_sim_theta(est_item_probs = est_item_probs_default,
-#                             x_lab = "Default Pattern")
-# 
-# # Supervised setting
-# samp_data_path <- paste0(wd, data_dir, "simdata_scen", 121211, "_iter",
-#                          1, "_samp", 1, ".RData")
-# load(samp_data_path)
-# est_item_probs_supervised <- sim_data$true_global_thetas
-# p_supervised <- plot_sim_theta(est_item_probs = est_item_probs_supervised,
-#                                x_lab = "Overlap Pattern")
-# 
-# # Plot thetas together
-# ggarrange(p_default, p_supervised, ncol = 2, common.legend = TRUE)
-# p_default + theme(legend.position = "none",
-#                   text = element_text(size = 15),
-#                   axis.text.x = element_text(size = 13, color = "black"),
-#                   axis.text.y = element_text(size = 13, color = "black"),
-#                   axis.title.x = element_text(size = 15, color = "black", face = "bold"),
-#                   axis.title.y = element_text(size = 15, color = "black", face = "bold"))
-# p_supervised + theme(legend.position = "right",
-#                      text = element_text(size = 15),
-#                      axis.text.x = element_text(size = 13, color = "black"),
-#                      axis.text.y = element_text(size = 13, color = "black"),
-#                      axis.title.x = element_text(size = 15, color = "black", face = "bold"),
-#                      axis.title.y = element_text(size = 15, color = "black", face = "bold"),
-#                      legend.title = element_text(size = 15, color = "black", face = "bold"),
-#                      legend.text = element_text(size = 15, color = "black"))
-# 
