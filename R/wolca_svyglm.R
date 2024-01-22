@@ -5,6 +5,8 @@
 #' binary outcome by fitting a survey-weighted probit model.
 #'
 #' @inheritParams swolca
+#' @param res An object of class `"wolca"`, resulting from a call to [wolca()] 
+#' or [swolca_var_adjust()]
 #' @param ci_level Confidence interval level for probit regression coefficient 
 #' estimates. Default is `0.95`.
 #' 
@@ -19,12 +21,16 @@
 #' regression model according to the formula specified in `glm_form` using the 
 #' `svyglm()` function from the `survey` package (Lumley, 2023). Regression 
 #' coefficients and their confidence intervals are obtained from the `svyglm()` 
-#' output. If the residual degrees of freedom is less than 1, a Wald confidence 
+#' output. If the residual degrees of freedom is negative, a Wald confidence 
 #' interval is manually calculated using a t-distribution with degrees of 
-#' freedom from the survey design. The point and interval estimates are then 
-#' converted into the mixture reference coding format to match the output format 
-#' from [swolca()]. `V_data` includes all covariates to include in the probit 
-#' regression other than latent class. 
+#' freedom from the survey design, and the `fit_summary` output also uses the 
+#' degrees of freedom from the survey design to obtain p-values. This can happen 
+#' when there are few clusters per stratum and a large number of covariates. 
+#' 
+#' The point and interval estimates are then converted into the mixture 
+#' reference coding format to match the output format from [swolca()]. `V_data` 
+#' includes all covariates to include in the probit regression other than latent 
+#' class. 
 #' 
 #' To save results, set `save_res = TRUE` (default) and `save_path` to a string
 #' that specifies both the location and the beginning of the file name 
@@ -34,13 +40,16 @@
 #' 
 #' @return
 #' Returns an object `res` of class `"wolca"`, which includes all outputs from 
-#' [wolca()] as well as some updates. List `estimates` of `res` is updated to 
-#' contain the following additional objects:
+#' [wolca()] or [wolca_var_adjust()] as well as additional list `estimates_syglm` 
+#' containing the following objects:
 #' \describe{
 #'   \item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xq}
 #'   \item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xq}
 #'   \item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xq}
 #'   \item{\code{fit}}{`svyglm` class object with output from the `svyglm` regression model}
+#'   \item{\code{fit_summary}}{`summary.svyglm` class object with output from 
+#' the `summary()` function. If the residual degrees of freedom is negative, 
+#' the degrees of freedom from the survey design is used.}
 #' }
 #' List `data_vars` of `res` is updated to contain the following additional objects:
 #' \describe{
@@ -99,7 +108,7 @@
 #'                            glm_form = glm_form, ci_level = 0.95, 
 #'                            V_data = V_data, save_res = FALSE)
 #' 
-wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL, 
+wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95, 
                          save_res = TRUE, save_path = NULL) {
   
   #============== Catch errors and initialize variables ========================
@@ -122,7 +131,7 @@ wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL,
   
   # If no additional covariates, set V_data to be a column of all ones
   if (is.null(V_data)) {
-    V_data <- as.data.frame(matrix(1, nrow = n))
+    V_data <- as.data.frame(matrix(1, nrow = length(w_all)))
   }
   
   # Catch errors
@@ -133,6 +142,15 @@ wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL,
   V <- model.matrix(as.formula(glm_form), data = V_data)
   # Number of regression covariates excluding class assignment 
   q <- ncol(V)  
+  
+  # Set pointer to adjusted or unadjusted estimates
+  if (!is.null(res$estimates_adjust)) {
+    # Adjusted estimates
+    estimates <- res$estimates_adjust
+  } else {
+    # Unadjusted estimates
+    estimates <- res$estimates
+  }
   
   #============== Create survey design =========================================
   if (!is.null(stratum_id)) {  # Include stratifying variable
@@ -179,20 +197,29 @@ wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL,
   fit <- survey::svyglm(formula = stats::as.formula(full_glm_form), 
                         design = svydes, 
                         family = stats::quasibinomial(link = "probit"))
+  fit_summary <- summary(fit)
   # Obtain coefficients and confidence interval
   coefs <- fit$coefficients
   ci <- stats::confint(fit, level = ci_level)
-  # If zero/negative residual df, manually calculate the Wald confidence interval 
-  # using a t-distribution with degrees of freedom from the survey design. 
-  # Best if no cluster-level covariates in the regression model
+  
+  # Residual df is the design df (the number of PSUs minus the number of strata) 
+  # minus the number of predictors, which can easily become negative when you 
+  # have only a few large clusters per stratum.
   if (all(is.na(ci))) {
+    # If zero/negative residual df, manually calculate the Wald confidence interval 
+    # using a t-distribution with degrees of freedom from the survey design. 
+    # Can also use survey degf for the `summary()` function and get p-values
+    # If no covariates at the cluster level, there is a reasonable argument that 
+    # the regression doesn't use up degrees of freedom, so can use svy design df 
     ci <- manual_CI(model_object = fit, svy_df = survey::degf(svydes), 
                     ci = ci_level)[, -1]
+    fit_summary <- summary(fit, df = survey::degf(svydes))
+    warning("Residual degrees of freedom negative. Degrees of freedom from the survey design used instead for calculating CI and p-values.")
   }
   
   # Convert format to mixture reference to match SWOLCA and SOLCA
-  xi_list <- convert_ref_to_mix(K = estimates$K_red, q = q, est_beta = coefs,
-                                ci_beta = ci)
+  xi_list <- convert_ref_to_mix(K = length(estimates$pi_med), q = q, 
+                                est_beta = coefs, ci_beta = ci)
   
   #================= Save and return output ====================================
   # Stop runtime tracker
@@ -202,10 +229,12 @@ wolca_svyglm <- function(res, y_all, glm_form, ci_level = 0.95, V_data = NULL,
   res$runtime <- sum_runtime
   
   # Add probit regression estimates to output
-  res$estimates$xi_est <- xi_list$est_xi
-  res$estimates$xi_est_lb <- xi_list$est_xi_lb
-  res$estimates$xi_est_ub <- xi_list$est_xi_ub
-  res$estimates$fit <- fit
+  res$estimates_svyglm <- list()
+  res$estimates_svyglm$xi_est <- xi_list$est_xi
+  res$estimates_svyglm$xi_est_lb <- xi_list$est_xi_lb
+  res$estimates_svyglm$xi_est_ub <- xi_list$est_xi_ub
+  res$estimates_svyglm$fit <- fit
+  res$estimates_svyglm$fit_summary <- fit_summary
   
   # Add outcome data to output
   res$data_vars$q = q

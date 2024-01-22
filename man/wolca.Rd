@@ -22,6 +22,7 @@ wolca(
   n_runs = 20000,
   burn = 10000,
   thin = 5,
+  update = 10,
   save_res = TRUE,
   save_path = NULL
 )
@@ -79,6 +80,9 @@ running the fixed sampler directly, need to specify a value here.}
 
 \item{thin}{Thinning factor for MCMC iterations. Default is 5.}
 
+\item{update}{Number specifying that MCMC progress updates should be printed
+every \code{update} iterations. Default is 10.}
+
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results,
@@ -89,7 +93,7 @@ If the fixed sampler is run, returns an object \code{res} of class \code{"wolca"
 list containing the following:
 \describe{
 \item{\code{estimates}}{List of posterior model results, resulting from a
-call to \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}
+call to \code{\link[=get_estimates_wolca]{get_estimates_wolca()}}}
 \item{\code{runtime}}{Total runtime for model}
 \item{\code{data_vars}}{List of data variables used, including:
 \code{n}: Sample size.
@@ -101,6 +105,7 @@ call to \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}
 \code{x_mat}: Matrix of multivariate categorical exposures; nxJ.
 \code{stratum_id}: Vector of individual stratum IDs; nx1 or NULL.
 \code{cluster_id}: Vector of individual cluster IDs; nx1 or NULL.
+\code{ci_level}: Confidence interval level.
 }
 \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to
 \code{\link[=run_MCMC_Rcpp]{run_MCMC_Rcpp()}}}

@@ -50,8 +50,8 @@
 #' If the fixed sampler is run, returns an object `res` of class `"wolca"`; a 
 #' list containing the following:
 #' \describe{
-#'   \item{\code{estimates_unadj}}{List of unadjusted posterior model results, 
-#'   resulting from a call to [get_estimates_wolca()]}
+#'   \item{\code{estimates}}{List of posterior model results, resulting from a 
+#'   call to [get_estimates_wolca()]}
 #'   \item{\code{runtime}}{Total runtime for model}
 #'   \item{\code{data_vars}}{List of data variables used, including:
 #'   `n`: Sample size.
@@ -63,6 +63,7 @@
 #'   `x_mat`: Matrix of multivariate categorical exposures; nxJ.
 #'   `stratum_id`: Vector of individual stratum IDs; nx1 or NULL.
 #'   `cluster_id`: Vector of individual cluster IDs; nx1 or NULL. 
+#'   `ci_level`: Confidence interval level.
 #'   }
 #'   \item{\code{MCMC_out}}{List of full MCMC output, resulting from a call to 
 #'   [run_MCMC_Rcpp()]}
@@ -125,7 +126,7 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
                   alpha_adapt = NULL, eta_adapt = NULL,
                   alpha_fixed = NULL, eta_fixed = NULL,
                   K_fixed = NULL, fixed_seed = NULL,
-                  n_runs = 20000, burn = 10000, thin = 5, 
+                  n_runs = 20000, burn = 10000, thin = 5, update = 10,
                   save_res = TRUE, save_path = NULL) {
   
   # Begin runtime tracker
@@ -152,7 +153,7 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
                fixed_seed = fixed_seed, alpha_adapt = alpha_adapt, 
                eta_adapt = eta_adapt, K_fixed = K_fixed, 
                alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
-               n_runs = n_runs, burn = burn, thin = thin, 
+               n_runs = n_runs, burn = burn, thin = thin, update = update,
                save_res = save_res, save_path = save_path)
 
   #================= ADAPTIVE SAMPLER ==========================================
@@ -188,7 +189,8 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
     MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = n_runs, 
                                     burn = burn, thin = thin, K = K_max, J = J, 
                                     R = R, n = n, w_all = w_all, x_mat = x_mat, 
-                                    alpha = alpha_adapt, eta = eta_adapt)
+                                    alpha = alpha_adapt, eta = eta_adapt, 
+                                    update = update)
     #================= Post-processing for adaptive sampler ====================
     # Get median number of classes with >= cutoff% of individuals, over all iterations
     M <- dim(MCMC_out$pi_MCMC)[1]  # Number of stored MCMC iterations
@@ -216,7 +218,7 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
     # Catch errors: check hyperparameter dimensions for fixed sampler
     catch_errors(x_mat = x_mat, K_fixed = K_fixed, 
                  alpha_fixed = alpha_fixed, eta_fixed = eta_fixed, 
-                 n_runs = n_runs, burn = burn, thin = thin)
+                 n_runs = n_runs, burn = burn, thin = thin, update = update)
     
     # Set seed
     if (!is.null(fixed_seed)) {
@@ -247,7 +249,8 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
     MCMC_out <- run_MCMC_Rcpp_wolca(OLCA_params = OLCA_params, n_runs = n_runs, 
                                     burn = burn, thin = thin, K = K_fixed, J = J, 
                                     R = R, n = n, w_all = w_all, x_mat = x_mat, 
-                                    alpha = alpha_fixed, eta = eta_fixed)
+                                    alpha = alpha_fixed, eta = eta_fixed,
+                                    update = update)
   
     # Post-processing to recalibrate labels and remove extraneous empty classes
     # Obtain K_med, pi, theta
@@ -261,7 +264,7 @@ wolca <- function(x_mat, sampling_wt, cluster_id, stratum_id,
                                      x_mat = x_mat)
     
     # Create output list. Replaces adaptive sampler output list
-    res <- list(estimates_unadj = estimates, MCMC_out = MCMC_out,
+    res <- list(estimates = estimates, MCMC_out = MCMC_out,
                 post_MCMC_out = post_MCMC_out, K_fixed = K_fixed)
   }
   

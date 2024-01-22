@@ -57,7 +57,7 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' 
 #' If hyperparameters are left as `NULL` (default), the following default 
 #' values are used. Let \eqn{K} refer to the final number of latent class 
-#' obtained from running [wolca()], available at `res$estimates_unadj$K_red`.
+#' obtained from running [wolca()], available at `res$estimates$K_red`.
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
 #' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
@@ -67,7 +67,7 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' 
 #' @return 
 #' Returns an object `res` of class `"wolca"`, which includes all outputs from 
-#' [wolca()] as well as a list `estimates` containing:
+#' [wolca()] as well as a list `estimates_adjust` containing:
 #' \describe{
 #'   \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red), 
 #'   where M is the number of MCMC iterations after burn-in and thinning.}
@@ -135,16 +135,16 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   if (!inherits(res, "wolca")) {
     stop("res must be an object of class `wolca`, resulting from a call to the 
          `wolca()` function that includes results from the fixed sampler")
-  } else if (is.null(res$estimates_unadj)) {
+  } else if (is.null(res$estimates)) {
     stop("res must include results from the fixed sampler in the `wolca()` function")
   }
   # Check variance adjustment has not already been performed
-  if ("estimates" %in% names(res)) {
+  if ("estimates_adjust" %in% names(res)) {
     stop("variance adjustment has already been performed, since res$estimates is not NULL")
   }
   
   # Extract data elements into the global environment
-  K <- res$estimates_unadj$K_red
+  K <- res$estimates$K_red
   J <- res$data_vars$J
   R_j <- res$data_vars$R_j
   R <- res$data_vars$R
@@ -155,7 +155,7 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   cluster_id <- res$data_vars$cluster_id
   
   # Get final number of classes (usually fewer classes than K_fixed)
-  K <- res$estimates_unadj$K_red
+  K <- res$estimates$K_red
   
   # Check hyperparameter dimensions match K
   if (any(!is.null(c(alpha, eta)))) {
@@ -231,13 +231,13 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   #=============== Convert to unconstrained parameters =========================
   # Convert params from constrained space to unconstrained space
   unc_par_hat <- rstan::unconstrain_pars(out_stan, 
-                                         list("pi" = res$estimates_unadj$pi_med,
-                                              "theta" = res$estimates_unadj$theta_med))
+                                         list("pi" = res$estimates$pi_med,
+                                              "theta" = res$estimates$theta_med))
   # Get posterior MCMC samples in unconstrained space for all parameters
-  M <- dim(res$estimates_unadj$pi_red)[1]
+  M <- dim(res$estimates$pi_red)[1]
   unc_par_samps <- lapply(1:M, unconstrain_wolca, stan_model = out_stan, K = K, 
-                          pi = res$estimates_unadj$pi_red, 
-                          theta = res$estimates_unadj$theta_red)
+                          pi = res$estimates$pi_red, 
+                          theta = res$estimates$theta_red)
   unc_par_samps <- matrix(unlist(unc_par_samps), byrow = TRUE, nrow = M)
   
   #=============== Post-processing adjustment in unconstrained space ===========
@@ -348,12 +348,12 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   sum_runtime <- runtime + res$runtime
   res$runtime <- sum_runtime
   
-  estimates_adj <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
-                        pi_med = pi_med_adj, theta_med = theta_med_adj, 
-                        c_all = res$estimates_unadj$c_all,
-                        pred_class_probs = res$estimates_unadj$pred_class_probs)
+  estimates_adjust <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
+                          pi_med = pi_med_adj, theta_med = theta_med_adj, 
+                          c_all = res$estimates$c_all,
+                          pred_class_probs = res$estimates$pred_class_probs)
   
-  res$estimates <- estimates_adj
+  res$estimates_adjust <- estimates_adjust
   class(res) <- "wolca"
   
   # Save output

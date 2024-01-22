@@ -7,15 +7,23 @@
 wolca_svyglm(
   res,
   y_all,
+  V_data = NULL,
   glm_form,
   ci_level = 0.95,
-  V_data = NULL,
   save_res = TRUE,
   save_path = NULL
 )
 }
 \arguments{
+\item{res}{An object of class \code{"wolca"}, resulting from a call to \code{\link[=wolca]{wolca()}}
+or \code{\link[=swolca_var_adjust]{swolca_var_adjust()}}}
+
 \item{y_all}{Vector of binary outcomes. nx1}
+
+\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+covariates must be converted to factors. If \code{NULL} (default), no additional
+covariates are to be included. All variables in \code{glm_form} must
+be found in \code{V_data}.}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
@@ -26,11 +34,6 @@ as these terms are already included.}
 \item{ci_level}{Confidence interval level for probit regression coefficient
 estimates. Default is \code{0.95}.}
 
-\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
-covariates must be converted to factors. If \code{NULL} (default), no additional
-covariates are to be included. All variables in \code{glm_form} must
-be found in \code{V_data}.}
-
 \item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
 
 \item{save_path}{String specifying directory and file name to save results,
@@ -38,13 +41,16 @@ e.g., "~/Documents/run". Default is \code{NULL}.}
 }
 \value{
 Returns an object \code{res} of class \code{"wolca"}, which includes all outputs from
-\code{\link[=wolca]{wolca()}} as well as some updates. List \code{estimates} of \code{res} is updated to
-contain the following additional objects:
+\code{\link[=wolca]{wolca()}} or \code{\link[=wolca_var_adjust]{wolca_var_adjust()}} as well as additional list \code{estimates_syglm}
+containing the following objects:
 \describe{
 \item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xq}
 \item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xq}
 \item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xq}
 \item{\code{fit}}{\code{svyglm} class object with output from the \code{svyglm} regression model}
+\item{\code{fit_summary}}{\code{summary.svyglm} class object with output from
+the \code{summary()} function. If the residual degrees of freedom is negative,
+the degrees of freedom from the survey design is used.}
 }
 List \code{data_vars} of \code{res} is updated to contain the following additional objects:
 \describe{
@@ -79,12 +85,16 @@ an asymptotic sandwich estimator for variance estimation.
 regression model according to the formula specified in \code{glm_form} using the
 \code{svyglm()} function from the \code{survey} package (Lumley, 2023). Regression
 coefficients and their confidence intervals are obtained from the \code{svyglm()}
-output. If the residual degrees of freedom is less than 1, a Wald confidence
+output. If the residual degrees of freedom is negative, a Wald confidence
 interval is manually calculated using a t-distribution with degrees of
-freedom from the survey design. The point and interval estimates are then
-converted into the mixture reference coding format to match the output format
-from \code{\link[=swolca]{swolca()}}. \code{V_data} includes all covariates to include in the probit
-regression other than latent class.
+freedom from the survey design, and the \code{fit_summary} output also uses the
+degrees of freedom from the survey design to obtain p-values. This can happen
+when there are few clusters per stratum and a large number of covariates.
+
+The point and interval estimates are then converted into the mixture
+reference coding format to match the output format from \code{\link[=swolca]{swolca()}}. \code{V_data}
+includes all covariates to include in the probit regression other than latent
+class.
 
 To save results, set \code{save_res = TRUE} (default) and \code{save_path} to a string
 that specifies both the location and the beginning of the file name
