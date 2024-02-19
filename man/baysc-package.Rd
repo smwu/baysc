@@ -63,4 +63,8 @@ Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
 obtained from survey data using a Supervised Weighted Overfitted Latent Class
 Analysis. arXiv preprint arXiv:2310.01575.
 }
+\author{
+\strong{Maintainer}: Stephanie Wu \email{stephwu18@gmail.com} (\href{https://orcid.org/0000-0001-5110-8407}{ORCID})
+
+}
 \keyword{package}

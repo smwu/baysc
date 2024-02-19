@@ -70,6 +70,7 @@
 #' formula_x <- "~ c_all + s_all"
 #' beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
 #'                                              s_all = c(0, 0.5, 0, 0)))
+#' V_unique <- expand.grid(c_all = as.factor(1:K), s_all = as.factor(1:H))                                            
 #' categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]], 
 #'                                        formula = formula_x, V_unique = V_unique)
 #' categ_probs_theta
@@ -467,6 +468,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' specifications
 #' 
 #' @param N Population size. Default is 80000.
+#' @param H Number of subpopulations. Default is 2.
 #' @param J Number of exposure items. Default is 30.
 #' @param K Number of latent classes. Default is 3.
 #' @param R Number of exposure categories for all items. Default is 4.

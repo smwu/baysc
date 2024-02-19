@@ -230,14 +230,14 @@
 #'
 swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL, 
                    stratum_id = NULL, V_data = NULL, run_sampler = "both", 
-                   glm_form, K_max = 30, adapt_seed = NULL, class_cutoff = 0.05,
+                   glm_form, K_max = 30, adapt_seed = NULL, K_fixed = NULL, 
+                   fixed_seed = NULL, class_cutoff = 0.05,
+                   n_runs = 20000, burn = 10000, thin = 5, update = 10,
+                   save_res = TRUE, save_path = NULL,
                    alpha_adapt = NULL, eta_adapt = NULL,
                    mu0_adapt = NULL, Sig0_adapt = NULL,
-                   fixed_seed = NULL, K_fixed = NULL, 
                    alpha_fixed = NULL, eta_fixed = NULL,
-                   mu0_fixed = NULL, Sig0_fixed = NULL,
-                   n_runs = 20000, burn = 10000, thin = 5, update = 10,
-                   save_res = TRUE, save_path = NULL) {
+                   mu0_fixed = NULL, Sig0_fixed = NULL) {
   
   # Begin runtime tracker
   start_time <- Sys.time()

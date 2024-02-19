@@ -29,7 +29,7 @@ classes in adaptive sampler. Default is 0.05.}
 \value{
 Returns list \code{post_MCMC_out} containing:
 \describe{
-\item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+\item{\code{K_med}}{Median, across iterations, of number of classes with at least \code{class_cutoff} percent of individuals}
 \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
 \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 \item{\code{xi}}{Array of reduced and relabeled posterior samples for xi. (n_iter)x(K_med)xq}

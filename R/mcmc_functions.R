@@ -408,7 +408,7 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J,
 #' @return
 #' Returns list `post_MCMC_out` containing:
 #' \describe{
-#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least `class_cutoff` percent of individuals}
 #'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
 #'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 #'   \item{\code{xi}}{Array of reduced and relabeled posterior samples for xi. (n_iter)x(K_med)xq}

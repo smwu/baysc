@@ -656,8 +656,8 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
     for (i in 1:length(cov_labels)) {
       num_categs <- length(levels(res$data_vars$V_data[[cov_name[i]]]))
       if (length(cov_labels[[i]]) != num_categs) {
-        stop(paste0("length of cov_labels for covariate ", i, " must equal the 
-                  number of categories: ", num_categs))
+        stop(paste0("length of cov_labels for covariate ", cov_name[i], 
+                    " must equal the number of categories: ", num_categs))
       }
     }
   }

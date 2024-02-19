@@ -29,6 +29,8 @@ simulate_pop(
 \arguments{
 \item{N}{Population size. Default is 80000.}
 
+\item{H}{Number of subpopulations. Default is 2.}
+
 \item{J}{Number of exposure items. Default is 30.}
 
 \item{K}{Number of latent classes. Default is 3.}

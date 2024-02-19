@@ -227,6 +227,11 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   if ("estimates_adjust" %in% names(res)) {
     stop("variance adjustment has already been performed, since res$estimates is not NULL")
   }
+  # Check num_reps
+  if (!(num_reps %% 1 == 0) | num_reps < 1) {
+    stop("num_reps must be a whole number greater than 0, recommended to be at least 50. 
+    More replicates will lead to more accurate results but will take longer to run.")
+  }
   
   # Extract data elements into the global environment
   K <- res$estimates$K_red
@@ -421,7 +426,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
     if (H_inv_pd_diff > 5) {
       stop("NaNs created during variance adjustment, likely due to lack of 
       smoothness in the posterior. Please run the sampler for more iterations or 
-      set adjust_var to FALSE.")
+      do not run the variance adjustment.")
     }
   } else {
     R2_inv <- chol(H_inv)

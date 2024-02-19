@@ -7,13 +7,13 @@
 \format{
 List \code{res} containing:
 \describe{
-\item{\code{estimates_unadj}}{List of unadjusted posterior model results}
+\item{\code{estimates}}{List of unadjusted posterior model results}
 \item{\code{runtime}}{Total runtime for model}
 \item{\code{data_vars}}{List of data variables used}
 \item{\code{MCMC_out}}{List of full MCMC output}
 \item{\code{post_MCMC_out}}{List of MCMC output after relabeling}
 \item{\code{K_fixed}}{Number of classes used for the fixed sampler}
-\item{\code{estimates}}{List of adjusted posterior model results with
+\item{\code{estimates_adjust}}{List of adjusted posterior model results with
 correct uncertainty estimation}
 }
 }

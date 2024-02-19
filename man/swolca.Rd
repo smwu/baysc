@@ -15,23 +15,23 @@ swolca(
   glm_form,
   K_max = 30,
   adapt_seed = NULL,
-  class_cutoff = 0.05,
-  alpha_adapt = NULL,
-  eta_adapt = NULL,
-  mu0_adapt = NULL,
-  Sig0_adapt = NULL,
-  fixed_seed = NULL,
   K_fixed = NULL,
-  alpha_fixed = NULL,
-  eta_fixed = NULL,
-  mu0_fixed = NULL,
-  Sig0_fixed = NULL,
+  fixed_seed = NULL,
+  class_cutoff = 0.05,
   n_runs = 20000,
   burn = 10000,
   thin = 5,
   update = 10,
   save_res = TRUE,
-  save_path = NULL
+  save_path = NULL,
+  alpha_adapt = NULL,
+  eta_adapt = NULL,
+  mu0_adapt = NULL,
+  Sig0_adapt = NULL,
+  alpha_fixed = NULL,
+  eta_fixed = NULL,
+  mu0_fixed = NULL,
+  Sig0_fixed = NULL
 )
 }
 \arguments{
@@ -66,8 +66,28 @@ as these terms are already included.}
 
 \item{adapt_seed}{Numeric seed for adaptive sampler. Default is \code{NULL}.}
 
+\item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
+not necessary for the adaptive sampler. If bypassing the adaptive sampler and
+running the fixed sampler directly, need to specify a value here.}
+
+\item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
+
 \item{class_cutoff}{Minimum class size proportion when determining number of
 classes in adaptive sampler. Default is 0.05.}
+
+\item{n_runs}{Number of MCMC iterations. Default is 20000.}
+
+\item{burn}{Number of MCMC iterations to drop as a burn-in period. Default is 10000.}
+
+\item{thin}{Thinning factor for MCMC iterations. Default is 5.}
+
+\item{update}{Number specifying that MCMC progress updates should be printed
+every \code{update} iterations. Default is 10.}
+
+\item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
+
+\item{save_path}{String specifying directory and file name to save results,
+e.g., "~/Documents/run". Default is \code{NULL}.}
 
 \item{alpha_adapt}{Adaptive sampler hyperparameter for prior for class
 membership probabilities \eqn{\pi}. Default is \code{NULL} and default values are
@@ -89,12 +109,6 @@ the number of regression covariates excluding latent class assignment.}
 used. If specified, must be a list of \code{K_max} qxq matrices, where q is the
 number of regression covariates excluding latent class assignment.}
 
-\item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
-
-\item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
-not necessary for the adaptive sampler. If bypassing the adaptive sampler and
-running the fixed sampler directly, need to specify a value here.}
-
 \item{alpha_fixed}{Fixed sampler hyperparameter for prior for \eqn{\pi}. Default is
 \code{NULL} and default values are used. If specified, must be (\code{K_fixed})x1.}
 
@@ -113,20 +127,6 @@ the number of regression covariates excluding latent class assignment.}
 \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
 used. If specified, must be a list of \code{K_fixed} qxq matrices, where q is the
 number of regression covariates excluding latent class assignment.}
-
-\item{n_runs}{Number of MCMC iterations. Default is 20000.}
-
-\item{burn}{Number of MCMC iterations to drop as a burn-in period. Default is 10000.}
-
-\item{thin}{Thinning factor for MCMC iterations. Default is 5.}
-
-\item{update}{Number specifying that MCMC progress updates should be printed
-every \code{update} iterations. Default is 10.}
-
-\item{save_res}{Boolean specifying if results should be saved. Default = \code{TRUE}.}
-
-\item{save_path}{String specifying directory and file name to save results,
-e.g., "~/Documents/run". Default is \code{NULL}.}
 }
 \value{
 If the fixed sampler is run, returns an object \code{res} of class \code{"swolca"}; a

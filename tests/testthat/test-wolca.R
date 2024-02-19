@@ -9,7 +9,7 @@ sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+V_data <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 glm_form <- "~ 1"
 
 # Run wolca
@@ -50,7 +50,7 @@ test_that("variance adjustment works", {
 })
 
 test_that("wolca svyglm works", {
-  expect_equal(round(c(res_svyglm$estimates_adjust$xi_est), 2), c(-0.02, 0.74, -0.72))
+  expect_equal(round(c(res_svyglm$estimates_svyglm$xi_est), 2), c(-0.02, 0.74, -0.72))
   expect_equal(res_svyglm$data_vars$q, 1)
 })
 
@@ -62,7 +62,7 @@ res_svyglm_strat <- wolca_svyglm(res = res_adjust, y_all = y_all,
                                  V_data = V_data, save_res = FALSE)
 
 test_that("wolca svyglm with stratum covariate works", {
-  expect_equal(round(c(res_svyglm_strat$estimates_adjust$xi_est[, 1]), 2), 
+  expect_equal(round(c(res_svyglm_strat$estimates_svyglm$xi_est[, 1]), 2), 
                c(0.28, 0.79, -0.49))
   expect_equal(res_svyglm_strat$data_vars$q, 2)
 })

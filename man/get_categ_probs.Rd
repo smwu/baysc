@@ -65,6 +65,7 @@ categ_probs_theta
 formula_x <- "~ c_all + s_all"
 beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
                                              s_all = c(0, 0.5, 0, 0)))
+V_unique <- expand.grid(c_all = as.factor(1:K), s_all = as.factor(1:H))                                            
 categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]], 
                                        formula = formula_x, V_unique = V_unique)
 categ_probs_theta
