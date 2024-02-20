@@ -45,13 +45,14 @@ LinkingTo:
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.0
 Depends: 
-    R (>= 3.4.0)
+    R (>= 3.5.0)
 Biarch: true
 SystemRequirements: GNU make
 Suggests: 
     testthat (>= 3.0.0),
     rstantools (>= 2.3.1.1),
     knitr,
-    rmarkdown
+    rmarkdown,
+    devtools
 Config/testthat/edition: 3
 VignetteBuilder: knitr

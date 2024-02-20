@@ -169,7 +169,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' @importFrom stats rnorm pnorm optimHess vcov median
 #' @importFrom LaplacesDemon rinvgamma
 #' @importFrom rstan sampling unconstrain_pars grad_log_prob constrain_pars
-#' @importFrom survey svydesign as.svyrepdesign withReplicates
+#' @importFrom survey svydesign as.svrepdesign withReplicates
 #' @importFrom Matrix nearPD
 #' @export
 #' 

@@ -1,6 +1,6 @@
 #' @name baysc-package
 #' @aliases baysc-package baysc
-#' @docType package
+# #' @docType package
 #' @title BAYesian Survey Clustering
 #' 
 #' @description
@@ -63,4 +63,5 @@
 #' adapt_seed = 1, n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, 
 #' save_res = FALSE)
 #' }
-NULL
+#' @keywords internal
+"_PACKAGE"

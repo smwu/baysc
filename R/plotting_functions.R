@@ -269,7 +269,7 @@ plot_pattern_probs <- function(res, item_labels = NULL, categ_labels = NULL,
 #' @seealso [plot_pattern_probs()] [plot_pattern_profiles()] [plot_outcome_probs()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_boxplot scale_fill_brewer labs 
-#' theme_bw theme element_size
+#' theme_bw theme element_text
 #' @importFrom tidyr pivot_longer
 #' @importFrom tidyselect everything
 #' @importFrom rlang .data
