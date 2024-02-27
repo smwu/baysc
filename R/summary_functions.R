@@ -730,7 +730,7 @@ get_param_mcmc <- function(res) {
 #' 2) the likelihood calculated with the posterior median estimates of all parameters.
 #' We use the DIC-6, which increases the penalty of complexity to reduce 
 #' overfitting (Stephenson et al., 2022). The DIC-6 is calculated as 
-#' \eqn{3\bar{D}(\theta}-2D(\bar{\theta})) 
+#' \eqn{3\bar{D}(\theta)-2D(\bar{\theta})) 
 #' = -6E[\log L(D|\theta)|D] + 4\log L(y|\bar{\theta})}.
 #' where \eqn{E[\cdot]} denotes the expectation, \eqn{\bar{D}(\theta)} is the 
 #' posterior median observed deviance and \eqn{D(\bar{\theta})} is the deviance 
