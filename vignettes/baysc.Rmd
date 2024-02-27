@@ -400,12 +400,14 @@ print(p + ggplot2::theme(axis.text.x = ggplot2::element_text(size = 9)))
 ```
 
 
-## Summary of runtime and extracting parameter estimates
-We can obtain other summary information such as the total runtime for the model, as well as a list of the raw point and interval estimates for all parameters, specifying the confidence or credible interval level. Here, we use a 95\% credible interval and round the estimates to two digits. A total of $K + (J*K*R) + (K*q) = 610$ estimates are available for this example but we only display the first three estimates for $\pi$, $\theta$, and $\xi$ to save space. $\pi$ estimates are labeled with "pi_k", $\theta$ estimates are labeled with "theta_j_k_r", and $\xi$ estimates are labeled with "xi_k_q". $k$ ranges from 1 to $K$, $j$ from 1 to $J$, $r$ from 1 to $R$, and $q$ from 1 to $Q$.
+## Runtime, model fit, and extracting parameter estimates
+We can obtain other summary information such as the total runtime for the model, the deviance information criteria to assess model goodness-of-fit for model selection, as well as a list of the raw point and interval estimates for all parameters, specifying the confidence or credible interval level. Here, we use a 95\% credible interval and round the estimates to two digits. A total of $K + (J*K*R) + (K*q) = 610$ estimates are available for this example but we only display the first three estimates for $\pi$, $\theta$, and $\xi$ to save space. $\pi$ estimates are labeled with "pi_k", $\theta$ estimates are labeled with "theta_j_k_r", and $\xi$ estimates are labeled with "xi_k_q". $k$ ranges from 1 to $K$, $j$ from 1 to $J$, $r$ from 1 to $R$, and $q$ from 1 to $Q$.
 
 ```{r}
 # Runtime
 res_swolca_adjust$runtime
+# Deviance information criteria for model goodness-of-fit
+get_dic(res_swolca_adjust)
 # Extract summary of parameter estimates
 estimates_df <- summarize_res(res = res_swolca_adjust, ci_level = 0.95, digits = 2)
 # First few pi estimates

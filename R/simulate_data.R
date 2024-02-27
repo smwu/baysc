@@ -278,7 +278,7 @@ get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_uniqu
   K <- ncol(profiles)
   J <- nrow(profiles)
   Q <- ncol(design_mat_unique)
-  non_mode <- (1 - modal_theta_prob) / K
+  non_mode <- (1 - modal_theta_prob) / (R - 1)
   mode_div_non <- log(modal_theta_prob / non_mode)
   non_div_mode <- log(non_mode / modal_theta_prob)
   beta_list_x <- vector(mode = "list", length = J)
@@ -722,7 +722,7 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   
   #================ Specify strength of dietary patterns =======================
   clust_mode <- modal_theta_prob
-  non_mode <- (1 - clust_mode) / K
+  non_mode <- (1 - clust_mode) / (R - 1)
   
   #================ Create S variable ==========================================
   # Create strata
@@ -757,8 +757,7 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   regr_vars <- labels(stats::terms(stats::as.formula(formula_c)))
   regr_vars <- regr_vars[!(stringr::str_detect(regr_vars, ":"))] 
   if (!all(regr_vars %in% colnames(V))) {
-    stop("all variables in formula_c other than c_all and s_all must be 
-      provided in V_additional")
+    stop("all variables in formula_c other than s_all must be provided in V_additional")
   }
   
   # Create design matrix

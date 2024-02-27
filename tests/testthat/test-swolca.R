@@ -50,3 +50,29 @@ test_that("stratum covariate works", {
   expect_equal(min(table(res_fixed_strat$estimates$c_all)), 842) 
 })
 
+
+# Run swolca with different categories for different exposure variables
+# Convert first food items to be binary: 1 or 2
+x_mat[, 1] <- ifelse(x_mat[, 1] >= 3, 2, 1)
+# Convert second food item to have 3 levels: 1, 2, or 3
+x_mat[, 2] <- ifelse(x_mat[, 2] >= 3, 3, x_mat[, 2])
+
+res_R_j <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+                  cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+                  run_sampler = "fixed", glm_form = glm_form, 
+                  fixed_seed = 1, K_fixed = 3, n_runs = 5, burn = 1, 
+                  thin = 1, save_res = FALSE)
+res_R_j <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+                  cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+                  run_sampler = "fixed", glm_form = glm_form, 
+                  fixed_seed = 1, K_fixed = 3, n_runs = 50, burn = 25, 
+                  thin = 1, save_res = FALSE)
+# Apply variance adjustment to posterior estimates
+res_R_j_adjust <- swolca_var_adjust(res = res_R_j, num_reps = 100, 
+                                    save_res = FALSE, adjust_seed = 1)
+
+test_that("R_j works", {
+  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.52, 0.25, 0.23))
+  expect_equal(max(table(res_R_j$estimates$c_all)), 2156) 
+  expect_equal(min(table(res_R_j$estimates$c_all)), 842) 
+})

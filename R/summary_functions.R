@@ -712,5 +712,70 @@ get_param_mcmc <- function(res) {
 }
 
 
+#' Obtain DIC-6
+#' 
+#' @description
+#' `get_dic` returns the DIC-6 for the model to be used as a measure of model fit.
+#' 
+#' @inheritParams plot_pattern_profiles
+#' 
+#' @return
+#' Returns the DIC-6.
+#' 
+#' @details
+#' The deviance information criterion (DIC) can be used as a metric for model 
+#' goodness of fit for mixture models (Spiegelhater et al., 2002; Celeux et al., 2006). 
+#' It compares two values:
+#' 1) the median of the likelihood over all iterations
+#' 2) the likelihood calculated with the posterior median estimates of all parameters.
+#' We use the DIC-6, which increases the penalty of complexity to reduce 
+#' overfitting (Stephenson et al., 2022). The DIC-6 is calculated as 
+#' \eqn{3\bar{D}(\theta}-2D(\bar{\theta})) 
+#' = -6E[\log L(D|\theta)|D] + 4\log L(y|\bar{\theta})}.
+#' where \eqn{E[\cdot]} denotes the expectation, \eqn{\bar{D}(\theta)} is the 
+#' posterior median observed deviance and \eqn{D(\bar{\theta})} is the deviance 
+#' of the posterior median.
+#'  
+#' @seealso [summarize_res()] 
+#' @export
+#' @references 
+#' Celeux, G., Forbes, F., Robert, C. P., Titterington, D. M. et al. (2006) 
+#' Deviance information criteria for missing data models. Bayesian Analysis, 1, 651-673.
+#' 
+#' Spiegelhalter, D. J., Best, N. G., Carlin, B. P. and Van Der Linde, A. (2002) 
+#' Bayesian measures of model complexity and fit. Journal of the Royal 
+#' Statistical Society: Series B (Statistical Methodology), 64, 583-639.
+#' 
+#' Stephenson, B. J., Herring, A. H., and Olshan, A. F. (2022). Derivation of 
+#' maternal dietary patterns accounting for regional heterogeneity. Journal of 
+#' the Royal Statistical Society Series C: Applied Statistics 71, 1957–1977.
+#'
+#' @examples
+#' data(run_nhanes_swolca_results)
+#' dic <- get_dic(res = run_nhanes_swolca_results)
+#' 
+get_dic <- function(res) {
+  # Check object class
+  if (!(class(res) %in% c("swolca", "wolca"))) {
+    stop("res must be an object of class `swolca` or `wolca`, resulting 
+         from a call to one of these functions")
+  }
+  # Set pointer to adjusted or unadjusted estimates
+  if (!is.null(res$estimates_adjust)) {
+    # Adjusted estimates
+    estimates <- res$estimates_adjust
+  } else {
+    # Unadjusted estimates
+    estimates <- res$estimates
+  }
+  
+  dic <- -6 * median(res$MCMC_out$loglik_MCMC) + 4 * sum(estimates$log_lik_med)
+  
+  return(dic)
+}
+
+
+
+
 
 
