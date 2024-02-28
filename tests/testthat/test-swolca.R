@@ -9,16 +9,16 @@ sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
 n <- dim(x_mat)[1]                   # Number of individuals
 
 # Probit model only includes latent class
-V <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
+V_data <- as.data.frame(matrix(1, nrow = n)) # Additional regression covariates
 glm_form <- "~ 1"
 
 # Run swolca
 res_adapt <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                   cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+                   cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                    run_sampler = "adapt", glm_form = glm_form, adapt_seed = 1,
                    n_runs = 5, burn = 1, thin = 1, save_res = FALSE)
 res_fixed <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                    cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+                    cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                     run_sampler = "fixed", glm_form = glm_form, fixed_seed = 1, 
                     K_fixed = 3, n_runs = 5, burn = 1, thin = 1, save_res = FALSE)
 
@@ -36,10 +36,10 @@ test_that("fixed sampler works", {
 
 
 # Run swolca with stratum covariate in probit model
-V <- data.frame(stratum_id = as.factor(stratum_id))
+V_data <- data.frame(stratum_id = as.factor(stratum_id))
 glm_form <- "~ stratum_id"
 res_fixed_strat <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                          cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+                          cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                           run_sampler = "fixed", glm_form = glm_form, 
                           fixed_seed = 1, K_fixed = 3, n_runs = 5, burn = 1, 
                           thin = 1, save_res = FALSE)
@@ -58,21 +58,40 @@ x_mat[, 1] <- ifelse(x_mat[, 1] >= 3, 2, 1)
 x_mat[, 2] <- ifelse(x_mat[, 2] >= 3, 3, x_mat[, 2])
 
 res_R_j <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                  cluster_id = cluster_id, stratum_id = stratum_id, V = V,
+                  cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                   run_sampler = "fixed", glm_form = glm_form, 
                   fixed_seed = 1, K_fixed = 3, n_runs = 5, burn = 1, 
                   thin = 1, save_res = FALSE)
-res_R_j <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
-                  cluster_id = cluster_id, stratum_id = stratum_id, V = V,
-                  run_sampler = "fixed", glm_form = glm_form, 
-                  fixed_seed = 1, K_fixed = 3, n_runs = 50, burn = 25, 
-                  thin = 1, save_res = FALSE)
-# Apply variance adjustment to posterior estimates
-res_R_j_adjust <- swolca_var_adjust(res = res_R_j, num_reps = 100, 
-                                    save_res = FALSE, adjust_seed = 1)
 
 test_that("R_j works", {
   expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.52, 0.25, 0.23))
   expect_equal(max(table(res_R_j$estimates$c_all)), 2156) 
   expect_equal(min(table(res_R_j$estimates$c_all)), 842) 
 })
+
+
+# Run swolca with continuous variables in probit model
+data("data_nhanes")
+x_mat <- as.matrix(dplyr::select(data_nhanes, citrus:drinks))
+y_all <- data_nhanes$BP_flag
+stratum_id <- data_nhanes$stratum_id
+cluster_id <- data_nhanes$cluster_id
+sampling_wt <- data_nhanes$sample_wt
+data_nhanes$age_std <- (data_nhanes$RIDAGEYR - mean(data_nhanes$RIDAGEYR)) / 
+  sd(data_nhanes$RIDAGEYR)
+V_data <- dplyr::select(data_nhanes, age_std)
+glm_form <- "~age_std"
+res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
+                     cluster_id = cluster_id, stratum_id = stratum_id,
+                     V_data = V_data, run_sampler = "fixed", K_fixed = 5,
+                     glm_form = glm_form, fixed_seed = 888, update = 20,
+                     n_runs = 100, burn = 50, thin = 2, save_res = FALSE)
+res_nhanes_adjust <- swolca_var_adjust(res = res_nhanes, num_reps = 100,
+                                       save_res = FALSE, adjust_seed = 1)
+test_that("continuous covariate works", {
+  expect_equal(round(res_nhanes_adjust$estimates$pi_med, 2), 
+               c(0.14, 0.20, 0.18, 0.21, 0.27))
+  expect_equal(max(table(res_nhanes_adjust$estimates$c_all)), 507) 
+  expect_equal(min(table(res_nhanes_adjust$estimates$c_all)), 316) 
+})
+

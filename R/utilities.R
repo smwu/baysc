@@ -139,7 +139,7 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
         stop("number of rows in x_mat must match length of sampling_wt")
       }
     }
-
+    
     # If no clustering, assign each individual to their own cluster. Else, check
     # same number of individuals for x and clusters
     if (is.null(cluster_id)) {
@@ -193,22 +193,26 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     }
     
     # Check hyperparameter dimensions for adaptive sampler
-    if (any(!is.null(c(alpha_adapt, eta_adapt)))) {
+    if (!is.null(alpha_adapt)) {
       if (length(alpha_adapt) != K_max) {
         stop("length of alpha_adapt must be the same as K_max")
       }
+    }
+    if (!is.null(eta_adapt)) {
       if ((nrow(eta_adapt) != J) | (ncol(eta_adapt) != R)) {
         stop("eta_adapt must be a matrix with J rows and R columns, where J is
              the number of exposure items and R is the maximum number of 
              exposure categories")
       }
     }  
-    if (any(!is.null(c(mu0_adapt, Sig0_adapt)))) {
+    if (!is.null(mu0_adapt)) {
       if (length(mu0_adapt) != K_max | !is.list(mu0_adapt) | 
           !(all(lapply(mu0_adapt, length) == q))) {
         stop("mu0_adapt must be a list of length K_max where each element is a 
            vector of length q (number of regression covariates excluding latent class)")
       }
+    }
+    if (!is.null(Sig0_adapt)) {
       if (length(Sig0_adapt) != K_max | !is.list(Sig0_adapt) | 
           !(all(lapply(Sig0_adapt, nrow) == q)) | 
           !(all(lapply(Sig0_adapt, ncol) == q))) {
@@ -229,10 +233,12 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
         stop("Maximum number of classes must be at least 1")
       }
       # Check hyperparameter dimensions for fixed sampler
-      if (any(!is.null(c(alpha_fixed, eta_fixed)))) {
+      if (!is.null(alpha_fixed)) {
         if (length(alpha_fixed) != K_fixed) {
           stop("length of alpha_fixed must be the same as K_fixed")
         }
+      }
+      if (!is.null(eta_fixed)) {
         if ((nrow(eta_fixed) != J) | (ncol(eta_fixed) != R)) {
           stop("eta_fixed must be a matrix with J rows and R columns, where J is
              the number of exposure items and R is the maximum number of 
@@ -243,12 +249,14 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
                 during the Hessian calculation in the var_adjust() function")
         }
       }
-      if (any(!is.null(c(mu0_fixed, Sig0_fixed)))) {
+      if (!is.null(mu0_fixed)) {
         if (length(mu0_fixed) != K_fixed | !is.list(mu0_fixed) | 
             !(all(lapply(mu0_fixed, length) == q))) {
           stop("mu0_fixed must be a list of length K_fixed where each element is a 
            vector of length q (number of regression covariates excluding latent class)")
         }
+      }
+      if (!is.null(Sig0_fixed)) {
         if (length(Sig0_fixed) != K_fixed | !is.list(Sig0_fixed) | 
             !(all(lapply(Sig0_fixed, nrow) == q)) | 
             !(all(lapply(Sig0_fixed, ncol) == q))) {
@@ -283,7 +291,7 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
         }
       }
     } 
-
+    
     # Check saving parameters
     if (!is.null(save_res)) {
       if (!is.logical(save_res)) {

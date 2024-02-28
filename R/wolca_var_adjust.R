@@ -163,10 +163,12 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   K <- res$estimates$K_red
   
   # Check hyperparameter dimensions match K
-  if (any(!is.null(c(alpha, eta)))) {
+  if (!is.null(alpha)) {
     if (length(alpha) != K) {
       stop("length of alpha must be the same as K")
     }
+  }
+  if (!is.null(eta)) {
     if ((nrow(eta) != J) | (ncol(eta) != R)) {
       stop("eta must be a matrix with J rows and R columns, where J is
              the number of exposure items and R is the maximum number of 

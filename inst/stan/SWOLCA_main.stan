@@ -34,6 +34,8 @@ transformed parameters {
 }
 model {
   vector[K] log_cond_c[n]; // log p(c_i=k| -)
+  // addition for continuous vars
+  vector[n] Vi_xi; // V[i, ]^T * xi[k] for all i
   
   pi ~ dirichlet(alpha);  // prior for pi
   for (j in 1:J) {        // prior for theta
@@ -47,7 +49,17 @@ model {
   
   for (i in 1:n) {
     for (k in 1:K) {
-      log_cond_c[i, k] = log(pi[k]) + bernoulli_lpmf(y[i] | Phi(to_row_vector(V[i, ]) * xi[k]));
+      //log_cond_c[i, k] = log(pi[k]) + bernoulli_lpmf(y[i] | Phi(to_row_vector(V[i, ]) * xi[k]));
+
+      // calculate and control extremes for the probit regression
+      Vi_xi[i] = to_row_vector(V[i, ]) * xi[k];
+      if (Vi_xi[i] < -8) {
+        Vi_xi[i] = -8;
+      }
+      if (Vi_xi[i] > 8) {
+        Vi_xi[i] = 9;
+      }
+      log_cond_c[i, k] = log(pi[k]) + bernoulli_lpmf(y[i] | Phi(Vi_xi[i]));
       for (j in 1:J) {
         log_cond_c[i, k] = log_cond_c[i, k] + categorical_lpmf(X[i,j] | theta[j, k, ]);
       }

@@ -174,7 +174,7 @@
 #' 
 #' @importFrom RcppTN rtn
 #' @importFrom LaplacesDemon rinvgamma
-#' @importFrom stats rnorm median model.matrix as.formula
+#' @importFrom stats rnorm median model.matrix as.formula sd
 #' @export
 #' 
 #' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
@@ -285,6 +285,16 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
   V <- model.matrix(as.formula(glm_form), data = V_data)
   # Number of regression covariates excluding class assignment
   q <- ncol(V)  
+  # Check that continuous covariates do not have variance that is too large
+  for (i in 1:ncol(V)) {
+    col <- V[, i]
+    if(!is.factor(col) & stats::sd(col) > 5) {
+      warning(paste0("Standard deviation for continuous covariate ", colnames(V)[i], 
+      " is greater than 5 and may result in estimation errors. ",
+      "To avoid these errors, consider standardizing the variable to have mean 0 ",
+      "and standard deviaiton 1 or converting the variable into a categorical form."))
+    }
+  }
 
   #================= ADAPTIVE SAMPLER ==========================================
   if (run_sampler %in% c("both", "adapt")) { # Run adaptive sampler

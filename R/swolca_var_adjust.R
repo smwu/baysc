@@ -248,10 +248,12 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   cluster_id <- res$data_vars$cluster_id
   
   # Check hyperparameter dimensions match K
-  if (any(!is.null(c(alpha, eta)))) {
+  if (!is.null(alpha)) {
     if (length(alpha) != K) {
       stop("length of alpha must be the same as K")
     }
+  }
+  if (!is.null(eta)) {
     if ((nrow(eta) != J) | (ncol(eta) != R)) {
       stop("eta must be a matrix with J rows and R columns, where J is
              the number of exposure items and R is the maximum number of 
@@ -262,12 +264,14 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
                 during the Hessian calculation in the var_adjust() function")
     }
   }
-  if (any(!is.null(c(mu0, Sig0)))) {
+  if (!is.null(mu0)) {
     if (length(mu0) != K | !is.list(mu0) | 
         !(all(lapply(mu0, length) == q))) {
       stop("mu0 must be a list of length K where each element is a 
            vector of length q (number of regression covariates excluding latent class)")
     }
+  }
+  if (!is.null(Sig0)) {
     if (length(Sig0) != K | !is.list(Sig0) | 
         !(all(lapply(Sig0, nrow) == q)) | 
         !(all(lapply(Sig0, ncol) == q))) {
@@ -343,7 +347,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   
   # Stan model
   mod_stan <- stanmodels$SWOLCA_main
-  
+
   # Run Stan model
   # Stan will pass warnings from calling 0 chains, but will still create an 
   # out_stan object for the 'grad_log_prob()' method
