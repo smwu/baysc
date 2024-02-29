@@ -402,6 +402,12 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   J_hat <- stats::vcov(rep_temp)
   H_inv <- solve(H_hat)
   V1 <- H_inv %*% J_hat %*% H_inv
+  # Check for errors in the matrix inversion
+  if (any(is.na(V1))) {
+    stop(paste0("NaNs created during variance adjustment, likely due to lack of ",
+      "smoothness in the posterior. Please run the sampler for more iterations ", 
+      "or do not run the variance adjustment."))
+  }
   
   # Check for issues with negative diagonals
   if (min(diag(V1)) < 0) {

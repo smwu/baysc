@@ -1134,7 +1134,7 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
       # Number of clusters to sample
       n_clus <- samp_size / sim_pop$cluster_size
       # Check number of clusters is a whole number
-      if (n_clus %% 1 == 0) {
+      if (n_clus %% 1 != 0) {
         stop(paste0("for cluster sampling, samp_size must be a multiple of the cluster 
              size: ", sim_pop$cluster_size))
       }

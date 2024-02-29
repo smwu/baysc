@@ -682,6 +682,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat) {
   
   # Get posterior parameter samples for unique classes for theta and xi
   theta_red <- post_MCMC_out$theta[, , unique_classes, ]
+  theta_red <- ifelse(theta_red < 1e-8, 1e-8, theta_red) # prevent underflow
   theta_red <- plyr::aaply(theta_red, c(1, 2, 3), function(x) x / sum(x),
                            .drop = FALSE) # Re-normalize
   xi_red <- post_MCMC_out$xi[, unique_classes, , drop = FALSE]
@@ -690,6 +691,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat) {
   pi_med <- apply(pi_red, 2, stats::median, na.rm = TRUE)
   pi_med <- pi_med / sum(pi_med)  # Re-normalize
   theta_med <- apply(theta_red, c(2, 3, 4), stats::median, na.rm = TRUE)
+  theta_med <- ifelse(theta_med < 1e-8, 1e-8, theta_med) # prevent underflow
   theta_med <- plyr::aaply(theta_med, c(1, 2), function(x) x / sum(x),
                            .drop = FALSE)  # Re-normalize
   xi_med <- apply(xi_red, c(2, 3), stats::median, na.rm = TRUE)

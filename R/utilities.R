@@ -265,6 +265,10 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
            latent class)")
         }
       }
+    } else {
+      if (any(!is.null(c(alpha_fixed, eta_fixed, mu0_fixed, Sig0_fixed)))) {
+        stop("K_fixed must be specified alongside the priors for the fixed sampler")
+      }
     }
     
     # Check MCMC parameters

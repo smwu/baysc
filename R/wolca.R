@@ -140,10 +140,16 @@ wolca <- function(x_mat, sampling_wt = NULL, cluster_id = NULL, stratum_id = NUL
   R_j <- apply(x_mat, 2,    # Number of exposure categories for each item
                function(x) length(unique(x)))  
   R <- max(R_j)             # Maximum number of exposure categories across items
+  
+  # If no sampling weights, set all weights to 1 
+  if (is.null(sampling_wt)) {
+    w_all <- rep(1, n)
+  # Otherwise, obtain normalized weights
+  } else {
+    kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
+    w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
+  }
 
-  # Obtain normalized weights
-  kappa <- sum(sampling_wt) / n   # Weights norm. constant. If sum(weights)=N, this is 1/(sampl_frac)
-  w_all <- c(sampling_wt / kappa) # Weights normalized to sum to n, nx1
   
   #================= Catch errors ==============================================
   catch_errors(x_mat = x_mat, sampling_wt = sampling_wt, cluster_id = cluster_id, 

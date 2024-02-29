@@ -23,18 +23,35 @@ We provide an example dataset from the National Health and Nutrition Examination
 A data simulation function is also available for creating example data for simulation studies but is not described in this vignette. Please see the “Simulating Data” vignette for a detailed description of the data simulation capabilities. 
 
 ## Background and statistical details
+### Bayesian Latent Class Analysis
 Latent class analysis (LCA), also known as a finite mixture model for categorical data, summarizes data from correlated categorical variables into a few underlying patterns that capture key differences between individuals in the data. Each individual is assigned to exactly one latent class (i.e., cluster). For each cluster, a pattern profile is created from the most probable category of each input variable. For instance, if the multivariate categorical input is food items consumed at levels “None”, “Low”, “Medium”, and “High”, then each cluster has a pattern profile consisting of the most probable consumption level for every food item among those belonging to that class, and these pattern profiles can be interpreted as dietary patterns. LCA assumes that, conditioning on the clusters, variables are independent, also known as the local independence assumption.
 
 Bayesian LCA differs from traditional LCA by allowing the number of clusters to be chosen by the data, rather than determined by the researcher after multiple model fits. The Bayesian formulation also offers advantages when it comes to accounting for survey design with sparse data. We refer to the Bayesian LCA in this package as an overfitted LCA (OLCA) because the implementation automatically selects the number of clusters by using an overfitted specification, where a conservatively high number of clusters is specified and then empty and unnecessary clusters drop out via a sparsity-inducing Dirichlet prior. Suppose $K_\max$ is a conservative upper bound for the number of clusters (e.g., 30). Let $\pi_1,\ldots, \pi_{K_\max}$ denote the cluster assignment probabilities for the $K_\max$ clusters. We set 
 $$
 (\pi_1,\ldots, \pi_{K_\max}) \sim \text{Dir}(\alpha_1,\ldots, \alpha_{K_\max})
 $$
-where hyperparameters $\alpha_k$ moderate the rate of growth for nonempty classes, with smaller values yielding a slower rate of growth and more sparsity. By default, we set $\alpha_k = 1/K_\max$ for all $k$, but users can specify other hyperparameter values if desired by using the `alpha_adapt` argument in the `wolca()` and `swolca()` functions. When finalizing the number of clusters, we drop any clusters that are duplicates, and we restrict all the clusters to be above a cutoff proportion of the population usin the argument `class_cutoff`. By default, we have `class_cutoff = 0.05`, which drops any clusters that are observed in less than 5\% of the population.  
+where hyperparameters $\alpha_k$ moderate the rate of growth for nonempty classes, with smaller values yielding a slower rate of growth and more sparsity. By default, we set $\alpha_k = 1/K_\max$ for all $k$, but users can specify other hyperparameter values if desired by using the `alpha_adapt` argument in the `wolca()` and `swolca()` functions. When finalizing the number of clusters, we drop any clusters that are duplicates, and we restrict all the clusters to be above a cutoff proportion of the population using the argument `class_cutoff`. By default, we have `class_cutoff = 0.05`, which drops any clusters that are observed in less than 5\% of the population.  
 
-When conducting Bayesian LCA using survey data, it is important to account for complex survey design elements such as stratification, clustering, and unequal sampling probabilities. Otherwise, biased parameter estimation and inference can occur and results will lack generalizability to the broader population. To account for survey data, we implement the weighted pseudo-likelihood approaches described in @stephenson2023identifying and @wu2023derivation, based on work by @savitsky2016bayesian and @williams2021uncertainty.
-Survey weights are incorporated into parameter estimation by up-weighting each individual's likelihood contribution proportional to the number of individuals they represent in the target population, and then using this weighted pseudo-likelihood in the Bayesian posterior update. 
+Interest may also in examining the relationship between the cluster pattern profiles and a binary outcome. This can be done in two ways: 1) through a two-step "classify-analyze" approach that performs a regression after clustering is completed, or 2) in a one-step approach where creation of the pattern profiles is directly informed by the outcome (Section 3.3).
+
+Below if a list of the parameters and variables used in the models. 
+Parameters:
+
+- $\pi_1,\ldots, \pi_K$: cluster assignment probabilities for each of the $K$ underlying clusters. $\pi$ parameters are returned in a vector of length $K$.
+- $\theta_{jk1}, \ldots, \theta_{jkR_j}$: exposure level probabilities ranging from 1 to $R_j$, where $R_j$ is the number of exposure levels for item $j$ out of a total of $J$ items, and $k=1,\ldots, K$. $\theta$ parameters are returned in a $JxKxR$-dimensional array. 
+- $\xi_{k1}, \ldots, \xi_{kQ}$: coefficients in the binary outcome probit regression with $Q$ covariates. $\xi$ parameters are returned in a $KxQ$-dimensional matrix.
+
+Variables:
+- $x_mat$: $nxJ$ matrix of the multivariate categorical exposure, where $n$ is the number of individuals in the sample.
+- $y_all$: $nx1$ vector of the binary outcome
+- $c_all$: Unobserved $nx1$ vector of the cluster assignment for each individual. Each individual is assigned to whichever cluster has the highest posterior probability.
+
+### Accounting for survey design
+When conducting Bayesian LCA using survey data, it is important to account for complex survey design elements such as stratification, clustering, and unequal sampling probabilities. Otherwise, biased parameter estimation and inference can occur and results will lack generalizability to the broader population. To account for survey data, we implement the weighted pseudo-likelihood approaches described in @stephenson2023identifying and @wu2023derivation, based on work by @savitsky2016bayesian and @williams2021uncertainty. 
+
+Survey weights are incorporated into parameter estimation by up-weighting each individual's likelihood contribution proportional to the number of individuals they represent in the target population, and then using this weighted pseudo-likelihood in the Bayesian posterior update. Let $\tilde{w}_i$ denote the $nx1$ vector of survey sampling weights, normalized to sum to the sample size to account for sampling uncertainty. 
 $$
-p_{wtd}(\theta|D) \propto p(\theta)\prod_{i=1}^n p(D_i|\theta)^{\frac{w_i}{\kappa}}
+p_{wtd}(\theta|D) \propto p(\theta)\prod_{i=1}^n p(D_i|\theta)^{\tilde{w}_i}
 $$
 The posterior distributions created by this will create variance estimates that are smaller than their true value. In order to obtain accurate variance estimates, a post-processing variance adjustment proposed by @williams2021uncertainty is used post-hoc to try to recover the true variance based on pseudo-MLE theory, by applying a rescaling and reshaping transformation to the posterior estimates to obtain adjusted estimates that have approximately correct variance. 
 
@@ -67,7 +84,7 @@ library(ggplot2)
 
 # NHANES example data
 
-We begin by installing the example NHANES dataset that contains dietary intake as a multivariate category exposure consisting of 28 food item groups consumed at levels “None”, “Low”, “Medium”, and “High”, and hypertension as a binary outcome, for $n=2004$ low-income women in the United States. More information on the dataset preparation can be found in the data documentation and in @wu2023derivation. 
+We begin by installing the example NHANES dataset that contains dietary intake as a multivariate categorical exposure consisting of 28 food item groups consumed at levels “None”, “Low”, “Medium”, and “High”, and hypertension as a binary outcome, for $n=2004$ low-income women in the United States. More information on the dataset preparation can be found in the data documentation and in @wu2023derivation. The package functions can also handle the scenario where the number of levels differs for different food item groups. 
 
 To prepare the dataset, run the following code:
 
@@ -181,6 +198,8 @@ As an alternative to the two-step approach in Section 3.2, a one-step “supervi
 
 The following code can be used to run this supervised approach. We use the `swolca()` function to run a supervised weighted overfitted latent class analysis and obtain pattern profiles. The `swolca_var_adjust()` function is used after to apply a post-processing adjustment that allows for correct estimation of the variability of the parameter estimates. If this adjustment is not applied, the estimated variances will be too small. We run the sampler for 100 iterations as an example, with a total runtime of around 8 minutes for `swolca()` and `swolca_var_adjust()`. Typically, at least 20000 iterations should be used for `swolca()`, corresponding to a runtime of around 3 hours.
 
+If continuous variables are incorporated into the binary outcome model, any such variables with standard deviation greater than 5 may result in errors in the variance adjustment. To avoid these errors, consider standardizing the variable to have mean 0 and standard deviation 1 or converting the variable into a categorical form. 
+
 ```{r, cache = TRUE, results = FALSE, warning = FALSE, message = FALSE}
 # Run SWOLCA 
 res_swolca <- swolca(x_mat = x_mat, y_all = y_all, V_data = V_data, 
@@ -217,7 +236,7 @@ Parameters used for `swolca_var_adjust()`:
 - `num_reps = 100`: Use 100 bootstrap replicates to estimate variability in the sampling process.
 - `save_res = FALSE`: Results do not need to be saved.
 
-Users can ignore the following warning messages: "the design is sampled with replacement and only the first stage is used: and "the number of chains being less than 1 and sampling not done." Messages about negative variances and large (>1) eigenvalue differences to the nearest positive definite matrix indicate instability in the variance adjustment matrix inversions. Methods to address this issue include running the sampler for more iterations or reducing the number of additional covariate terms in the outcome regression. One could also choose to forgo the variance adjustment and simply use the posterior distributions produced by `swolca()`, acknowledging that estimated variances will be slight underestimates. 
+Users can ignore the following warning messages: "the design is sampled with replacement and only the first stage is used: and "the number of chains being less than 1 and sampling not done." Messages about negative variances and large (>1) eigenvalue differences to the nearest positive definite matrix indicate instability in the variance adjustment matrix inversions. Methods to address this issue include running the sampler for more iterations or reducing the number of additional covariate terms in the outcome regression. If continuous covariates are included in the probit regression model, these errors may also be due to the variance of the covariate being too large. In such cases, it is recommended to reduce the variable of the covariate, either by standardizing the variable to have mean 0 and standard deviation 1, or by transforming the variable into a categorical variable. One could also choose to forgo the variance adjustment and simply use the posterior distributions produced by `swolca()`, acknowledging that estimated variances will be slight underestimates.
 
 ## Unweighted analyses
 If no survey weights are available and we would like to perform analyses without accounting for survey design, we can simply use the default `weights` values of the `wolca()` and `swolca()` functions, which set all weights equal to 1. Since no survey design information is available, the `wolca_var_adjust()` and `swolca_var_adjust()` functions cannot be run and the estimates will not be correct for the broader population, only for the study sample. Variances may also be underestimated due to unaccounted-for clustering. 
@@ -378,7 +397,7 @@ regr_plot <- plot_regr_coefs(regr_coefs = regr_coefs, res = res_swolca_adjust,
 regr_plot + ggplot2::theme(legend.position = "top")
 ```
 
-Alternatively, rather than plotting the regression coefficients, we can evaluate the probit regression model at all levels of a key covariate and then plot the conditional probability of the outcome using the `plot_outcome_probs()` function. This displays the probability of the outcome for the different clusters, evaluated at all levels of a key covariate, with all other covariates evaluated at their reference level. In this example, we plot the probability of hypertension for the five dietary patterns across levels of age, with error bars for the 95\% credible intervals. 
+Alternatively, for categorical covariates, rather than plotting the regression coefficients, we can evaluate the probit regression model at all levels of the covariate and then plot the conditional probability of the outcome using the `plot_outcome_probs()` function. This displays the probability of the outcome for the different clusters, evaluated at all levels of a categorical covariate, with all other covariates evaluated at their reference level. In this example, we plot the probability of hypertension for the five dietary patterns across levels of age, with error bars for the 95\% credible intervals. 
 
 ```{r, fig.width = 5, fig.height = 4, fig.align = 'center'}
 class_labels <- paste0("C", 1:5)
@@ -388,7 +407,8 @@ plot_outcome_probs(res = res_swolca_adjust, cov_name = "age_cat",
                    x_title = "Age Group")
 ```
 
-We can also display the probability of outcome plots for two covariates at the same time, assessing for any interactions. We can add lines connecting the points between levels of "Age" using the `add_lines = TRUE` parameter, and remove the error bars by setting `ci_level = NULL`. 
+We can also display the probability of outcome plots for two categorical covariates at the same time, assessing for any interactions. We can add lines connecting the points between levels of "Age" using the `add_lines = TRUE` parameter, and remove the error bars by setting `ci_level = NULL`. 
+
 ```{r, fig.width = 7, fig.height = 5, fig.align = 'center'}
 racethnic_categs <- c("NH White", "NH Black", "NH Asian", "Hispanic/Latino", 
                       "Other/Mixed")

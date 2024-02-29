@@ -60,11 +60,13 @@ x_mat[, 2] <- ifelse(x_mat[, 2] >= 3, 3, x_mat[, 2])
 res_R_j <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                   cluster_id = cluster_id, stratum_id = stratum_id, V_data = V_data,
                   run_sampler = "fixed", glm_form = glm_form, 
-                  fixed_seed = 1, K_fixed = 3, n_runs = 5, burn = 1, 
-                  thin = 1, save_res = FALSE)
+                  fixed_seed = 888, K_fixed = 3, n_runs = 500, burn = 250, 
+                  thin = 5, update = 100, save_res = FALSE)
+res_R_j_adjust <- swolca_var_adjust(res = res_R_j, num_reps = 100,
+                                    save_res = FALSE, adjust_seed = 1)
 
 test_that("R_j works", {
-  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.52, 0.25, 0.23))
+  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.51, 0.26, 0.22))
   expect_equal(max(table(res_R_j$estimates$c_all)), 2156) 
   expect_equal(min(table(res_R_j$estimates$c_all)), 842) 
 })

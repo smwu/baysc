@@ -120,7 +120,10 @@
 #' hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn 
 #' from InvGamma(shape=3.5, scale=6.25) distributions. Note that hyperparameters
 #' for the fixed sampler should probably only be specified if running the 
-#' fixed sampler directly, bypassing the adaptive sampler. 
+#' fixed sampler directly, bypassing the adaptive sampler.
+#'
+#' To prevent underflow issues, all \eqn{\theta} and \eqn{\xi} parameters are 
+#' restricted to have a minimum value of \eqn{1e-8}. 
 #' 
 #' @return
 #' If the fixed sampler is run, returns an object `res` of class `"swolca"`; a 
