@@ -30,7 +30,7 @@
 #' of pattern profiles with a binary outcome through a two-step appraoch, run 
 #' [wolca_svyglm()].
 #' 
-#' Use the `swolca()` function to run a supervised weighted overfitted LCA that 
+#' Use the [swolca()] function to run a supervised weighted overfitted LCA that 
 #' allows information about the binary outcome to directly inform the creation 
 #' of the pattern profiles. [swolca_var_adjust()] provides a post-hoc variance 
 #' adjustment that addresses variance underestimation. 

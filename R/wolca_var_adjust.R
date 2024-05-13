@@ -65,6 +65,18 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' hyperparameter set to 0.01. This is done independently for each exposure item j
 #' and is assumed to be the same across latent classes. 
 #' 
+#' If the following warning message appears, please run the sampler for more 
+#' iterations as there is instability in the parameter estimates, usually in the 
+#' form of large positive or negative values for \eqn{\xi}): 
+#' "Error in svrVar(thetas, scale, rscales, mse = design$mse, coef = full) : 
+#' All replicates contained NAs".
+#' 
+#' When running the variance adjustment, the following warning messages may appear: 
+#' "the number of chains is less than 1; sampling not done" and 
+#' "In mrbweights(design$cluster, design$strata, design$fpc, ...) : Design is 
+#' sampled with replacement: only first stage used". These messages do not pose 
+#' an issue to the statistical validity of the methods and can be ignored. 
+#' 
 #' @return 
 #' Returns an object `res` of class `"wolca"`, which includes all outputs from 
 #' [wolca()] as well as a list `estimates_adjust` containing:

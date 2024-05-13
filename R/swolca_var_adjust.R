@@ -141,6 +141,12 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' "Error in svrVar(thetas, scale, rscales, mse = design$mse, coef = full) : 
 #' All replicates contained NAs".
 #' 
+#' When running the variance adjustment, the following warning messages may appear: 
+#' "the number of chains is less than 1; sampling not done" and 
+#' "In mrbweights(design$cluster, design$strata, design$fpc, ...) : Design is 
+#' sampled with replacement: only first stage used". These messages do not pose 
+#' an issue to the statistical validity of the methods and can be ignored. 
+#' 
 #' @return 
 #' Returns an object `res` of class `"swolca"`, which includes all outputs from 
 #' [swolca()] as well as a list `estimates_adjust` containing:
