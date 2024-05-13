@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate_data.R
 \name{get_betas_x}
 \alias{get_betas_x}
-\title{Obtain list of beta matrices for generating multivariate categorical exposure X}
+\title{Obtain list of beta matrices for generating multivariate categorical exposure X_i}
 \usage{
 get_betas_x(profiles, R, modal_theta_prob = 0.85, formula_x, V_unique)
 }
@@ -17,7 +17,7 @@ range from 1 to R, where R is the number of levels for all items.}
 \item{modal_theta_prob}{Probability of true exposure level. Default is 0.85.}
 
 \item{formula_x}{String specifying formula for multinomial logistic
-regression to create multivariate categorical exposure X.}
+regression to create multivariate categorical exposure X_i.}
 
 \item{V_unique}{Dataframe with one column containing the unique values of
 the categorical covariate specified in \code{formula_x}.}
@@ -30,16 +30,16 @@ of columns equal to the number of columns in the design matrix.
 }
 \description{
 Obtain list of beta matrices that can be used to generate the multivariate
-categorical exposure variable X using a multinomial logistic regression where
-X depends on categorical covariate composed of latent class assignment C.
+categorical exposure variable X_i using a multinomial logistic regression where
+X_i depends on categorical covariate composed of latent class assignment C_i.
 }
 \examples{
-## Example 1: X ~ C
+## Example 1: X_i ~ C_i
 # Number of items, exposure levels, latent classes
 J <- 30; R <- 4; K <- 3
-# Formula specifying that X depends on C
+# Formula specifying that X_i depends on C_i
 formula_x <- "~ c_all"
-# Dataframe with unique values of C
+# Dataframe with unique values of C_i
 V_unique <- data.frame(c_all = as.factor(1:K))
 # Matrix of pattern profiles for each latent class
 profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
@@ -51,17 +51,17 @@ profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J),
                                         rep(1, times = 0.3 * J))))
 # True level probability
 modal_theta_prob <- 0.85
-# Get matrix of betas for generating C
+# Get matrix of betas for generating C_i
 beta_list_x <- get_betas_x(profiles = profiles, R = R, 
                            modal_theta_prob = modal_theta_prob, 
                            formula_x = formula_x, V_unique = V_unique)
 # Beta matrix for item j=1
 beta_list_x[[1]]     
                       
-## Example 2: X ~ C + S
+## Example 2: X_i ~ C_i + S_i
 # Update formula_x
 formula_x <- "~ c_all + s_all"
-# Update beta_list_x by adding in coefficients for S to each j matrix
+# Update beta_list_x by adding in coefficients for S_i to each j matrix
 beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
                                              s_all = c(0, 0.5, 0, 0)))
 beta_list_x[[1]]  

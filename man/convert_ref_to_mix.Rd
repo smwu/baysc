@@ -4,26 +4,26 @@
 \alias{convert_ref_to_mix}
 \title{Convert from reference cell coding to mixture reference coding}
 \usage{
-convert_ref_to_mix(K, q, est_beta, ci_beta = NULL)
+convert_ref_to_mix(K, Q, est_beta, ci_beta = NULL)
 }
 \arguments{
 \item{K}{Number of latent classes}
 
-\item{q}{Number of regression covariates excluding class assignment}
+\item{Q}{Number of regression covariates excluding class assignment}
 
 \item{est_beta}{Vector of probit regression coefficients in reference cell
-coding. (K*q)x1. Order of betas must correspond to a formula with \code{c_all} as
+coding. (K*Q)x1. Order of betas must correspond to a formula with \code{c_all} as
 the first covariate and all interaction terms involving \code{c_all} present.}
 
 \item{ci_beta}{Matrix of interval estimates for probit regression
-coefficients in reference cell coding. (K*q)x2, where the first column is
+coefficients in reference cell coding. (K*Q)x2, where the first column is
 the lower bound and the second column is the upper bound. Set to \code{NULL}
 (default), if no interval estimate conversions are necessary.}
 }
 \value{
-Outputs list \code{xi_list} containing \code{est_xi}, a Kxq matrix of
+Outputs list \code{xi_list} containing \code{est_xi}, a KxQ matrix of
 regression estimates in mixture reference coding. If \code{ci_beta} is not \code{NULL},
-\code{xi_list} also contains \code{est_xi_lb} and \code{est_xi_ub}, which are Kxq matrices
+\code{xi_list} also contains \code{est_xi_lb} and \code{est_xi_ub}, which are KxQ matrices
 of the lower and upper bound interval estimates, respectively, in mixture
 reference coding.
 }

@@ -11,7 +11,7 @@
 #' If no survey sample adjustments are desired, leave `sampling_wt`, `stratum_id`, 
 #' and `cluster_id` to their default `NULL` values.
 #' 
-#' By default, the function will run two samplers: the adaptive sampler followed 
+#' By default, the function will run two samplers: the adaptive sampler, followed 
 #' by the fixed sampler. The adaptive sampler determines the number of latent 
 #' classes, which is then used in the fixed sampler for parameter estimation. 
 #' If the number of latent classes is already known and only the fixed sampler 
@@ -45,6 +45,9 @@
 #' and is assumed to be the same across latent classes. Note that hyperparameters
 #' for the fixed sampler should probably only be specified if running the 
 #' fixed sampler directly, bypassing the adaptive sampler. 
+#' 
+#' To prevent underflow issues, all \eqn{\theta} parameters are restricted to 
+#' have a minimum value of \eqn{1e-8}. 
 #'
 #' @return
 #' If the fixed sampler is run, returns an object `res` of class `"wolca"`; a 
@@ -105,6 +108,7 @@
 #' Analysis. arXiv preprint arXiv:2310.01575.
 #'
 #' @examples
+#' \dontrun{   
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
@@ -119,7 +123,7 @@
 #'              cluster_id = cluster_id, stratum_id = stratum_id, 
 #'              run_sampler = "both", adapt_seed = 1, n_runs = 50, burn = 25, 
 #'              thin = 1, save_res = FALSE)
-#'
+#' }
 wolca <- function(x_mat, sampling_wt = NULL, cluster_id = NULL, stratum_id = NULL,  
                   run_sampler = "both", K_max = 30, adapt_seed = NULL, 
                   K_fixed = NULL, fixed_seed = NULL, class_cutoff = 0.05,

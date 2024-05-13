@@ -16,7 +16,7 @@ wolca_var_adjust(
 }
 \arguments{
 \item{res}{An object of class \code{"wolca"}, resulting from a call to \code{\link[=wolca]{wolca()}},
-containing the unadjusted estimates}
+containing the unadjusted estimates.}
 
 \item{alpha}{Hyperparameter for prior for class membership probabilities
 \eqn{\pi}. Default is \code{NULL} and default values are used (see Details below).
@@ -26,7 +26,7 @@ If specified, must be (\code{K_max})x1.}
 \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k}, assumed to be
 the same across classes. Default is \code{NULL} and default values are used (see
 Details below). If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+items and R is the maximum number of levels for the exposure.}
 
 \item{num_reps}{Number of bootstrap replicates to use for the variance
 adjustment estimate. Default is 100.}
@@ -90,11 +90,12 @@ obtained from running \code{\link[=wolca]{wolca()}}, available at \code{res$esti
 For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
 each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
 hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the number
-of categories for exposure item j. If \code{R_j < R}, the remaining categories have
+of levels for exposure item j. If \code{R_j < R}, the remaining levels have
 hyperparameter set to 0.01. This is done independently for each exposure item j
 and is assumed to be the same across latent classes.
 }
 \examples{
+\dontrun{   
 # Load simulated data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
@@ -113,7 +114,7 @@ res <- wolca(x_mat = x_mat, sampling_wt = sampling_wt,
 # Apply variance adjustment to posterior estimates
 res_adjust <- wolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
                                adjust_seed = 1)                        
-
+}
 }
 \references{
 Williams, M. R., & Savitsky, T. D. (2021). Uncertainty Estimation for

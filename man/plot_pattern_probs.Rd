@@ -70,5 +70,5 @@ plot_pattern_probs(res = run_nhanes_swolca_results, item_labels = item_labels,
 
 }
 \seealso{
-\code{\link[=plot_pattern_profiles]{plot_pattern_profiles()}} \code{\link[=plot_clus_dist]{plot_clus_dist()}} \code{\link[=plot_outcome_probs]{plot_outcome_probs()}}
+\code{\link[=plot_pattern_profiles]{plot_pattern_profiles()}} \code{\link[=plot_class_dist]{plot_class_dist()}} \code{\link[=plot_outcome_probs]{plot_outcome_probs()}}
 }

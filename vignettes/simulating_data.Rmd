@@ -244,7 +244,7 @@ Each individual with have a binary outcome $Y_i$ taking on values 0 or 1. We spe
 formula_y = "~ c_all * s_all"
 ```
 
-$Y_i$ is generated using a probit regression dependent on the variables that influence the outcome (e.g., $C_i$, $S_i$, and $C_i:S_i$ in the default setting). Define the regression parameters to be $\xi_{iq}$ where $\beta$ are the regression coefficient parameters: And let $\Phi$ denote the cumulative density function of the standard Normal distribution. The corresponding probit regression formulation is
+$Y_i$ is generated using a probit regression dependent on the variables that influence the outcome (e.g., $C_i$, $S_i$, and $C_i:S_i$ in the default setting). Define the regression parameters to be $\beta_{iq}$ where $q=1,\ldots,Q$ index the covariates. And let $\Phi$ denote the cumulative density function of the standard Normal distribution. The corresponding probit regression formulation is
 $$
 \begin{align*}
 Y_i|C_i, S_i &\sim \text{Bernoulli}\big(P(Y_i=1|C_i,S_i)\big) \text{, where }\\
@@ -277,9 +277,9 @@ We can see that these $\beta$ values correspond to approximate outcome probabili
 
 ```{r}
 # Get number of regression covariates, excluding class assignment C
-q <- length(which(!grepl("c_all", colnames(design_mat_y))))
+Q <- length(which(!grepl("c_all", colnames(design_mat_y))))
 # Convert to mixture reference coding
-xi_vec_y <- convert_ref_to_mix(K = K, q = 2, est_beta = beta_vec_y)$est_xi
+xi_vec_y <- convert_ref_to_mix(K = K, Q = 2, est_beta = beta_vec_y)$est_xi
 # Convert to outcome probabilities
 convert_to_probs(est_xi = xi_vec_y, glm_form = "~s_all", 
                  V_data = data.frame(s_all = factor(1:2)), cov_name = "s_all")

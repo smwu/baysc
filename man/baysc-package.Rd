@@ -7,59 +7,42 @@
 \title{BAYesian Survey Clustering}
 \description{
 \code{baysc} is an R package for running Bayesian clustering methods on survey data.
+A Bayesian latent class analysis (LCA) is available for eliciting underlying pattern
+profiles incorporating survey sampling weights and other survey design elements.
+
+Options also exist for relating the pattern profiles to a binary outcome, either
+through a two-step approach after cluster is completed, or in a one-step approach
+where creation of the pattern profiles is directly informed by the outcome.
+Summary and plotting functions for visualizing output are available, as are
+diagnostic functions for examining convergence of the sampler.
+
+We provide an example dataset from the National Health and Nutrition
+Examination Survey (NHANES) that includes dietary intake and hypertension data
+for low-income women in the United States, as well as survey sampling weights
+and information on stratification and clustering in the survey design. A
+simulated dataset named \code{sim_data} is also provided to help with
+familiarization of the package, and simulation functions \code{\link[=simulate_pop]{simulate_pop()}} and
+\code{\link[=simulate_samp]{simulate_samp()}} are available for creating example data population and
+survey sample data for simulation studies.
 }
 \details{
-Use the \code{swolca()} function to run a supervised weighted overfitted latent
-class analysis (SWOLCA), proposed in Wu et al. (2023).
+Use the \code{\link[=wolca]{wolca()}} function to run an unsupervised weighted overfitted LCA and
+obtain pattern profiles. \code{\link[=wolca_var_adjust]{wolca_var_adjust()}} provides a post-hoc variance
+adjustment that addresses variance underestimation. To examine the association
+of pattern profiles with a binary outcome through a two-step appraoch, run
+\code{\link[=wolca_svyglm]{wolca_svyglm()}}.
 
-Use the \code{solca()} function to run an unweighted supervised overfitted latent
-class analysis (SOLCA) that does not account for survey design.
+Use the \code{swolca()} function to run a supervised weighted overfitted LCA that
+allows information about the binary outcome to directly inform the creation
+of the pattern profiles. \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} provides a post-hoc variance
+adjustment that addresses variance underestimation.
 
-Use the \code{wolca()} function to run a two-step analysis where the first step is
-an unsupervised weighted overfitted latent class analysis (WOLCA) and the
-second step is a frequentist survey-weighted probit regression model using
-the \code{survey} package.
-
-A simulated dataset named \code{sim_data} is also provided to help with
-familiarization of the package.
-}
-\examples{
-\dontrun{
-# Load data and obtain relevant variables
-data("sim_data")
-data_vars <- sim_data
-x_mat <- data_vars$X_data            # Categorical exposure matrix, nxp
-y_all <- c(data_vars$Y_data)         # Binary outcome vector, nx1
-cluster_id <- data_vars$cluster_id   # Cluster indicators, nx1
-stratum_id <- data_vars$true_Si      # Stratum indicators, nx1
-sampling_wt <- data_vars$sample_wt   # Survey sampling weights, nx1
-n <- dim(x_mat)[1]        # Number of individuals
-
-# Probit model only includes latent class
-V <- matrix(1, nrow = n) # Regression design matrix without class assignment
-
-# Stan model
-mod_stan <- stanmodels$SWOLCA_main
-
-# Run swolca
-res_swolca <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-cluster_id = cluster_id, stratum_id = stratum_id, V = V, adapt_seed = 1,
-n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, save_res = FALSE)
-
-# Run solca
-res_solca <- solca(x_mat = x_mat, y_all = y_all, V = V, adapt_seed = 1, 
-n_runs = 50, burn = 25, thin = 1, save_res = FALSE)
-
-# Run wolca
-res_wolca <- wolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt, 
-cluster_id = cluster_id, stratum_id = stratum_id, V = V, glm_form = glm_form, 
-adapt_seed = 1, n_runs = 50, burn = 25, thin = 1, mod_stan = mod_stan, 
-save_res = FALSE)
-}
+More information about the methods can be found in the vignettes and in
+Wu et al. (2023).
 }
 \references{
-Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
-(2023). Derivation of outcome-dependent dietary patterns for low-income women
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2023).
+Derivation of outcome-dependent dietary patterns for low-income women
 obtained from survey data using a Supervised Weighted Overfitted Latent Class
 Analysis. arXiv preprint arXiv:2310.01575.
 }

@@ -20,8 +20,8 @@ number of latent classes.}
 parameters, \eqn{\theta}, where J is the number of items and R is the
 maximum number of item levels.}
 }
-If \code{res} is a \code{swolca} object, \code{param_mcmc} also contains \code{xi_mcmc}, a
-Mx(Kxq) dataframe of the regression parameters, \eqn{\xi}, where q is the
+If \code{res} is a \code{"swolca"} object, \code{param_mcmc} also contains \code{xi_mcmc}, a
+Mx(KxQ) dataframe of the regression parameters, \eqn{\xi}, where Q is the
 number of covariates, excluding latent class indicators, in the regression.
 }
 \description{

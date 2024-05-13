@@ -29,7 +29,7 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' 
 #' @inheritParams swolca_var_adjust
 #' @param res An object of class `"wolca"`, resulting from a call to [wolca()],
-#' containing the unadjusted estimates
+#' containing the unadjusted estimates.
 #' @param save_path String specifying directory and file name to save results, 
 #' e.g., "~/Documents/run". Default is `NULL`. If this is the same as the file 
 #' name specified in [wolca()], the unadjusted results are overwritten with the 
@@ -61,7 +61,7 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
 #' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
-#' of categories for exposure item j. If `R_j < R`, the remaining categories have
+#' of levels for exposure item j. If `R_j < R`, the remaining levels have
 #' hyperparameter set to 0.01. This is done independently for each exposure item j
 #' and is assumed to be the same across latent classes. 
 #' 
@@ -99,6 +99,7 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' Review, 89(1), 72-107.
 #'
 #' @examples
+#' \dontrun{   
 #' # Load simulated data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
@@ -117,7 +118,7 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #' # Apply variance adjustment to posterior estimates
 #' res_adjust <- wolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
 #'                                adjust_seed = 1)                        
-#' 
+#' }
 wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100, 
                              save_res = TRUE, save_path = NULL, 
                              adjust_seed = NULL) {
@@ -158,6 +159,9 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   w_all <- res$data_vars$w_all
   stratum_id <- res$data_vars$stratum_id
   cluster_id <- res$data_vars$cluster_id
+  if (is.null(cluster_id)) {  # no clustering
+    cluster_id <- 1:n
+  }
   
   # Get final number of classes (usually fewer classes than K_fixed)
   K <- res$estimates$K_red

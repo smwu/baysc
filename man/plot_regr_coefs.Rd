@@ -61,6 +61,6 @@ plot_regr_coefs(regr_coefs = regr_coefs, res = res, cov_labels = cov_labels)
 
 }
 \seealso{
-\code{\link[=get_regr_coefs]{get_regr_coefs()}} \code{\link[=plot_pattern_probs]{plot_pattern_probs()}} \code{\link[=plot_clus_dist]{plot_clus_dist()}}
+\code{\link[=get_regr_coefs]{get_regr_coefs()}} \code{\link[=plot_pattern_probs]{plot_pattern_probs()}} \code{\link[=plot_class_dist]{plot_class_dist()}}
 \code{\link[=plot_pattern_profiles]{plot_pattern_profiles()}}
 }

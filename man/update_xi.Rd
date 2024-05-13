@@ -15,7 +15,7 @@ update_xi(xi, n, K, w_all, c_all, z_all, V, mu0, Sig0)
 
 \item{z_all}{Vector of latent variables in the probit model. nx1}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Regression design matrix without class assignment. nxQ}
 }
 \value{
 Updated \code{xi} matrix after drawing from its posterior distribution.

@@ -74,7 +74,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' a call to [swolca()] to correct for underestimation of posterior intervals.
 #' 
 #' @param res An object of class `"swolca"`, resulting from a call to [swolca()],
-#' containing the unadjusted estimates
+#' containing the unadjusted estimates.
 #' @param alpha Hyperparameter for prior for class membership probabilities 
 #' \eqn{\pi}. Default is `NULL` and default values are used (see Details below). 
 #' If specified, must be (`K_max`)x1. 
@@ -82,15 +82,15 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k}, assumed to be 
 #' the same across classes. Default is `NULL` and default values are used (see 
 #' Details below). If specified, must be JxR, where J is the number of exposure 
-#' items and R is the maximum number of categories for the exposure.
+#' items and R is the maximum number of levels for the exposure.
 #' @param mu0 Mean hyperparameters for regression coefficients \eqn{\xi_{k\cdot}} 
 #' for each class \eqn{k}. Default is `NULL` and default values are used (see 
 #' Details below). If specified, must be a list of `K_max` vectors of dimension 
-#' qx1, where q is the number of regression covariates excluding latent class assignment.  
+#' Qx1, where Q is the number of regression covariates excluding latent class assignment.  
 #' @param Sig0 Variance hyperparameters for regression coefficients 
 #' \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is `NULL` and default 
 #' values are used (see Details below). If specified, must be a list of `K_max` 
-#' qxq matrices, where q is the number of regression covariates excluding latent 
+#' QxQ matrices, where Q is the number of regression covariates excluding latent 
 #' class assignment. 
 #' @param num_reps Number of bootstrap replicates to use for the variance 
 #' adjustment estimate. Default is 100.
@@ -127,7 +127,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for 
 #' each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with 
 #' hyperparameter  \eqn{\eta_j} equal to `rep(1, R_j)` where `R_j` is the number 
-#' of categories for exposure item j. If `R_j < R`, the remaining categories have
+#' of levels for exposure item j. If `R_j < R`, the remaining levels have
 #' hyperparameter set to 0.01. This is done independently for each exposure item j
 #' and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a 
 #' Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0} 
@@ -148,10 +148,10 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #'   \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red), 
 #'   where M is the number of MCMC iterations after burn-in and thinning.}
 #'   \item{\code{theta_red}}{Array of adjusted posterior samples for theta. MxJx(K_red)xR}
-#'   \item{\code{xi_red}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
+#'   \item{\code{xi_red}}{Array of adjusted posterior samples for xi. Mx(K_red)xQ}
 #'   \item{\code{pi_med}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
 #'   \item{\code{theta_med}}{Array of adjusted posterior median estimates for theta. px(K_red)xR}
-#'   \item{\code{xi_med}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
+#'   \item{\code{xi_med}}{Matrix of adjusted posterior median estimates for xi. (K_red)xQ}
 #'   \item{\code{Phi_med}}{Vector of adjusted individual outcome probabilities. nx1}
 #'   \item{\code{c_all}}{Vector of final individual class assignments from `swolca()`. nx1}
 #'   \item{\code{pred_class_probs}}{Matrix of individual posterior class 
@@ -179,6 +179,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' Review, 89(1), 72-107.
 #'
 #' @examples
+#' \dontrun{   
 #' # Load simulated data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
@@ -202,7 +203,7 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' # Apply variance adjustment to posterior estimates
 #' res_adjust <- swolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
 #'                                 adjust_seed = 1)                        
-#' 
+#' }
 swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL, 
                               Sig0 = NULL, num_reps = 100, save_res = TRUE,
                               save_path = NULL, adjust_seed = NULL) {
@@ -239,13 +240,16 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   R_j <- res$data_vars$R_j
   R <- res$data_vars$R
   n <- res$data_vars$n
-  q <- res$data_vars$q  # prevent stats::rnorm error
+  Q <- res$data_vars$Q  # prevent stats::rnorm error
   x_mat <- res$data_vars$x_mat
   y_all <- res$data_vars$y_all
   V <- res$data_vars$V
   w_all <- res$data_vars$w_all
   stratum_id <- res$data_vars$stratum_id
   cluster_id <- res$data_vars$cluster_id
+  if (is.null(cluster_id)) {  # no clustering
+    cluster_id <- 1:n
+  }
   
   # Check hyperparameter dimensions match K
   if (!is.null(alpha)) {
@@ -266,17 +270,17 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   }
   if (!is.null(mu0)) {
     if (length(mu0) != K | !is.list(mu0) | 
-        !(all(lapply(mu0, length) == q))) {
+        !(all(lapply(mu0, length) == Q))) {
       stop("mu0 must be a list of length K where each element is a 
-           vector of length q (number of regression covariates excluding latent class)")
+           vector of length Q (number of regression covariates excluding latent class)")
     }
   }
   if (!is.null(Sig0)) {
     if (length(Sig0) != K | !is.list(Sig0) | 
-        !(all(lapply(Sig0, nrow) == q)) | 
-        !(all(lapply(Sig0, ncol) == q))) {
+        !(all(lapply(Sig0, nrow) == Q)) | 
+        !(all(lapply(Sig0, ncol) == Q))) {
       stop("Sig0 must be a list of length K where each element is a 
-            qxq matrix, where q is the number of regression covariates excluding 
+            QxQ matrix, where Q is the number of regression covariates excluding 
            latent class)")
     }
   }
@@ -321,7 +325,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
     mu0 <- vector("list", K)
     for (k in 1:K) {
       # MVN(0,1) hyperprior for prior mean of xi
-      mu0[[k]] <- stats::rnorm(n = q)
+      mu0[[k]] <- stats::rnorm(n = Q)
     }
   }
   if (is.null(Sig0)) {
@@ -329,8 +333,8 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
     for (k in 1:K) {
       # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
       # components and mean variance 2.5 for a weakly informative prior on xi
-      Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25),
-                        nrow = q, ncol = q)
+      Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25),
+                        nrow = Q, ncol = Q)
     }
   }
   
@@ -338,7 +342,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   print("Running variance adjustment")
   
   # Define data for Stan model
-  data_stan <- list(K = K, J = J, R = R, n = n, q = q, X = x_mat, y = y_all, 
+  data_stan <- list(K = K, J = J, R = R, n = n, Q = Q, X = x_mat, y = y_all, 
                     V = V, weights = w_all, alpha = alpha, eta = eta, mu0 = mu0, 
                     Sig0 = Sig0)
   
@@ -454,7 +458,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   # Constrained adjusted parameters for all MCMC samples
   pi_red_adj <- matrix(NA, nrow=M, ncol=K)
   theta_red_adj <- array(NA, dim=c(M, J, K, R))
-  xi_red_adj <- array(NA, dim=c(M, K, q))
+  xi_red_adj <- array(NA, dim=c(M, K, Q))
   for (i in 1:M) {
     ##### FIX WITH CUSTOMIZED ERROR
     constr_pars <- rstan::constrain_pars(out_stan, par_adj[i,])

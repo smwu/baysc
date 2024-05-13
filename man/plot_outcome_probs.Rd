@@ -28,9 +28,9 @@ covariate names. Covariates must be included in \code{glm_form} and \code{V_data
 
 \item{ci_level}{Optional number from 0 to 1 specifying the confidence/credible
 interval level. Default is \code{0.95}, which gives a 95\\% equal-tailed interval
-composed of the 2.5\\% and 97.5\\% quantiles. For \code{wolca()} results, this must
-match the \code{ci_level} parameter in the main function. Set to \code{NULL} to exclude
-credible intervals from the plot.}
+composed of the 2.5\\% and 97.5\\% quantiles. For \code{"wolca"} objects, this must
+match the \code{ci_level} parameter in the main \code{\link[=wolca]{wolca()}} function. Set to \code{NULL}
+to exclude credible intervals from the plot.}
 
 \item{add_lines}{Boolean specifying whether lines should be added to connect
 the points between categories. Default is \code{FALSE}.}
@@ -116,5 +116,5 @@ ggpubr::ggarrange(p1, p2, p3, p4, common.legend = TRUE, legend = "top",
                    
 }
 \seealso{
-\code{\link[=get_regr_coefs]{get_regr_coefs()}} \code{\link[=plot_pattern_probs]{plot_pattern_probs()}} \code{\link[=plot_clus_dist]{plot_clus_dist()}} \code{\link[=plot_pattern_profiles]{plot_pattern_profiles()}}
+\code{\link[=get_regr_coefs]{get_regr_coefs()}} \code{\link[=plot_pattern_probs]{plot_pattern_probs()}} \code{\link[=plot_class_dist]{plot_class_dist()}} \code{\link[=plot_pattern_profiles]{plot_pattern_profiles()}}
 }

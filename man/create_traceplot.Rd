@@ -15,8 +15,8 @@ number of latent classes.}
 \item{\code{theta_mcmc}}{Mx(JxKxR) dataframe of the item level probability
 parameters, \eqn{\theta}, where J is the number of items and R is the
 maximum number of item levels.}
-\item{\code{xi_mcmc}}{If output for a \code{swolca} object, Mx(Kxq) dataframe of
-the regression parameters, \eqn{\xi}, where q is the number of covariates,
+\item{\code{xi_mcmc}}{If output for a \code{"swolca"} object, Mx(KxQ) dataframe of
+the regression parameters, \eqn{\xi}, where Q is the number of covariates,
 excluding latent class indicators, in the regression.}
 }}
 

@@ -3,32 +3,32 @@ data {
   int<lower=1> J;  // number of food items
   int<lower=1> R;  // number of consumption levels
   int<lower=1> n;  // number of subjects
-  int<lower=1> q;  // number of covariates in probit regression
+  int<lower=1> Q;  // number of covariates in probit regression
   
   int X[n, J];                // categorical food data
   int<lower=0, upper=1> y[n]; // binary outcome data
-  real V[n, q];               // covariate matrix excluding class assignment
+  real V[n, Q];               // covariate matrix excluding class assignment
   vector<lower=0>[n] weights;       // individual-level survey weights
   
   vector[K] alpha;         // hyperparameter for pi prior
   matrix[J, R] eta;           // hyperparameter for theta prior
-  vector[q] mu0[K];           // hyperparameter for mean of xi prior
-  cov_matrix[q] Sig0[K];      // hyperparameter for covariance of xi prior
+  vector[Q] mu0[K];           // hyperparameter for mean of xi prior
+  cov_matrix[Q] Sig0[K];      // hyperparameter for covariance of xi prior
 }
 parameters {
   simplex[K] pi;                 // cluster probabilities
   simplex[R] theta[J, K];  // cluster-specific item consumption probabilities
-  vector[q] xi[K];         // regression coefficients
+  vector[Q] xi[K];         // regression coefficients
 }
 transformed parameters {
   matrix[J, R] theta_prod;  // to check convergence up to permutation of labels
-  vector[q] xi_prod;  // to check convergence up to permutation of labels
+  vector[Q] xi_prod;  // to check convergence up to permutation of labels
   for (j in 1:J) {
     for (r in 1:R) {
       theta_prod[j, r] = prod(theta[j, ,r]);
     }
   }
-  for (v in 1:q) {
+  for (v in 1:Q) {
     xi_prod[v] = prod(xi[, v]);
   }
 }

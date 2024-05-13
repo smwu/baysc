@@ -21,7 +21,7 @@ update_c(c_all, n, K, J, theta, x_mat, pi, z_all, V, xi, y_all)
 
 \item{z_all}{Vector of latent variables in the probit model. nx1}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Regression design matrix without class assignment. nxQ}
 
 \item{xi}{Matrix parameter xi for probit regression coefficients. Kxq}
 

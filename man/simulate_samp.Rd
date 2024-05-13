@@ -25,7 +25,7 @@ Either \code{samp_prop} or \code{samp_size} must be specified.}
 \item{samp_size}{Sample size. Default is \code{NULL}. Either \code{samp_prop} or
 \code{samp_size} must be specified.}
 
-\item{strat}{Boolean specifying whether to perform stratification by S.
+\item{strat}{Boolean specifying whether to perform stratification by S_i.
 Default is \code{TRUE}.}
 
 \item{strat_dist}{Vector of relative stratum sizes in the sample. Components
@@ -52,8 +52,8 @@ individuals. nx1}
 \item{\code{N}}{Population size}
 \item{\code{J}}{Number of exposure items}
 \item{\code{R}}{Number of exposure categories}
-\item{\code{H}}{Number of stratum (i.e., levels of S)}
-\item{\code{N_s}}{Vector of population sizes for levels of S. Hx1}
+\item{\code{S}}{Number of stratum (i.e., levels of S_i)}
+\item{\code{N_s}}{Vector of population sizes for levels of S_i. Sx1}
 \item{\code{true_K}}{True number of latent classes, K}
 \item{\code{true_Ai}}{\code{NULL} or vector of additional continuous variable
 for sampled individuals. nx1}
@@ -64,8 +64,8 @@ individuals. nx1}
 \item{\code{true_Ci}}{Vector of true latent class indicators for sampled
 individuals. nx1}
 \item{\code{true_pi}}{Vector of true pi values overall in the population. Kx1}
-\item{\code{true_pi_s}}{\code{NULL} or HxK matrix of true pi values within each
-level of S}
+\item{\code{true_pi_s}}{\code{NULL} or SxK matrix of true pi values within each
+level of S_i}
 \item{\code{X_data}}{Matrix of multivariate categorical exposure for
 sampled individuals. nxJ}
 \item{\code{true_global_patterns}}{Matrix of true global exposure patterns
@@ -76,12 +76,12 @@ defined by modal category. JxK}
 individuals. nx1}
 \item{\code{cluster_size}}{Cluster size}
 \item{\code{true_xi}}{Matrix of probit regression coefficients in mixture
-reference coding. Kxq, where q is the number of covariate terms in the
-regression, excluding all terms involving C}
+reference coding. KxQ, where Q is the number of covariate terms in the
+regression, excluding all terms involving C_i}
 \item{\code{true_Phi}}{Vector of true outcome probabilities for sampled
 individuals. nx1}
 \item{\code{true_Phi_mat}}{\code{NULL} or matrix of true outcome probabilities
-for individuals aggregated by C and S. KxH}
+for individuals aggregated by C_i and S_i. KxS}
 }
 If \code{save_res = TRUE} (default), also saves \code{sim_samp} as
 \verb{[save_path]_sim_samp.RData}.
@@ -91,12 +91,14 @@ If \code{save_res = TRUE} (default), also saves \code{sim_samp} as
 simulated population according to input specifications.
 }
 \examples{
+\dontrun{
 ### Example 1: Default values
 # Create population
 sim_pop <- simulate_pop(save_res = FALSE)
 sim_samp <- simulate_samp(sim_pop = sim_pop, samp_prop = 0.05, strat = TRUE,
                           strat_dist = c(0.5, 0.5), clust = TRUE,
                           samp_seed = 101, save_res = FALSE)
+}
 }
 \seealso{
 \code{\link[=simulate_pop]{simulate_pop()}}

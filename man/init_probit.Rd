@@ -4,21 +4,21 @@
 \alias{init_probit}
 \title{Initialize probit model}
 \usage{
-init_probit(K, n, q, V, mu0, Sig0, y_all, c_all)
+init_probit(K, n, Q, V, mu0, Sig0, y_all, c_all)
 }
 \arguments{
 \item{K}{Number of classes}
 
 \item{n}{Number of individuals}
 
-\item{q}{Number of regression covariates excluding class assignment}
+\item{Q}{Number of regression covariates excluding class assignment}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Regression design matrix without class assignment. nxQ}
 
-\item{mu0}{List of K qx1 vectors of mean hyperparameters for regression
+\item{mu0}{List of K Qx1 vectors of mean hyperparameters for regression
 coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 
-\item{Sig0}{List of K qxq matrices of variance hyperparameters for regression
+\item{Sig0}{List of K QxQ matrices of variance hyperparameters for regression
 coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 
 \item{y_all}{Vector of outcomes. nx1}
@@ -28,7 +28,7 @@ coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 \value{
 Returns list \code{probit_params} containing:
 \describe{
-\item{\code{xi}}{Matrix parameter xi for probit regression coefficients. Kxq}
+\item{\code{xi}}{Matrix parameter xi for probit regression coefficients. KxQ}
 \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
 }
 }
@@ -65,7 +65,7 @@ glm_form <- "~ 1"
 # Obtain probit regression design matrix without class assignment
 V <- model.matrix(as.formula(glm_form), data = V_data)
 # Number of regression covariates excluding class assignment
-q <- ncol(V)  
+Q <- ncol(V)  
 
 # Set hyperparameters
 K <- 30
@@ -77,18 +77,18 @@ for (j in 1:J) {
 mu0 <- Sig0 <- vector("list", K)
 for (k in 1:K) {
   # MVN(0,1) hyperprior for prior mean of xi
-  mu0[[k]] <- stats::rnorm(n = q)
+  mu0[[k]] <- stats::rnorm(n = Q)
   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
   # components and mean variance 2.5 for a weakly informative prior on xi
-  Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
-  nrow = q, ncol = q)
+  Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+  nrow = Q, ncol = Q)
 }
 
 # First initialize OLCA params
 OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Initialize probit model
-probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
+probit_params <- init_probit(K = K, n = n, Q = Q, V = V, mu0 = mu0, 
 Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
 # probit_params
 

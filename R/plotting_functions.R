@@ -25,7 +25,7 @@
 #' @return
 #' Returns a `ggplot2` object displaying a heatmap of the latent class patterns.
 #' 
-#' @seealso [plot_pattern_probs()] [plot_clus_dist()] [plot_outcome_probs()]
+#' @seealso [plot_pattern_probs()] [plot_class_dist()] [plot_outcome_probs()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_brewer labs 
 #' theme_classic scale_x_discrete theme element_text
@@ -144,7 +144,7 @@ plot_pattern_profiles <- function(res, item_labels = NULL, item_title = "Item",
 #' Returns a `ggplot2` object displaying a grouped barplot of the probability of 
 #' the exposure categories, for each exposure item and each latent class
 #' 
-#' @seealso [plot_pattern_profiles()] [plot_clus_dist()] [plot_outcome_probs()]
+#' @seealso [plot_pattern_profiles()] [plot_class_dist()] [plot_outcome_probs()]
 #' 
 #' @importFrom ggplot2 ggplot aes geom_bar facet_wrap scale_fill_brewer labs 
 #' theme_bw theme element_text element_blank element_rect
@@ -251,10 +251,10 @@ plot_pattern_probs <- function(res, item_labels = NULL, categ_labels = NULL,
 }
 
 
-#' Plot distribution of clusters in the population across posterior sample iterations 
+#' Plot distribution of classes in the population across posterior sample iterations 
 #' 
 #' @description
-#' `plot_clus_dist` plots a boxplot of the class membership probabilities, 
+#' `plot_class_dist` plots a boxplot of the class membership probabilities, 
 #' \eqn{\pi}, in the posterior samples, for each latent class.
 #' 
 #' @inheritParams plot_pattern_profiles
@@ -280,12 +280,12 @@ plot_pattern_probs <- function(res, item_labels = NULL, categ_labels = NULL,
 #' data(run_nhanes_swolca_results)
 #' 
 #' # Default labels
-#' plot_clus_dist(res = run_nhanes_swolca_results)
+#' plot_class_dist(res = run_nhanes_swolca_results)
 #' 
 #' # Specifying labels
 #' class_labels <- paste0("Class ", 1:5)
-#' plot_clus_dist(res = run_nhanes_swolca_results, class_labels = class_labels)
-plot_clus_dist <- function(res, class_labels = NULL, 
+#' plot_class_dist(res = run_nhanes_swolca_results, class_labels = class_labels)
+plot_class_dist <- function(res, class_labels = NULL, 
                              class_title = "Dietary Pattern",
                              y_title = "Class Membership Probability", ...) {
   
@@ -363,7 +363,7 @@ plot_clus_dist <- function(res, class_labels = NULL,
 #' intervals are obtained from the [get_regr_coefs()] function using the 
 #' interval level specified there.
 #' 
-#' @seealso [get_regr_coefs()] [plot_pattern_probs()] [plot_clus_dist()] 
+#' @seealso [get_regr_coefs()] [plot_pattern_probs()] [plot_class_dist()] 
 #' [plot_pattern_profiles()] 
 #' 
 #' @importFrom ggplot2 ggplot aes theme_bw geom_point theme element_text 
@@ -464,9 +464,9 @@ plot_regr_coefs <- function(regr_coefs, res, cov_labels = NULL, ...) {
 #' covariate names. Covariates must be included in `glm_form` and `V_data`.
 #' @param ci_level Optional number from 0 to 1 specifying the confidence/credible 
 #' interval level. Default is `0.95`, which gives a 95\% equal-tailed interval 
-#' composed of the 2.5\% and 97.5\% quantiles. For `wolca()` results, this must 
-#' match the `ci_level` parameter in the main function. Set to `NULL` to exclude 
-#' credible intervals from the plot. 
+#' composed of the 2.5\% and 97.5\% quantiles. For `"wolca"` objects, this must 
+#' match the `ci_level` parameter in the main [wolca()] function. Set to `NULL` 
+#' to exclude credible intervals from the plot. 
 #' @param add_lines Boolean specifying whether lines should be added to connect 
 #' the points between categories. Default is `FALSE`.
 #' @param cov_labels Optional list of 1 or 2 string vectors specifying the 
@@ -484,7 +484,7 @@ plot_regr_coefs <- function(regr_coefs, res, cov_labels = NULL, ...) {
 #' the conditional probability of the outcome across categories of one or two 
 #' covariates of interest, colored by latent class.
 #' 
-#' @seealso [get_regr_coefs()] [plot_pattern_probs()] [plot_clus_dist()] [plot_pattern_profiles()] 
+#' @seealso [get_regr_coefs()] [plot_pattern_probs()] [plot_class_dist()] [plot_pattern_profiles()] 
 #' 
 #' @importFrom ggplot2 ggplot aes geom_line geom_point scale_color_brewer labs 
 #' theme_bw theme element_text position_dodge facet_grid geom_errorbar
@@ -728,8 +728,8 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
 #'   \item{\code{theta_mcmc}}{Mx(JxKxR) dataframe of the item level probability 
 #'   parameters, \eqn{\theta}, where J is the number of items and R is the 
 #'   maximum number of item levels.}
-#'   \item{\code{xi_mcmc}}{If output for a `swolca` object, Mx(Kxq) dataframe of 
-#'   the regression parameters, \eqn{\xi}, where q is the number of covariates, 
+#'   \item{\code{xi_mcmc}}{If output for a `"swolca"` object, Mx(KxQ) dataframe of 
+#'   the regression parameters, \eqn{\xi}, where Q is the number of covariates, 
 #'   excluding latent class indicators, in the regression.}
 #' }
 #' @param param_names String vector of parameter names to create plots for. All 

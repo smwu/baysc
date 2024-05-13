@@ -8,10 +8,10 @@ create_categ_var(beta_mat, design_mat, split_dim = NULL, V = NULL)
 }
 \arguments{
 \item{beta_mat}{Coefficient parameters for the linear predictor terms of a
-multinomial logistic regression. KxQ, where K is the number of categories
-and Q is the number of covariate terms in the regression}
+multinomial logistic regression. Kx(Q_full), where K is the number of
+categories and Q_full is the number of covariate terms in the regression}
 
-\item{design_mat}{Regression design matrix. NxQ}
+\item{design_mat}{Regression design matrix. Nx(Q_full)}
 
 \item{split_dim}{Optional covariate to get separate category probabilities
 for. Default is \code{NULL}. If not \code{NULL}, must also specify \code{V} containing the
@@ -28,8 +28,8 @@ Returns list \code{out_vars} containing
 \item{\code{pi_mat}}{Matrix of category probabilities for all individuals. NxK}
 \item{\code{true_pi}}{Vector of overall category probabilities across all
 individuals. Nx1}
-\item{\code{pi_split}}{If \code{split_dim} is specified, HxK matrix of category
-probabilities split by the levels in \code{split_dim}, where H is the number of
+\item{\code{pi_split}}{If \code{split_dim} is specified, SxK matrix of category
+probabilities split by the levels in \code{split_dim}, where S is the number of
 levels in the \code{split_dim} variable, and K is the number of categories as
 specified by \code{beta_mat}. Otherwise, \code{NULL} if \code{split_dim} is \code{NULL}.}
 }
@@ -48,7 +48,7 @@ design_mat_c <- model.matrix(as.formula(formula_c), data = V)
 # Specify matrix of multinomial logistic regression coefficients for each
 # category. Kx2 matrix with first row all 0's.
 # The coefficients below corresponds to category probabilities of 
-# (0.3, 0.5, 0.2) for S=1 and (0.1, 0.6, 0.3) for S=2, giving overall 
+# (0.3, 0.5, 0.2) for S_i=1 and (0.1, 0.6, 0.3) for S_i=2, giving overall 
 # probabilities (0.253, 0.522, 0.225)
 beta_mat_c <- matrix(c(0, 0, 
                        0.5, 1.3,

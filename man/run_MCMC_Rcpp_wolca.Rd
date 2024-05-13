@@ -24,7 +24,7 @@ run_MCMC_Rcpp_wolca(
 \item{OLCA_params}{Output list from \code{\link[=init_OLCA]{init_OLCA()}} containing:
 \describe{
 \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
-\item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
+\item{\code{theta}}{Array parameter theta for item level probabilities. JxKxR}
 \item{\code{c_all}}{Vector of random initial class assignments. nx1}
 }}
 
@@ -74,6 +74,7 @@ A Gibbs sampler updates the parameters and variables in the following order:
 iterations to encourage mixing, according to a random permutation sampler.
 }
 \examples{
+   
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data

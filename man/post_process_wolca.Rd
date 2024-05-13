@@ -19,12 +19,12 @@ post_process_wolca(MCMC_out, J, R, class_cutoff)
 \item{R}{Maximum number of exposure categories}
 
 \item{class_cutoff}{Minimum class size proportion when determining number of
-classes in adaptive sampler. Default is 0.05.}
+classes. Default is 0.05.}
 }
 \value{
 Returns list \code{post_MCMC_out} containing:
 \describe{
-\item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+\item{\code{K_med}}{Median, across iterations, of number of classes with at least \code{class_cutoff} percent of individuals}
 \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
 \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
@@ -37,7 +37,7 @@ to the reduced number of classes for the unsupervised WOLCA model.
 }
 \details{
 First, \code{K_med}, the median number of classes with at least the \code{class_cutoff}
-proportion of individuals is obtained over all MCMC iterations. Then, label
+proportion of individuals, is obtained over all MCMC iterations. Then, label
 switching is addressed through a relabeling procedure, where agglomerative
 clustering with Hamming distance is used to group individuals into \code{K_med}
 clusters and labels are re-assigned based on these clusters. Finally,
@@ -45,6 +45,7 @@ parameter estimates are reordered using the relabeled classes so that
 posterior output can be averaged across MCMC iterations.
 }
 \examples{
+  
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data

@@ -11,8 +11,8 @@ swolca(
   cluster_id = NULL,
   stratum_id = NULL,
   V_data = NULL,
-  run_sampler = "both",
   glm_form,
+  run_sampler = "both",
   K_max = 30,
   adapt_seed = NULL,
   K_fixed = NULL,
@@ -48,13 +48,10 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+\item{V_data}{Dataframe of additional regression covariates. nxQ. Factor
 covariates must be converted to factors. If \code{NULL} (default), no additional
 covariates are to be included. All variables in \code{glm_form} must
 be found in \code{V_data}.}
-
-\item{run_sampler}{String specifying which sampler(s) should be run. Must be
-one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
@@ -62,18 +59,21 @@ latent class as covariates. All variables in \code{glm_form} must be found in \c
 Do not specify interaction terms for latent class by additional covariates,
 as these terms are already included.}
 
+\item{run_sampler}{String specifying which sampler(s) should be run. Must be
+one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}. See Details.}
+
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
 \item{adapt_seed}{Numeric seed for adaptive sampler. Default is \code{NULL}.}
 
 \item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
 not necessary for the adaptive sampler. If bypassing the adaptive sampler and
-running the fixed sampler directly, need to specify a value here.}
+running the fixed sampler directly, need to specify a value here. See Details.}
 
 \item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
 
 \item{class_cutoff}{Minimum class size proportion when determining number of
-classes in adaptive sampler. Default is 0.05.}
+classes. Default is 0.05.}
 
 \item{n_runs}{Number of MCMC iterations. Default is 20000.}
 
@@ -91,62 +91,66 @@ e.g., "~/Documents/run". Default is \code{NULL}.}
 
 \item{alpha_adapt}{Adaptive sampler hyperparameter for prior for class
 membership probabilities \eqn{\pi}. Default is \code{NULL} and default values are
-used. If specified, must be (\code{K_max})x1.}
+used (see Details). If specified, must be (\code{K_max})x1.}
 
-\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
+\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
 \eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
-values are used. If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+values are used (see Details). If specified, must be JxR, where J is the
+number of exposure items and R is the maximum number of categories for the exposure.}
 
-\item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
-If specified, must be a list of \code{K_max} vectors of dimension qx1, where q is
-the number of regression covariates excluding latent class assignment.}
+\item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and
+default values are used (see Details). If specified, must be a list of \code{K_max}
+vectors of dimension Qx1, where Q is the number of regression covariates
+excluding latent class assignment.}
 
-\item{Sig0_adapt}{Adaptive sampler variance hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
-used. If specified, must be a list of \code{K_max} qxq matrices, where q is the
-number of regression covariates excluding latent class assignment.}
+\item{Sig0_adapt}{Adaptive sampler variance hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and
+default values are used (see Details). If specified, must be a list of \code{K_max}
+QxQ matrices, where Q is the number of regression covariates excluding latent
+class assignment.}
 
 \item{alpha_fixed}{Fixed sampler hyperparameter for prior for \eqn{\pi}. Default is
-\code{NULL} and default values are used. If specified, must be (\code{K_fixed})x1.}
+\code{NULL} and default values are used (see Details). If specified, must be (\code{K_fixed})x1.}
 
-\item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
-level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
-values are used. If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+\item{eta_fixed}{Fixed sampler hyperparameter for prior for item level
+probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k},
+assumed to be the same across classes. Default is \code{NULL} and default values
+are used (see Details). If specified, must be JxR, where J is the number of
+exposure items and R is the maximum number of categories for the exposure.}
 
 \item{mu0_fixed}{Fixed sampler mean hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
-If specified, must be a list of \code{K_fixed} vectors of dimension qx1, where q is
-the number of regression covariates excluding latent class assignment.}
+\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default
+values are used (see Details). If specified, must be a list of \code{K_fixed}
+vectors of dimension Qx1, where Q is the number of regression covariates
+excluding latent class assignment.}
 
-\item{Sig0_fixed}{Fixed sampler variance hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
-used. If specified, must be a list of \code{K_fixed} qxq matrices, where q is the
-number of regression covariates excluding latent class assignment.}
+\item{Sig0_fixed}{Fixed sampler variance hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and
+default values are used (see Details). If specified, must be a list of
+\code{K_fixed} QxQ matrices, where Q is the number of regression covariates
+excluding latent class assignment.}
 }
 \value{
 If the fixed sampler is run, returns an object \code{res} of class \code{"swolca"}; a
 list containing the following:
 \describe{
 \item{\code{estimates}}{List of posterior model results, resulting from a
-.  call to \code{\link[=get_estimates]{get_estimates()}}}
+call to \code{\link[=get_estimates]{get_estimates()}}}
 \item{\code{runtime}}{Total runtime for model}
 \item{\code{data_vars}}{List of data variables used, including:
 \code{n}: Sample size.
 \code{J}: Number of exposure items.
-\code{R_j}: Number vector of number of exposure categories for each item; Jx1.
+\code{R_j}: Vector of number of exposure levels for each item; Jx1.
 \code{R}: Maximum number of exposure categories across items.
-\code{q}: Number of regression covariates excluding class assignment.
+\code{Q}: Number of regression covariates excluding class assignment.
 \code{w_all}: Vector of sampling weights normalized to sum to n; nx1.
 \code{sampling_wt}: Vector of survey sampling weights; nx1.
 \code{x_mat}: Matrix of multivariate categorical exposures; nxJ.
 \code{y_all}: Vector of binary outcomes; nx1.
-\code{V_data}: Dataframe of additional regression covariates; nxq or NULL.
-\code{V}: Regression design matrix without class assignment; nxq.
+\code{V_data}: Dataframe of additional regression covariates; nxQ or NULL.
+\code{V}: Regression design matrix without class assignment; nxQ.
 \code{glm_form}: String specifying formula for probit regression, excluding
 outcome and latent class.
 \code{stratum_id}: Vector of individual stratum IDs; nx1 or NULL.
@@ -185,7 +189,7 @@ variance estimation, please run \code{\link[=swolca_var_adjust]{swolca_var_adjus
 If no survey sample adjustments are desired, leave \code{sampling_wt}, \code{stratum_id},
 and \code{cluster_id} to their default \code{NULL} values.
 
-By default, the function will run two samplers: the adaptive sampler followed
+By default, the function will run two samplers: the adaptive sampler, followed
 by the fixed sampler. The adaptive sampler determines the number of latent
 classes, which is then used in the fixed sampler for parameter estimation.
 If the number of latent classes is already known and only the fixed sampler
@@ -221,7 +225,7 @@ If hyperparameters for the adaptive or fixed sampler are left as \code{NULL}
 For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
 each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
 hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the number
-of categories for exposure item j. If \code{R_j < R}, the remaining categories have
+of levels for exposure item j. If \code{R_j < R}, the remaining levels have
 hyperparameter set to 0.01. This is done independently for each exposure item j
 and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a
 Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0}
@@ -230,8 +234,16 @@ hyperparameter \eqn{\Sigma_0} a diagonal matrix with diagonal components drawn
 from InvGamma(shape=3.5, scale=6.25) distributions. Note that hyperparameters
 for the fixed sampler should probably only be specified if running the
 fixed sampler directly, bypassing the adaptive sampler.
+
+To prevent underflow issues, all \eqn{\theta} and \eqn{\xi} parameters are
+restricted to have a minimum value of \eqn{1e-8}. If continuous variables are
+incorporated into the binary outcome model, any such variables with standard
+deviation greater than 5 may result in errors in the variance adjustment.
+To avoid these errors, consider standardizing the variable to have mean 0 and
+standard deviation 1 or converting the variable into a categorical form.
 }
 \examples{
+\dontrun{   
 # Load simulated data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
@@ -256,8 +268,6 @@ res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 res_adjust <- swolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
                                 adjust_seed = 1)    
 
-   
-\dontrun{        
 # Run swolca on NHANES data
 data("data_nhanes")
 x_mat <- as.matrix(dplyr::select(data_nhanes, citrus:drinks))

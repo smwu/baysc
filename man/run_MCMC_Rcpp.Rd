@@ -14,7 +14,7 @@ run_MCMC_Rcpp(
   J,
   R,
   n,
-  q,
+  Q,
   w_all,
   x_mat,
   y_all,
@@ -30,13 +30,13 @@ run_MCMC_Rcpp(
 \item{OLCA_params}{Output list from \code{\link[=init_OLCA]{init_OLCA()}} containing:
 \describe{
 \item{\code{pi}}{Vector parameter pi for class membership probabilities. Kx1}
-\item{\code{theta}}{Array parameter theta for item category probabilities. JxKxR}
+\item{\code{theta}}{Array parameter theta for item level probabilities. JxKxR}
 \item{\code{c_all}}{Vector of random initial class assignments. nx1}
 }}
 
 \item{probit_params}{Output list from \code{\link[=init_probit]{init_probit()}} containing:
 \describe{
-\item{\code{xi}}{Matrix parameter xi for probit regression coefficients. Kxq}
+\item{\code{xi}}{Matrix parameter xi for probit regression coefficients. KxQ}
 \item{\code{z_all}}{Vector of latent variables in the probit model. nx1}
 }}
 
@@ -54,7 +54,7 @@ run_MCMC_Rcpp(
 
 \item{n}{Number of individuals}
 
-\item{q}{Number of regression covariates excluding class assignment}
+\item{Q}{Number of regression covariates excluding class assignment}
 
 \item{w_all}{Weights normalized to sum to n. nx1}
 
@@ -62,7 +62,7 @@ run_MCMC_Rcpp(
 
 \item{y_all}{Vector of outcomes. nx1}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Regression design matrix without class assignment. nxQ}
 
 \item{alpha}{Kx1 vector of hyperparameters for prior for class membership
 probabilities \eqn{\pi}}
@@ -71,10 +71,10 @@ probabilities \eqn{\pi}}
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
 \eqn{k}, assumed to be the same across classes.}
 
-\item{mu0}{List of K qx1 vectors of mean hyperparameters for regression
+\item{mu0}{List of K Qx1 vectors of mean hyperparameters for regression
 coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 
-\item{Sig0}{List of K qxq matrices of variance hyperparameters for regression
+\item{Sig0}{List of K QxQ matrices of variance hyperparameters for regression
 coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}.}
 
 \item{update}{Number specifying that MCMC progress updates should be printed
@@ -85,7 +85,7 @@ Returns list \code{MCMC_out} containing:
 \describe{
 \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
-\item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxq}
+\item{\code{xi_MCMC}}{Array of posterior samples for xi. (n_iter)xKxQ}
 \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
 \item{\code{z_all_MCMC}}{Matrix of posterior samples for z_all. (n_iter)xn}
 \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
@@ -102,7 +102,7 @@ are permuted every 10 iterations to encourage mixing, according to a random
 permutation sampler (Fruhwirth-Schnatter, 2001).
 }
 \examples{
-
+   
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
@@ -127,7 +127,7 @@ glm_form <- "~ 1"
 # Obtain probit regression design matrix without class assignment
 V <- model.matrix(as.formula(glm_form), data = V_data)
 # Number of regression covariates excluding class assignment
-q <- ncol(V)  
+Q <- ncol(V)  
 
 # Set hyperparameters
 K <- 30
@@ -139,24 +139,24 @@ for (j in 1:J) {
 mu0 <- Sig0 <- vector("list", K)
 for (k in 1:K) {
   # MVN(0,1) hyperprior for prior mean of xi
-  mu0[[k]] <- stats::rnorm(n = q)
+  mu0[[k]] <- stats::rnorm(n = Q)
   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
   # components and mean variance 2.5 for a weakly informative prior on xi
-  Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = q, shape = 3.5, scale = 6.25), 
-  nrow = q, ncol = q)
+  Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+  nrow = Q, ncol = Q)
 }
 
 # First initialize OLCA params
 OLCA_params <- init_OLCA(K = K, n = n, J = J, R = R, alpha = alpha, eta = eta)
 
 # Then initialize probit params 
-probit_params <- init_probit(K = K, n = n, q = q, V = V, mu0 = mu0, 
+probit_params <- init_probit(K = K, n = n, Q = Q, V = V, mu0 = mu0, 
 Sig0 = Sig0, y_all = y_all, c_all = OLCA_params$c_all)
 
 # Then run MCMC sampling
 MCMC_out <- run_MCMC_Rcpp(OLCA_params = OLCA_params, 
 probit_params = probit_params, n_runs = 50, burn = 25, thin = 5,
-K = K, J = J, R = R, n = n, q = q, w_all = w_all, x_mat = x_mat, 
+K = K, J = J, R = R, n = n, Q = Q, w_all = w_all, x_mat = x_mat, 
 y_all = y_all, V = V, alpha = alpha, eta = eta, Sig0 = Sig0, mu0 = mu0)
 # MCMC_out
 

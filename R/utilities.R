@@ -66,8 +66,8 @@ manual_CI <- function(model_object, svy_df, ci = 0.95){
 #' @export
 catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL, 
                          cluster_id = NULL, stratum_id = NULL, V_data = NULL,
-                         run_sampler = NULL, glm_form = NULL, K_max = NULL, 
-                         adapt_seed = NULL, fixed_seed = NULL,
+                         run_sampler = NULL, glm_form = NULL, Q = NULL,
+                         K_max = NULL, adapt_seed = NULL, fixed_seed = NULL,
                          class_cutoff = NULL, alpha_adapt = NULL, 
                          eta_adapt = NULL, mu0_adapt = NULL, 
                          Sig0_adapt = NULL, K_fixed = NULL, alpha_fixed = NULL, 
@@ -207,17 +207,17 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     }  
     if (!is.null(mu0_adapt)) {
       if (length(mu0_adapt) != K_max | !is.list(mu0_adapt) | 
-          !(all(lapply(mu0_adapt, length) == q))) {
+          !(all(lapply(mu0_adapt, length) == Q))) {
         stop("mu0_adapt must be a list of length K_max where each element is a 
-           vector of length q (number of regression covariates excluding latent class)")
+           vector of length Q (number of regression covariates excluding latent class)")
       }
     }
     if (!is.null(Sig0_adapt)) {
       if (length(Sig0_adapt) != K_max | !is.list(Sig0_adapt) | 
-          !(all(lapply(Sig0_adapt, nrow) == q)) | 
-          !(all(lapply(Sig0_adapt, ncol) == q))) {
+          !(all(lapply(Sig0_adapt, nrow) == Q)) | 
+          !(all(lapply(Sig0_adapt, ncol) == Q))) {
         stop("Sig0_adapt must be a list of length K_max where each element is a 
-            qxq matrix, where q is the number of regression covariates excluding 
+            QxQ matrix, where Q is the number of regression covariates excluding 
            latent class)")
       }
     }
@@ -251,17 +251,17 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
       }
       if (!is.null(mu0_fixed)) {
         if (length(mu0_fixed) != K_fixed | !is.list(mu0_fixed) | 
-            !(all(lapply(mu0_fixed, length) == q))) {
+            !(all(lapply(mu0_fixed, length) == Q))) {
           stop("mu0_fixed must be a list of length K_fixed where each element is a 
-           vector of length q (number of regression covariates excluding latent class)")
+           vector of length Q (number of regression covariates excluding latent class)")
         }
       }
       if (!is.null(Sig0_fixed)) {
         if (length(Sig0_fixed) != K_fixed | !is.list(Sig0_fixed) | 
-            !(all(lapply(Sig0_fixed, nrow) == q)) | 
-            !(all(lapply(Sig0_fixed, ncol) == q))) {
+            !(all(lapply(Sig0_fixed, nrow) == Q)) | 
+            !(all(lapply(Sig0_fixed, ncol) == Q))) {
           stop("Sig0_fixed must be a list of length K_fixed where each element is a 
-            qxq matrix, where q is the number of regression covariates excluding 
+            QxQ matrix, where Q is the number of regression covariates excluding 
            latent class)")
         }
       }
@@ -328,38 +328,38 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
 #' coding.
 #' 
 #' @param K Number of latent classes
-#' @param q Number of regression covariates excluding class assignment
+#' @param Q Number of regression covariates excluding class assignment
 #' @param est_beta Vector of probit regression coefficients in reference cell 
-#' coding. (K*q)x1. Order of betas must correspond to a formula with `c_all` as
+#' coding. (K*Q)x1. Order of betas must correspond to a formula with `c_all` as
 #' the first covariate and all interaction terms involving `c_all` present.
 #' @param ci_beta Matrix of interval estimates for probit regression 
-#' coefficients in reference cell coding. (K*q)x2, where the first column is 
+#' coefficients in reference cell coding. (K*Q)x2, where the first column is 
 #' the lower bound and the second column is the upper bound. Set to `NULL` 
 #' (default), if no interval estimate conversions are necessary.
 #' 
-#' @return Outputs list `xi_list` containing `est_xi`, a Kxq matrix of 
+#' @return Outputs list `xi_list` containing `est_xi`, a KxQ matrix of 
 #' regression estimates in mixture reference coding. If `ci_beta` is not `NULL`,
-#' `xi_list` also contains `est_xi_lb` and `est_xi_ub`, which are Kxq matrices
+#' `xi_list` also contains `est_xi_lb` and `est_xi_ub`, which are KxQ matrices
 #' of the lower and upper bound interval estimates, respectively, in mixture 
 #' reference coding.
 #' 
 #' @keywords internal
 #' @seealso [wolca_svyglm()]
 #' @export
-convert_ref_to_mix <- function(K, q, est_beta, ci_beta = NULL) {
-  est_xi <- matrix(NA, nrow = K, ncol = q)
+convert_ref_to_mix <- function(K, Q, est_beta, ci_beta = NULL) {
+  est_xi <- matrix(NA, nrow = K, ncol = Q)
   if (!is.null(ci_beta)) {
-    est_xi_lb <- est_xi_ub <- matrix(NA, nrow = K, ncol = q)
+    est_xi_lb <- est_xi_ub <- matrix(NA, nrow = K, ncol = Q)
   }
   
   # If only latent class as a covariate (no interactions)
-  if (q == 1) {
+  if (Q == 1) {
     est_int_k1 <- NULL   # baseline class
     est_int_koth <- NULL # additional classes
   # Position of interaction terms for additional covariates
-  } else if (q > 1) {
-    est_int_k1 <- K + 1:(q-1)       # baseline class
-    est_int_koth <- (K - 1) * (1:(q-1)) # additional classes
+  } else if (Q > 1) {
+    est_int_k1 <- K + 1:(Q-1)       # baseline class
+    est_int_koth <- (K - 1) * (1:(Q-1)) # additional classes
   }
   
   # Get estimates for first class level, including all interactions
@@ -370,10 +370,10 @@ convert_ref_to_mix <- function(K, q, est_beta, ci_beta = NULL) {
   }
   # Get estimates for additional class levels, including all interactions
   for (k in 2:K) {
-    est_xi[k, ] <- est_beta[c(k, (k + (q-1)) + est_int_koth)] + est_xi[1, ]
+    est_xi[k, ] <- est_beta[c(k, (k + (Q-1)) + est_int_koth)] + est_xi[1, ]
     if (!is.null(ci_beta)) {
-      est_xi_lb[k, ] <- ci_beta[c(k, (k + (q-1)) + est_int_koth), 1] + est_xi_lb[1, ]
-      est_xi_ub[k, ] <- ci_beta[c(k, (k + (q-1)) + est_int_koth), 2] + est_xi_ub[1, ]
+      est_xi_lb[k, ] <- ci_beta[c(k, (k + (Q-1)) + est_int_koth), 1] + est_xi_lb[1, ]
+      est_xi_ub[k, ] <- ci_beta[c(k, (k + (Q-1)) + est_int_koth), 2] + est_xi_ub[1, ]
     }
   }
   
@@ -399,9 +399,9 @@ convert_ref_to_mix <- function(K, q, est_beta, ci_beta = NULL) {
 #' combination of factor variable and reference cell coding, to standard 
 #' reference cell coding.
 #' 
-#' @param est_xi Matrix of xi parameter estimates in mixture reference coding. Kxq
+#' @param est_xi Matrix of xi parameter estimates in mixture reference coding. KxQ
 #' @return Returns vector `est_beta` of the probit regression coefficients
-#' converted into reference cell coding with interactions. (K*q)x1
+#' converted into reference cell coding with interactions. (K*Q)x1
 #' 
 #' @keywords internal
 #' @export
@@ -415,23 +415,23 @@ convert_mix_to_ref <- function(est_xi) {
   
   ## Alternative method
   # K <- nrow(est_xi)
-  # q <- ncol(est_xi)
-  # est_beta <- numeric(K * q)
+  # Q <- ncol(est_xi)
+  # est_beta <- numeric(K * Q)
   # # If only latent class as a covariate (no interactions)
-  # if (q == 1) {
+  # if (Q == 1) {
   #   est_int_k1 <- NULL   # baseline class
   #   est_int_koth <- NULL # additional classes
   # # Position of interaction terms for additional covariates
-  # } else if (q > 1) {
-  #   est_int_k1 <- K + 1:(q-1)       # baseline class
-  #   est_int_koth <- (K - 1) * (1:(q-1)) # additional classes
+  # } else if (Q > 1) {
+  #   est_int_k1 <- K + 1:(Q-1)       # baseline class
+  #   est_int_koth <- (K - 1) * (1:(Q-1)) # additional classes
   # }
   # 
   # # Get estimates for first class level, including all interactions
   # est_beta[c(1, est_int_k1)] <- est_xi[1, ]
   # # Get estimates for additional class levels, including all interactions
   # for (k in 2:K) {
-  #   est_beta[c(k, (k + (q-1)) + est_int_koth)] <- est_xi[k, ] - est_xi[1, ]
+  #   est_beta[c(k, (k + (Q-1)) + est_int_koth)] <- est_xi[k, ] - est_xi[1, ]
   # }
   # return(est_beta)
 }
@@ -443,7 +443,7 @@ convert_mix_to_ref <- function(est_xi) {
 #' conditional probit regression probabilities, P(Y=1|-), for a given covariate.
 #' 
 #' @inheritParams swolca
-#' @param est_xi Matrix of xi parameter estimates. Kxq
+#' @param est_xi Matrix of xi parameter estimates. KxQ
 #' @param cov_name String vector of length 1 or 2 specifying the key covariate(s) 
 #' for which to obtain the outcome probabilities. All covariate names must be 
 #' included in `glm_form` and `V_data`. 
@@ -453,7 +453,7 @@ convert_mix_to_ref <- function(est_xi) {
 #' `cov_name`. Number of rows is equal to the number of category combinations of 
 #' the key covariate(s). The first K columns include the \eqn{\Phi} values 
 #' for the K latent classes, evaluated at the covariate values listed in the 
-#' remaining q columns. The key covariate(s) are evaluated at all levels and 
+#' remaining Q columns. The key covariate(s) are evaluated at all levels and 
 #' the other covariates are evaluated at their reference levels. 
 #' 
 #' @importFrom stats terms as.formula model.matrix pnorm

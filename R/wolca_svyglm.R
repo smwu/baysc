@@ -1,7 +1,7 @@
 #' Fit survey-weighted probit model for WOLCA
 #'
 #' @description
-#' `wolca_svyglm` relates latent classes patterns derived from `wolca()` to a 
+#' `wolca_svyglm` relates latent classes patterns derived from [wolca()] to a 
 #' binary outcome by fitting a survey-weighted probit model.
 #'
 #' @inheritParams swolca
@@ -27,7 +27,7 @@
 #' degrees of freedom from the survey design to obtain p-values. This can happen 
 #' when there are few clusters per stratum and a large number of covariates. 
 #' 
-#' The point and interval estimates are then converted into the mixture 
+#' The point and interval estimates are then converted into mixture 
 #' reference coding format to match the output format from [swolca()]. `V_data` 
 #' includes all covariates to include in the probit regression other than latent 
 #' class. 
@@ -43,9 +43,9 @@
 #' [wolca()] or [wolca_var_adjust()] as well as additional list `estimates_syglm` 
 #' containing the following objects:
 #' \describe{
-#'   \item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xq}
-#'   \item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xq}
-#'   \item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xq}
+#'   \item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xQ}
+#'   \item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xQ}
+#'   \item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xQ}
 #'   \item{\code{fit}}{`svyglm` class object with output from the `svyglm` regression model}
 #'   \item{\code{fit_summary}}{`summary.svyglm` class object with output from 
 #' the `summary()` function. If the residual degrees of freedom is negative, 
@@ -53,10 +53,10 @@
 #' }
 #' List `data_vars` of `res` is updated to contain the following additional objects:
 #' \describe{
-#'   \item{\code{q}}{Number of regression covariates excluding class assignment.}
+#'   \item{\code{Q}}{Number of regression covariates excluding class assignment.}
 #'   \item{\code{y_all}}{Vector of binary outcomes; nx1.}
-#'   \item{\code{V_data}}{Dataframe of additional regression covariates; nxq or `NULL`.}
-#'   \item{\code{V}}{Regression design matrix without class assignment; nxq.}
+#'   \item{\code{V_data}}{Dataframe of additional regression covariates; nxQ or `NULL`.}
+#'   \item{\code{V}}{Regression design matrix without class assignment; nxQ.}
 #'   \item{\code{glm_form}}{String specifying formula for probit regression, 
 #'   excluding outcome and latent class.}
 #'   \item{\code{ci_level}}{Confidence interval level for probit regression 
@@ -78,6 +78,7 @@
 #' package version 4.2.
 #'
 #' @examples
+#' \dontrun{   
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
@@ -107,7 +108,7 @@
 #' res_svyglm <- wolca_svyglm(res = res_adjust, y_all = y_all, 
 #'                            glm_form = glm_form, ci_level = 0.95, 
 #'                            V_data = V_data, save_res = FALSE)
-#' 
+#' }
 wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95, 
                          save_res = TRUE, save_path = NULL) {
   
@@ -141,7 +142,7 @@ wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95,
   # Obtain probit regression design matrix without class assignment
   V <- model.matrix(as.formula(glm_form), data = V_data)
   # Number of regression covariates excluding class assignment 
-  q <- ncol(V)  
+  Q <- ncol(V)  
   
   # Set pointer to adjusted or unadjusted estimates
   if (!is.null(res$estimates_adjust)) {
@@ -218,7 +219,7 @@ wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95,
   }
   
   # Convert format to mixture reference to match SWOLCA and SOLCA
-  xi_list <- convert_ref_to_mix(K = length(estimates$pi_med), q = q, 
+  xi_list <- convert_ref_to_mix(K = length(estimates$pi_med), Q = Q, 
                                 est_beta = coefs, ci_beta = ci)
   
   #================= Save and return output ====================================
@@ -237,7 +238,7 @@ wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95,
   res$estimates_svyglm$fit_summary <- fit_summary
   
   # Add outcome data to output
-  res$data_vars$q = q
+  res$data_vars$Q = Q
   res$data_vars$y_all = y_all
   res$data_vars$V_data = V_data
   res$data_vars$V = V

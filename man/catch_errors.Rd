@@ -13,6 +13,7 @@ catch_errors(
   V_data = NULL,
   run_sampler = NULL,
   glm_form = NULL,
+  Q = NULL,
   K_max = NULL,
   adapt_seed = NULL,
   fixed_seed = NULL,
@@ -50,13 +51,13 @@ indicating each individual is their own cluster.}
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
-\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+\item{V_data}{Dataframe of additional regression covariates. nxQ. Factor
 covariates must be converted to factors. If \code{NULL} (default), no additional
 covariates are to be included. All variables in \code{glm_form} must
 be found in \code{V_data}.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
-one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
+one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}. See Details.}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
@@ -71,50 +72,54 @@ as these terms are already included.}
 \item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
 
 \item{class_cutoff}{Minimum class size proportion when determining number of
-classes in adaptive sampler. Default is 0.05.}
+classes. Default is 0.05.}
 
 \item{alpha_adapt}{Adaptive sampler hyperparameter for prior for class
 membership probabilities \eqn{\pi}. Default is \code{NULL} and default values are
-used. If specified, must be (\code{K_max})x1.}
+used (see Details). If specified, must be (\code{K_max})x1.}
 
-\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
+\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
 \eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
-values are used. If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+values are used (see Details). If specified, must be JxR, where J is the
+number of exposure items and R is the maximum number of categories for the exposure.}
 
-\item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
-If specified, must be a list of \code{K_max} vectors of dimension qx1, where q is
-the number of regression covariates excluding latent class assignment.}
+\item{mu0_adapt}{Adaptive sampler mean hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and
+default values are used (see Details). If specified, must be a list of \code{K_max}
+vectors of dimension Qx1, where Q is the number of regression covariates
+excluding latent class assignment.}
 
-\item{Sig0_adapt}{Adaptive sampler variance hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
-used. If specified, must be a list of \code{K_max} qxq matrices, where q is the
-number of regression covariates excluding latent class assignment.}
+\item{Sig0_adapt}{Adaptive sampler variance hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and
+default values are used (see Details). If specified, must be a list of \code{K_max}
+QxQ matrices, where Q is the number of regression covariates excluding latent
+class assignment.}
 
 \item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
 not necessary for the adaptive sampler. If bypassing the adaptive sampler and
-running the fixed sampler directly, need to specify a value here.}
+running the fixed sampler directly, need to specify a value here. See Details.}
 
 \item{alpha_fixed}{Fixed sampler hyperparameter for prior for \eqn{\pi}. Default is
-\code{NULL} and default values are used. If specified, must be (\code{K_fixed})x1.}
+\code{NULL} and default values are used (see Details). If specified, must be (\code{K_fixed})x1.}
 
-\item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
-level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
-values are used. If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+\item{eta_fixed}{Fixed sampler hyperparameter for prior for item level
+probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k},
+assumed to be the same across classes. Default is \code{NULL} and default values
+are used (see Details). If specified, must be JxR, where J is the number of
+exposure items and R is the maximum number of categories for the exposure.}
 
 \item{mu0_fixed}{Fixed sampler mean hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are used.
-If specified, must be a list of \code{K_fixed} vectors of dimension qx1, where q is
-the number of regression covariates excluding latent class assignment.}
+\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default
+values are used (see Details). If specified, must be a list of \code{K_fixed}
+vectors of dimension Qx1, where Q is the number of regression covariates
+excluding latent class assignment.}
 
-\item{Sig0_fixed}{Fixed sampler variance hyperparameters for regression coefficients
-\eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default values are
-used. If specified, must be a list of \code{K_fixed} qxq matrices, where q is the
-number of regression covariates excluding latent class assignment.}
+\item{Sig0_fixed}{Fixed sampler variance hyperparameters for regression
+coefficients \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and
+default values are used (see Details). If specified, must be a list of
+\code{K_fixed} QxQ matrices, where Q is the number of regression covariates
+excluding latent class assignment.}
 
 \item{n_runs}{Number of MCMC iterations. Default is 20000.}
 

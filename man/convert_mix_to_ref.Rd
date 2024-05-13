@@ -7,11 +7,11 @@
 convert_mix_to_ref(est_xi)
 }
 \arguments{
-\item{est_xi}{Matrix of xi parameter estimates in mixture reference coding. Kxq}
+\item{est_xi}{Matrix of xi parameter estimates in mixture reference coding. KxQ}
 }
 \value{
 Returns vector \code{est_beta} of the probit regression coefficients
-converted into reference cell coding with interactions. (K*q)x1
+converted into reference cell coding with interactions. (K*Q)x1
 }
 \description{
 Convert regression estimates \eqn{\xi} from mixture reference coding, a

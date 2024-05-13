@@ -1,7 +1,7 @@
-#' Reorder clusters
+#' Reorder classes
 #' 
 #' @description
-#' `reorder_clusters` changes the order of the latent classes to help with 
+#' `reorder_classes` changes the order of the latent classes to help with 
 #' plotting and to allow visualization of a different reference class for the 
 #' regression coefficients.
 #' 
@@ -19,12 +19,12 @@
 #' @return
 #' Returns object `res_new` that is identical to input `res` but has updated 
 #' latent class ordering for `pi_red`, `theta_red`, `pi_med`, `theta_med`, and 
-#' `c_all`. If `res` is a `swolca` object, `res_new` also includes updated 
-#' latent class ordering for `xi_red` and `xi_med`. If `res` is a `wolca` 
-#' object, reordering should be done prior to running `wolca_svyglm()` to obtain 
+#' `c_all`. If `res` is a `"swolca"` object, `res_new` also includes updated 
+#' latent class ordering for `xi_red` and `xi_med`. If `res` is a `"wolca"` 
+#' object, reordering should be done prior to running [wolca_svyglm()] to obtain 
 #' regression estimates with a different reference class. 
 #' 
-#' @seealso [plot_outcome_probs()] [plot_clus_dist()] [summarize_res()]
+#' @seealso [plot_outcome_probs()] [plot_class_dist()] [summarize_res()]
 #' 
 #' @export
 #'
@@ -32,16 +32,20 @@
 #' # Load NHANES data
 #' data(run_nhanes_swolca_results)
 #' # Reorder latent classes
-#' res_new <- reorder_clusters(res = run_nhanes_swolca_results, 
+#' res_new <- reorder_classes(res = run_nhanes_swolca_results, 
 #'                            new_order = c(3, 2, 5, 4, 1))
 #' # Get posterior estimates for xi with class 3 as the reference
 #' get_regr_coefs(res = res_new, ci_level = 0.95, digits = 2)                           
 #' 
-reorder_clusters <- function(res, new_order) {
+reorder_classes <- function(res, new_order) {
   # Check object class
-  if (!(class(res) %in% c("swolca", "wolca"))) {
+  if (!inherits(res, c("swolca", "wolca"))) {
     stop("res must be an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
+  } else if ((inherits(res, "wolca")) & !is.null(res$estimates_svyglm)) {
+    warning(paste0("For WOLCA, reordering of classes should be done before ",
+                "calling wolca_svyglm(). res$estimates_svyglm should be NULL ",
+                "prior to running this function."))
   }
   
   # Initialize res_new object
@@ -93,16 +97,16 @@ reorder_clusters <- function(res, new_order) {
 #' @inheritParams summarize_res
 #' 
 #' @details 
-#' If `res` is a `swolca` object, any cluster can be chosen as the reference 
-#' cluster level for which to display regression coefficients. Simply run 
-#' `reorder_clusters()` with the desired reference level as the first cluster in 
-#' `new_order`, and then run `get_regr_coefs()` using the reordered `res` object.
+#' If `res` is a `swolca` object, any latent class can be chosen as the reference 
+#' class level for which to display regression coefficients. Simply run 
+#' [reorder_classes()] with the desired reference level as the first class in 
+#' `new_order`, and then run [get_regr_coefs()] using the reordered `res` object.
 #' 
 #' If `res` is a `wolca` object, choosing a different reference level can only 
-#' be done by re-running `wolca_syvglm()` with the new ordering. To do this, run 
-#' `reorder_clusters()`, then run `wolca_svyglm()` to obtain regression 
+#' be done by re-running [wolca_svyglm()] with the new ordering. To do this, run 
+#' [reorder_classes()], then run [wolca_svyglm()] to obtain regression 
 #' estimates with a different reference class, and then finally use the 
-#' `get_regr_coefs()` function. 
+#' [get_regr_coefs()] function. 
 #' 
 #' @return
 #' Returns dataframe `beta` containing the following columns:
@@ -120,7 +124,7 @@ reorder_clusters <- function(res, new_order) {
 #'   obtained from the `wolca_svyglm()` function}
 #' }
 #' 
-#' @seealso [reorder_clusters()] [plot_outcome_probs()] [summarize_res()]
+#' @seealso [reorder_classes()] [plot_outcome_probs()] [summarize_res()]
 #' 
 #' @importFrom dplyr mutate_if
 #' @importFrom stats terms as.formula median quantile
@@ -133,7 +137,7 @@ reorder_clusters <- function(res, new_order) {
 get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
   
   # Check object class
-  if (!(class(res) %in% c("swolca", "wolca"))) {
+  if (!(inherits(res, c("swolca", "wolca")))) {
     stop("res must be an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
   }
@@ -195,7 +199,7 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
     est_red <- estimates$xi_red
 
     K <- nrow(est_xi)
-    q <- ncol(est_xi)
+    Q <- ncol(est_xi)
     colnames(beta) <- c("Covariate", "Estimate", "LB", "UB", "P(xi > 0)")
     
     # Intercept estimates
@@ -210,15 +214,15 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
     }
     
     # Additional covariates main effect estimates
-    for (i in 2:q) {
+    for (i in 2:Q) {
       beta[K + (i-1), -1] <- c(est_xi[1, i], get_ci(est_red[, 1, i]),
                                get_prob_pos(est_red[, 1, i]))
     }
     
     # Additional covariates latent class interaction terms
-    for (i in 2:q) {
+    for (i in 2:Q) {
       for (j in 2:K) {
-        beta[q + (i-1)*(K-1) + (j-1), -1] <- 
+        beta[Q + (i-1)*(K-1) + (j-1), -1] <- 
           c(stats::median(est_red[, j, i] - est_red[, 1, i]),
             get_ci(est_red[, j, i] - est_red[, 1, i], digits = digits),
             get_prob_pos(est_red[, j, i] - est_red[, 1, i], digits = digits))
@@ -240,9 +244,10 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
 
 #' Get levels of a variable 
 #'
-#' `convert_ref_to_mix` converts from reference cell coding to a combination of 
-#' factor variable and reference cell coding, referred to as mixture reference 
-#' coding.
+#' `get_levels` obtains the levels of a specified variable in a dataframe. For 
+#' factor varialbes, the levels are directly returned. For continuous variables,
+#' the levels are returned as an empty string. Internal function used in 
+#' [vars_across_class()].
 #' 
 #' @param df Dataframe including variable of interest
 #' @param var String specifying variable of interest
@@ -251,51 +256,54 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
 #' of interest. If the variable is not a factor, outputs the empty string `""`.
 #' 
 #' @keywords internal
-#' @seealso [vars_across_clus()]
+#' @seealso [vars_across_class()]
 #' @export
 get_levels <- function(df, var) {
   # For factor variables, get levels directly
   if (is.factor(df[[var]])) {
     levels <- levels(df[[var]])
-    # For continuous variables, set levels to 1
+    # For continuous variables, set levels to empty string
   } else {
     levels <- ""
   }
   return(levels)
 }
 
-#' Get column percentages across latent classes
+#' Get the covariate distribution across latent classes
 #' 
 #' @description 
 #' `get_cov_props` gives the column means or percentages across latent classes 
 #' for a given demographic variable, calculated for the population using survey 
-#' weights and methods from the `survey` package
+#' weights and methods from the `survey` R package. Internal function used in 
+#' [vars_across_class()].
 #' 
-#' @inheritParams vars_across_clus
+#' @inheritParams vars_across_class
 #' @param svy_design Survey design defined using the `svydesign()` function in 
 #' the `survey` package
 #' @param cov String specifying covariate of interest. Use `"population"` or 
 #' `"sample"` to get the class-specific population or sample sizes, respectively.
 #' @param var_levels String vector specifying levels of the covariate of interest. 
 #' If the covariate is continuous, set this to the empty string `""`.
-#' @param res Results from unadjusted or adjusted SWOLCA or WOLCA, necessary for 
-#' `cov == "population`. Otherwise, use default value of `NULL`.
+#' @param res Results from running [swolca()] or [wolca()], with or without the 
+#' variance adjustment. This is necessary when `cov == "population"` but can 
+#' otherwise be set to the default value of `NULL`.
 #' 
 #' @details
-#' If the covariate is a factor, outputs percentages for each level. If the 
-#' covariate is continuous, outputs the mean. If the covariate is the population 
-#' class membership proportions (i.e., `cov == "population"`), the posterior 
-#' standard deviation is also provided using the results from SWOLCA or WOLCA. 
-#' The standard errors for the other variables are not provided because they 
-#' would be underestimates due to not accounting for variability in the latent 
-#' class assignments. If the covariate is the sample class membership proportions 
-#' (i.e., `cov == "sample"`), then the percentages provided are exact.
+#' If the covariate is a factor, the function outputs percentages for each level. 
+#' If the covariate is continuous, the function outputs the mean for each level. 
+#' If the covariate is the population class membership proportions (i.e., 
+#' `cov == "population"`), the posterior standard deviation is also provided 
+#' using the results from running [swolca()] or [wolca()]. The standard errors 
+#' for the other variables are not provided because they would be underestimates 
+#' due to not accounting for variability in the latent class assignments. If the 
+#' covariate is the sample class membership proportions (i.e., `cov == "sample"`), 
+#' then the percentages provided are exact.
 #' 
 #' @return
 #' Outputs `output` dataframe with number of rows equal to the number of levels 
-#' in the covariate of interest (one row if covariate is continuous), and number 
-#' of columns equal to the number of latent classes, plus an additional column 
-#' for the overall value over all classes. 
+#' in the covariate of interest (one row if the covariate is continuous), and 
+#' number of columns equal to the number of latent classes, plus an additional 
+#' column for the overall value over all classes. 
 #' 
 #' @importFrom survey svydesign svymean svyby
 #' @importFrom stats as.formula sd
@@ -305,7 +313,7 @@ get_cov_props <- function(svy_design, cov, var_levels, col_props = TRUE,
                           res = NULL, digits = 1) {
   # Check object class
   if (!is.null(res)) {
-    if (!(class(res) %in% c("swolca", "wolca"))) {
+    if (!(inherits(res, c("swolca", "wolca")))) {
       stop("res must be NULL or an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
     }
@@ -371,45 +379,52 @@ get_cov_props <- function(svy_design, cov, var_levels, col_props = TRUE,
 }
 
 
-#' Create table of cluster distributions across variables
+#' Create table of class distributions across variables
 #' 
 #' @description
-#' `vars_across_clus` displays the distribution of variables across clusters 
-#' (i.e., latent classes) in the population. 
+#' `vars_across_class` displays the distribution of variables across latent 
+#' classes in the population. 
 #' 
 #' @inheritParams swolca
 #' @param c_all nx1 factor vector of latent class assignments, typically obtained 
-#' from the `swolca()`, `wolca()`, `swolca_var_adjust()` or `wolca_var_adjust()`
+#' from the [swolca()], [wolca()], [swolca_var_adjust()] or [wolca_var_adjust()]
 #' functions. Factor levels should be labeled with the names that are to appear 
 #' in the output table.
-#' @param cov_df Dataframe containing sociodemographic variables. n rows. 
-#' Factors should be labeled with the names and levels that are to appear in the 
+#' @param cov_df Dataframe with n rows, with columns consisting of the variables 
+#' that are to be shown with their distributions across latent classes. Factor 
+#' variables should be labeled with the names and levels that are to appear in the 
 #' output table. 
 #' @param col_props Boolean indicating if factor variables should have percentages 
 #' reported as column totals (default `TRUE`) that provide the percentage of the 
 #' population in each category for a given latent class, or reported as row 
-#' totals that provide the percentage of the population in each latent class for 
-#' a given category. 
+#' totals (`FALSE`) that provide the percentage of the population in each latent 
+#' class for a given category. 
 #' @param digits Integer indicating the number of decimal places to be used. 
 #' Default is 1, which rounds to the nearest tenth. 
-#' @param res Results from `swolca()`, `wolca()`, `swolca_var_adjust()` or 
-#' `wolca_var_adjust()`.
+#' @param res Results from [swolca()], [wolca()], [swolca_var_adjust()] or 
+#' [wolca_var_adjust()].
 #' 
 #' @details
 #' The dataframe output includes a first row that presents the population 
 #' percentage of individuals falling into each latent class, as well as the 
-#' corresponding posterior standard deviation, obtained through the SWOLCA or 
-#' WOLCA mode \eqn{\pi} parameters. The second row is the sample percentage 
-#' falling into each latent class. Subsequent rows for continuous variables 
-#' display the mean values for each latent class in the population, adjusting 
-#' for survey design. Subsequent rows for factor variables display either column 
-#' totals (percentage of the population in each category for a given latent 
-#' class) or row totals (percentage of the population in each latent class for a 
-#' given category), depending on `col_props`, adjusting for survey design. 
+#' corresponding posterior standard deviation, obtained from the \eqn{\pi} 
+#' parameters from a `"swolca"` or `"wolca"` object. The second row is the sample 
+#' percentage falling into each latent class. 
+#' 
+#' Subsequent rows for continuous variables display the mean values for each 
+#' latent class in the population, adjusting for survey design. Subsequent rows 
+#' for factor variables display either column totals (percentage of the 
+#' population in each category for a given latent class) or row totals 
+#' (percentage of the population in each latent class for a given category), 
+#' depending on the `col_props` input variable, adjusting for survey design. 
 #' Survey design adjustments are carried out post-hoc using methods provided in 
-#' the `survey` package. Since these methods do not account for variability in 
-#' the latent classes, their standard error estimates will be underestimates and 
-#' are not reported. 
+#' the `survey` R package (Lumley, 2004). Since these methods do not account for 
+#' variability in the latent classes, their standard error estimates will be 
+#' underestimates and are not reported. 
+#' 
+#' @references
+#' Lumley T (2004). “Analysis of Complex Survey Samples.” Journal of Statistical 
+#' Software, 9(1), 1-19. R package verson 2.2.
 #' 
 #' @return 
 #' Outputs dataframe `output_df` displaying the distribution of variables across 
@@ -437,19 +452,19 @@ get_cov_props <- function(svy_design, cov, var_levels, col_props = TRUE,
 #'    Current_Smoker = factor(smoker, levels = c(0, 1), labels = c("No", "Yes")),
 #'    Physical_Activity = factor(physactive, levels = c("Inactive", "Active")),
 #'    .keep = "unused")
-#' output_df <- vars_across_clus(c_all = c_all, cov_df = cov_df, 
+#' output_df <- vars_across_class(c_all = c_all, cov_df = cov_df, 
 #'                               sampling_wt = data_nhanes$sample_wt, 
 #'                               stratum_id = data_nhanes$stratum_id,
 #'                               cluster_id = data_nhanes$cluster_id,
 #'                               digits = 1, col_props = TRUE, res = res)
 #'                  
-vars_across_clus <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id, 
+vars_across_class <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id, 
                              digits = 1, col_props = TRUE, res) {
   if (!is.factor(c_all)) {
     stop("c_all must be a factor")
   }
   # Check object class
-  if (!(class(res) %in% c("swolca", "wolca"))) {
+  if (!(inherits(res, c("swolca", "wolca")))) {
     stop("res must be an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
   }
@@ -515,7 +530,7 @@ vars_across_clus <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id,
 #' @inheritParams plot_pattern_profiles
 #' @param ci_level Numeric from 0 to 1 specifying the credible interval level. 
 #' Default is 0.95, which gives a 95\% equal-tailed interval composed of the 
-#' 2.5\% and 97.5\% quantiles. For `wolca()` results, this must match the 
+#' 2.5\% and 97.5\% quantiles. For `wolca` objects, this must match the 
 #' `ci_level` parameter in the main function. 
 #' @param digits Integer indicating the number of decimal places to be used. 
 #' Default is 2, which rounds to the nearest hundredth. 
@@ -541,7 +556,7 @@ vars_across_clus <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id,
 summarize_res <- function(res, ci_level = 0.95, digits = 2) {
   
   # Check object class
-  if (!(class(res) %in% c("swolca", "wolca"))) {
+  if (!(inherits(res, c("swolca", "wolca")))) {
     stop("res must be an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
   }
@@ -561,16 +576,16 @@ summarize_res <- function(res, ci_level = 0.95, digits = 2) {
     estimates <- res$estimates
   }
   
-  # Check WOLCA for ci_level error and obtain q
+  # Check WOLCA for ci_level error and obtain Q
   if (is(res, "wolca")) {  # `wolca()`
     if (ci_level != res$data_vars$ci_level) {
       stop("ci_level must match the specified ci_level in the wolca() function")
     }
     # Obtain number of regression parameters excluding latent class
-    q <- dim(estimates$xi_est)[2]
+    Q <- dim(estimates$xi_est)[2]
   } else {  # `swolca()
     # Obtain number of regression parameters excluding latent class
-    q <- dim(estimates$xi_med)[2]
+    Q <- dim(estimates$xi_med)[2]
   }
   
   # Obtain dimensions
@@ -620,8 +635,8 @@ summarize_res <- function(res, ci_level = 0.95, digits = 2) {
                                       rep(1:K, each = J, times = R)), "_", 
                                rep(1:R, each = J*K))) 
   # For xi, iterates over k, then r
-  xi_names <- paste0("xi_", paste0(rep(1:K, times = q), "_",
-                                   rep(1:q, each = K)))
+  xi_names <- paste0("xi_", paste0(rep(1:K, times = Q), "_",
+                                   rep(1:Q, each = K)))
   estimates_df[, 1] <- c(pi_names, theta_names, xi_names)
   estimates_df[, -1] <- round(rbind(pi_summary, theta_summary, xi_summary), 
                               digits = digits)
@@ -649,8 +664,8 @@ summarize_res <- function(res, ci_level = 0.95, digits = 2) {
 #'   parameters, \eqn{\theta}, where J is the number of items and R is the 
 #'   maximum number of item levels.}
 #' }
-#' If `res` is a `swolca` object, `param_mcmc` also contains `xi_mcmc`, a 
-#' Mx(Kxq) dataframe of the regression parameters, \eqn{\xi}, where q is the 
+#' If `res` is a `"swolca"` object, `param_mcmc` also contains `xi_mcmc`, a 
+#' Mx(KxQ) dataframe of the regression parameters, \eqn{\xi}, where Q is the 
 #' number of covariates, excluding latent class indicators, in the regression. 
 #' 
 #' @seealso [summarize_res()] 
@@ -662,7 +677,7 @@ summarize_res <- function(res, ci_level = 0.95, digits = 2) {
 #' 
 get_param_mcmc <- function(res) {
   # Check object class
-  if (!(class(res) %in% c("swolca", "wolca"))) {
+  if (!(inherits(res, c("swolca", "wolca")))) {
     stop("res must be an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
   }
@@ -688,10 +703,10 @@ get_param_mcmc <- function(res) {
                                       rep(1:K, each = J, times = R)), "_", 
                                rep(1:R, each = J*K))) 
   if (is(res, "swolca")) {
-    q <- dim(estimates$xi_med)[2]
+    Q <- dim(estimates$xi_med)[2]
     # For xi, iterates over k, then r
-    xi_names <- paste0("xi_", paste0(rep(1:K, times = q), "_",
-                                     rep(1:q, each = K)))
+    xi_names <- paste0("xi_", paste0(rep(1:K, times = Q), "_",
+                                     rep(1:Q, each = K)))
   }
   
   # Get MCMC iterations for all estimates
@@ -756,7 +771,7 @@ get_param_mcmc <- function(res) {
 #' 
 get_dic <- function(res) {
   # Check object class
-  if (!(class(res) %in% c("swolca", "wolca"))) {
+  if (!(inherits(res, c("swolca", "wolca")))) {
     stop("res must be an object of class `swolca` or `wolca`, resulting 
          from a call to one of these functions")
   }

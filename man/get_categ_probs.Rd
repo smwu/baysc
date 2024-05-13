@@ -14,7 +14,7 @@ variable. Number of columns is equal to the number of covariate terms in the
 regression.}
 
 \item{formula}{Formula for multinomial logistic regression. Should start with
-\code{"~ c_all"} if generating exposure X. All variables must be found in \code{V_unique}.}
+\code{"~ c_all"} if generating exposure X_i. All variables must be found in \code{V_unique}.}
 
 \item{V_unique}{Dataframe with containing the unique values of the variables
 specified in \code{formula}.}
@@ -29,20 +29,20 @@ Get categorical probabilities for a unique design matrix corresponding to
 specified multinomial logistic regression formula and coefficient parameters
 }
 \examples{
-# Get pi probabilities for C ~ S
-K <- 3; H <- 2
+# Get pi probabilities for C_i ~ S_i
+K <- 3; S <- 2
 formula_c <- "~ s_all"
-V_unique <- data.frame(s_all = as.factor(1:H))
-pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
-                   0.1, 0.6, 0.3),  # class membership probs for S=2
-                 byrow = TRUE, nrow = H, ncol = K)
+V_unique <- data.frame(s_all = as.factor(1:S))
+pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S_i=1
+                   0.1, 0.6, 0.3),  # class membership probs for S_i=2
+                 byrow = TRUE, nrow = S, ncol = K)
 beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
                           V_unique = V_unique)
 categ_probs_pi <- get_categ_probs(beta_mat = beta_mat_c, formula = formula_c, 
                                   V_unique = V_unique)
 categ_probs_pi
 
-# Get theta probabilities for X ~ C 
+# Get theta probabilities for X_i ~ C_i 
 J <- 30; R <- 4; K <- 3
 formula_x <- "~ c_all"
 V_unique <- data.frame(c_all = as.factor(1:K))
@@ -61,11 +61,11 @@ categ_probs_theta <- get_categ_probs(beta_mat = beta_list_x[[1]],
                                      formula = formula_x, V_unique = V_unique)
 categ_probs_theta                                     
 
-# Get theta probabilities for X ~ C + S
+# Get theta probabilities for X_i ~ C_i + S_i
 formula_x <- "~ c_all + s_all"
 beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
                                              s_all = c(0, 0.5, 0, 0)))
-V_unique <- expand.grid(c_all = as.factor(1:K), s_all = as.factor(1:H))                                            
+V_unique <- expand.grid(c_all = as.factor(1:K), s_all = as.factor(1:S))                                            
 categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]], 
                                        formula = formula_x, V_unique = V_unique)
 categ_probs_theta

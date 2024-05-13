@@ -23,7 +23,7 @@
 #' variable. Number of columns is equal to the number of covariate terms in the 
 #' regression.
 #' @param formula Formula for multinomial logistic regression. Should start with
-#' `"~ c_all"` if generating exposure X. All variables must be found in `V_unique`.
+#' `"~ c_all"` if generating exposure X_i. All variables must be found in `V_unique`.
 #' @param V_unique Dataframe with containing the unique values of the variables 
 #' specified in `formula`.
 #' @return
@@ -34,20 +34,20 @@
 #' @importFrom stats model.matrix as.formula
 #' @export
 #' @examples
-#' # Get pi probabilities for C ~ S
-#' K <- 3; H <- 2
+#' # Get pi probabilities for C_i ~ S_i
+#' K <- 3; S <- 2
 #' formula_c <- "~ s_all"
-#' V_unique <- data.frame(s_all = as.factor(1:H))
-#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
-#'                    0.1, 0.6, 0.3),  # class membership probs for S=2
-#'                  byrow = TRUE, nrow = H, ncol = K)
+#' V_unique <- data.frame(s_all = as.factor(1:S))
+#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S_i=1
+#'                    0.1, 0.6, 0.3),  # class membership probs for S_i=2
+#'                  byrow = TRUE, nrow = S, ncol = K)
 #' beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
 #'                           V_unique = V_unique)
 #' categ_probs_pi <- get_categ_probs(beta_mat = beta_mat_c, formula = formula_c, 
 #'                                   V_unique = V_unique)
 #' categ_probs_pi
 #' 
-#' # Get theta probabilities for X ~ C 
+#' # Get theta probabilities for X_i ~ C_i 
 #' J <- 30; R <- 4; K <- 3
 #' formula_x <- "~ c_all"
 #' V_unique <- data.frame(c_all = as.factor(1:K))
@@ -66,11 +66,11 @@
 #'                                      formula = formula_x, V_unique = V_unique)
 #' categ_probs_theta                                     
 #' 
-#' # Get theta probabilities for X ~ C + S
+#' # Get theta probabilities for X_i ~ C_i + S_i
 #' formula_x <- "~ c_all + s_all"
 #' beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
 #'                                              s_all = c(0, 0.5, 0, 0)))
-#' V_unique <- expand.grid(c_all = as.factor(1:K), s_all = as.factor(1:H))                                            
+#' V_unique <- expand.grid(c_all = as.factor(1:K), s_all = as.factor(1:S))                                            
 #' categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]], 
 #'                                        formula = formula_x, V_unique = V_unique)
 #' categ_probs_theta
@@ -101,45 +101,45 @@ get_categ_probs <- function(beta_mat, formula, V_unique) {
 #' 
 #' @description
 #' Obtain matrix of betas that can be used to generate the categorical latent 
-#' class assignment variable C using a multinomial logistic regression where C 
-#' may depend on a categorical covariate such as the stratum variable S. 
+#' class assignment variable C_i using a multinomial logistic regression where C_i 
+#' may depend on a categorical covariate such as the stratum variable S_i. 
 #' 
-#' @param pi_mat Matrix where each row is the class assignment probabilities for 
-#' a level of the categorical covariate. HxK, where H is the number of levels of 
+#' @param pi_mat Matrix where each row is the class membership probabilities for 
+#' a level of the categorical covariate. SxK, where S is the number of levels of 
 #' the categorical covariate and K is the number of latent classes. Rows of 
 #' `pi_mat` must sum to 1.
 #' @param formula_c String specifying formula for multinomial logistic 
-#' regression to create category latent class assignment C.
+#' regression to create category latent class assignment C_i.
 #' @param V_unique Dataframe with one column containing the unique values of 
 #' the categorical covariate specified in `formula_c`. If `formula_c = "~1"`, 
 #' set `V_unique = NULL`.
 #' 
 #' @return 
 #' Returns `beta_mat` matrix of betas to be used in a multinomial logistic 
-#' regression to generate a categorical variable C. `beta_mat` has K rows and 
+#' regression to generate a categorical variable C_i. `beta_mat` has K rows and 
 #' number of columns equal to the number of levels in the categorical covariate.
 #' 
 #' @importFrom stats terms as.formula model.matrix
 #' @export
 #' @examples
-#' ## Example 1: latent class C depends on stratum variable S
-#' # Number of latent classes and number of levels of S
-#' K <- 3; H <- 2
-#' # Formula specifying that C depends on S
+#' ## Example 1: latent class C_i depends on stratum variable S_i
+#' # Number of latent classes and number of levels of S_i
+#' K <- 3; S <- 2
+#' # Formula specifying that C_i depends on S_i
 #' formula_c <- "~ s_all"
-#' # Dataframe with unique values of S
-#' V_unique <- data.frame(s_all = as.factor(1:H))
-#' # Matrix of class assignment probabilities for each level of S
-#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
-#'                    0.1, 0.6, 0.3),  # class membership probs for S=2
-#'                  byrow = TRUE, nrow = H, ncol = K)
-#' # Get matrix of betas for generating C
+#' # Dataframe with unique values of S_i
+#' V_unique <- data.frame(s_all = as.factor(1:S))
+#' # Matrix of class membership probabilities for each level of S_i
+#' pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S_i=1
+#'                    0.1, 0.6, 0.3),  # class membership probs for S_i=2
+#'                  byrow = TRUE, nrow = S, ncol = K)
+#' # Get matrix of betas for generating C_i
 #' beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
 #'                           V_unique = V_unique)
 #' beta_mat_c
 #' 
 #' ## Example 2: latent class is generated independently of other variables
-#' # Matrix of class assignment probabilities
+#' # Matrix of class membership probabilities
 #' pi_mat <- matrix(c(0.3, 0.5, 0.2), nrow = 1)
 #' formula_c <- "~ 1"
 #' V_unique <- NULL
@@ -162,7 +162,7 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
   # Number of latent classes
   K <- ncol(pi_mat)
   
-  # If C is independent of other variables
+  # If C_i is independent of other variables
   if (length(var_terms) == 0) {
     # Get beta matrix
     beta_mat <- matrix(0, nrow = K, ncol = 1)
@@ -171,7 +171,7 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
     }
     colnames(beta_mat) <- "(Intercept)"
     rownames(beta_mat) <- 1:K
-  # If C depends on other variables
+  # If C_i depends on other variables
   } else {
     # Variable must be categorical and found in V_unique
     if (!is.factor(V_unique[[var_terms]])) {
@@ -181,12 +181,12 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
     design_mat_unique <- stats::model.matrix(stats::as.formula(formula_c), 
                                              data = V_unique)
     # Number of levels of categorical covariate 
-    H <- ncol(design_mat_unique)
+    S <- ncol(design_mat_unique)
     # Get beta matrix
-    beta_mat <- matrix(0, nrow = K, ncol = H)
+    beta_mat <- matrix(0, nrow = K, ncol = S)
     for (k in 2:K) {
       beta_mat[k, 1] <- log(pi_mat[1, k] / pi_mat[1, 1])
-      for (h in 2:H) {
+      for (h in 2:S) {
         beta_mat[k, h] <- log(pi_mat[h, k] / pi_mat[h, 1]) - beta_mat[k, 1]
       }
     }
@@ -197,12 +197,12 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
   return(beta_mat)
 }
 
-#' Obtain list of beta matrices for generating multivariate categorical exposure X
+#' Obtain list of beta matrices for generating multivariate categorical exposure X_i
 #' 
 #' @description
 #' Obtain list of beta matrices that can be used to generate the multivariate 
-#' categorical exposure variable X using a multinomial logistic regression where 
-#' X depends on categorical covariate composed of latent class assignment C. 
+#' categorical exposure variable X_i using a multinomial logistic regression where 
+#' X_i depends on categorical covariate composed of latent class assignment C_i. 
 #' 
 #' @param profiles Matrix where each column is a latent class pattern profile 
 #' and each row is the item level for all classes. JxK, where J is the number of 
@@ -211,7 +211,7 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
 #' @param R Number of exposure levels. Fixed across exposure items.
 #' @param modal_theta_prob Probability of true exposure level. Default is 0.85.
 #' @param formula_x String specifying formula for multinomial logistic 
-#' regression to create multivariate categorical exposure X.
+#' regression to create multivariate categorical exposure X_i.
 #' @param V_unique Dataframe with one column containing the unique values of 
 #' the categorical covariate specified in `formula_x`. 
 #' 
@@ -223,12 +223,12 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
 #' @seealso [simulate_pop()]
 #' @export
 #' @examples
-#' ## Example 1: X ~ C
+#' ## Example 1: X_i ~ C_i
 #' # Number of items, exposure levels, latent classes
 #' J <- 30; R <- 4; K <- 3
-#' # Formula specifying that X depends on C
+#' # Formula specifying that X_i depends on C_i
 #' formula_x <- "~ c_all"
-#' # Dataframe with unique values of C
+#' # Dataframe with unique values of C_i
 #' V_unique <- data.frame(c_all = as.factor(1:K))
 #' # Matrix of pattern profiles for each latent class
 #' profiles <- as.matrix(data.frame(C1 = c(rep(1, times = 0.5 * J), 
@@ -240,17 +240,17 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
 #'                                         rep(1, times = 0.3 * J))))
 #' # True level probability
 #' modal_theta_prob <- 0.85
-#' # Get matrix of betas for generating C
+#' # Get matrix of betas for generating C_i
 #' beta_list_x <- get_betas_x(profiles = profiles, R = R, 
 #'                            modal_theta_prob = modal_theta_prob, 
 #'                            formula_x = formula_x, V_unique = V_unique)
 #' # Beta matrix for item j=1
 #' beta_list_x[[1]]     
 #'                       
-#' ## Example 2: X ~ C + S
+#' ## Example 2: X_i ~ C_i + S_i
 #' # Update formula_x
 #' formula_x <- "~ c_all + s_all"
-#' # Update beta_list_x by adding in coefficients for S to each j matrix
+#' # Update beta_list_x by adding in coefficients for S_i to each j matrix
 #' beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
 #'                                              s_all = c(0, 0.5, 0, 0)))
 #' beta_list_x[[1]]  
@@ -277,7 +277,7 @@ get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_uniqu
   # Get dimensions and initialize values
   K <- ncol(profiles)
   J <- nrow(profiles)
-  Q <- ncol(design_mat_unique)
+  Q_full <- ncol(design_mat_unique)
   non_mode <- (1 - modal_theta_prob) / (R - 1)
   mode_div_non <- log(modal_theta_prob / non_mode)
   non_div_mode <- log(non_mode / modal_theta_prob)
@@ -285,37 +285,37 @@ get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_uniqu
   
   # For each exposure item j, get beta matrix
   for (j in 1:J) {
-    beta_mat_j <- matrix(0, nrow = R, ncol = Q)
+    beta_mat_j <- matrix(0, nrow = R, ncol = Q_full)
     colnames(beta_mat_j) <- colnames(design_mat_unique)
     rownames(beta_mat_j) <- 1:R
     theta_j <- profiles[j, ]  # profiles for item j
-    # Case when mode for C=1 is category 1
+    # Case when mode for C_i=1 is category 1
     if (theta_j[1] == 1) {  
-      # C = 1
+      # C_i = 1
       beta_mat_j[-1, 1] <- non_div_mode
-      # C = 2, 3, ...
+      # C_i = 2, 3, ...
       for (k in 2:K) {
-        # If mode is same as C=1 mode, then all 0's
-        # Else if mode is different from C = 1
+        # If mode is same as C_i=1 mode, then all 0's
+        # Else if mode is different from C_i = 1
         if (theta_j[k] != theta_j[1]) { 
           # beta_rk = M + M*I(r is mode)
           beta_mat_j[-1, k] = mode_div_non
           beta_mat_j[theta_j[k], k] = beta_mat_j[theta_j[k], k] + mode_div_non
         }
       }
-    # Case when mode for C=1 is not category 1
+    # Case when mode for C_i=1 is not category 1
     } else {  
-      # C = 1
+      # C_i = 1
       beta_mat_j[theta_j[1], 1] <- mode_div_non 
-      # C = 2, 3, ...
+      # C_i = 2, 3, ...
       for (k in 2:K) {
-        if (theta_j[k] != theta_j[1]) { # Mode is different from C = 1
+        if (theta_j[k] != theta_j[1]) { # Mode is different from C_i = 1
           if (theta_j[k] == 1) {  # Mode is category 1
-            # beta_rk = N + N*I(r is C=1 mode)
+            # beta_rk = N + N*I(r is C_i=1 mode)
             beta_mat_j[-1, k] = non_div_mode
             beta_mat_j[theta_j[1], k] = beta_mat_j[theta_j[1], k] + non_div_mode
           } else {  # Mode is not category 1
-            # beta_rk = N*I(r is C=1 mode) + M*I(r is mode)
+            # beta_rk = N*I(r is C_i=1 mode) + M*I(r is mode)
             beta_mat_j[theta_j[1], k] = non_div_mode
             beta_mat_j[theta_j[k], k] = mode_div_non
           }
@@ -335,9 +335,9 @@ get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_uniqu
 #' Create a categorical variable using multinomial logistic regression
 #' 
 #' @param beta_mat Coefficient parameters for the linear predictor terms of a 
-#' multinomial logistic regression. KxQ, where K is the number of categories 
-#' and Q is the number of covariate terms in the regression
-#' @param design_mat Regression design matrix. NxQ
+#' multinomial logistic regression. Kx(Q_full), where K is the number of 
+#' categories and Q_full is the number of covariate terms in the regression
+#' @param design_mat Regression design matrix. Nx(Q_full)
 #' @param split_dim Optional covariate to get separate category probabilities 
 #' for. Default is `NULL`. If not `NULL`, must also specify `V` containing the
 #' covariate of interest.
@@ -351,8 +351,8 @@ get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_uniqu
 #'   \item{\code{pi_mat}}{Matrix of category probabilities for all individuals. NxK}
 #'   \item{\code{true_pi}}{Vector of overall category probabilities across all
 #'   individuals. Nx1}
-#'   \item{\code{pi_split}}{If `split_dim` is specified, HxK matrix of category 
-#'   probabilities split by the levels in `split_dim`, where H is the number of 
+#'   \item{\code{pi_split}}{If `split_dim` is specified, SxK matrix of category 
+#'   probabilities split by the levels in `split_dim`, where S is the number of 
 #'   levels in the `split_dim` variable, and K is the number of categories as 
 #'   specified by `beta_mat`. Otherwise, `NULL` if `split_dim` is `NULL`.}
 #' }
@@ -370,7 +370,7 @@ get_betas_x <- function(profiles, R, modal_theta_prob = 0.85, formula_x, V_uniqu
 #' # Specify matrix of multinomial logistic regression coefficients for each
 #' # category. Kx2 matrix with first row all 0's.
 #' # The coefficients below corresponds to category probabilities of 
-#' # (0.3, 0.5, 0.2) for S=1 and (0.1, 0.6, 0.3) for S=2, giving overall 
+#' # (0.3, 0.5, 0.2) for S_i=1 and (0.1, 0.6, 0.3) for S_i=2, giving overall 
 #' # probabilities (0.253, 0.522, 0.225)
 #' beta_mat_c <- matrix(c(0, 0, 
 #'                        0.5, 1.3,
@@ -468,23 +468,23 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' specifications
 #' 
 #' @param N Population size. Default is 80000.
-#' @param H Number of subpopulations. Default is 2.
+#' @param S Number of subpopulations. Default is 2.
 #' @param J Number of exposure items. Default is 30.
 #' @param K Number of latent classes. Default is 3.
 #' @param R Number of exposure categories for all items. Default is 4.
-#' @param N_s Population size for each level of categorical variable S. 
-#' Default is `c(60000, 20000)`, corresponding to a binary S with H=2 levels.
+#' @param N_s Population size for each level of categorical variable S_i. 
+#' Default is `c(60000, 20000)`, corresponding to a binary S_i with S=2 levels.
 #' @param formula_c String specifying formula for multinomial logistic 
-#' regression to create category latent class assignment C. Default is `"~ s_all"`, 
-#' which generates C dependent on stratum variable S. All variables in the 
+#' regression to create category latent class assignment C_i. Default is `"~ s_all"`, 
+#' which generates C_i dependent on stratum variable S_i. All variables in the 
 #' formula must be `"c_all"`, `"s_all"`, or specified in `V_additional`.
 #' @param formula_x String specifying formula for multinomial logistic regression 
-#' to create multivariate categorical exposure X. Default is `"~ c_all"`, 
-#' which generates X dependent on latent class C. All variables in 
+#' to create multivariate categorical exposure X_i. Default is `"~ c_all"`, 
+#' which generates X_i dependent on latent class C_i. All variables in 
 #' the formula must be `"c_all"`, `"s_all"`, or specified in `V_additional`.
 #' @param formula_y String specifying formula for logistic regression to create 
-#' binary outcome Y. Default is `"~ c_all * s_all"`, which generates Y dependent 
-#' on latent class C, stratum S, and their interaction. All variables in the 
+#' binary outcome Y_i. Default is `"~ c_all * s_all"`, which generates Y_i dependent 
+#' on latent class C_i, stratum S_i, and their interaction. All variables in the 
 #' formula must be `"c_all"`, `"s_all"`, or specified in `V_additional`.
 #' @param modal_theta_prob Probability between 0 and 1 for the most likely 
 #' exposure category, assumed to be the same for all items. For all other
@@ -492,22 +492,22 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' 0.85, so if there are R=4 exposure categories, then the 3 non-modal 
 #' categories occur with probability \eqn{(1-0.85)/3 = 0.05}
 #' @param beta_mat_c Coefficient parameters for a multinomial logistic 
-#' regression to generate latent class assignment C. KxQ, where K is the 
-#' number of categories and Q is the number of covariate terms in the regression. 
+#' regression to generate latent class assignment C_i. Kx(Q_full), where K is the 
+#' number of categories and Q_full is the number of covariate terms in the regression. 
 #' Default is `NULL` and default values are used. See details.
-#' @param beta_list_x Coefficient parameters for a multinomial logistic 
-#' regression to generate multivariate exposure X. List of J matrices, 
-#' each of dimension KxQ. Default is `NULL` and default values are used. See details.
+#' @param beta_list_x Coefficient parameters for a multinomial logistic regression 
+#' to generate multivariate exposure X_i. List of J matrices, each of dimension 
+#' Kx(Q_full). Default is `NULL` and default values are used. See details.
 #' @param beta_vec_y Coefficient parameters for a logistic regression to 
-#' generate binary outcome Y. Qx1. Default is `NULL` and 
+#' generate binary outcome Y_i. (Q_full)x1. Default is `NULL` and 
 #' default values are used. See details.
 #' @param xi_mat_y Alternative to `xi_mat_y` but in mixture reference coding. 
-#' Default is `NULL`. If specified, must have K rows and q columns, where q is 
+#' Default is `NULL`. If specified, must have K rows and Q columns, where Q is 
 #' the number of covariate terms in the regression, excluding all terms 
-#' involving C.
-#' @param V_additional Dataframe with any additional variables other than C and
-#' S to be used to generate variables. Number of rows should be N. Default is `NULL`.
-#' @param cluster_size Size of clusters for clustering in the outcome, Y, assumed
+#' involving C_i.
+#' @param V_additional Dataframe with any additional variables other than C_i and
+#' S_i to be used to generate variables. Number of rows should be N. Default is `NULL`.
+#' @param cluster_size Size of clusters for clustering in the outcome, Y_i, assumed
 #' to be the same for all clusters. Default is 80, corresponding to 1000 
 #' clusters if N is 80000, assuming exchangeable latent correlation matrix with 
 #' correlation 0.5 on the off-diagonals.
@@ -519,7 +519,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' @details
 #' If `NULL` (default) is used for `beta_mat_c`, `beta_list_x`, or `beta_mat_y`, 
 #' the following default values are used, corresponding to the scenario with K=3 
-#' latent class and H=2 levels for variable S: `beta_mat_c` is a 3x2 matrix with
+#' latent class and S=2 levels for variable S_i: `beta_mat_c` is a 3x2 matrix with
 #' values `c(0, 0, 0.5, 1.3, -0.4, 1.5)` by row; `beta_list_x` is a list of J=30
 #' 4x4 matrices as in Example 1 provided below; and `beta_vec_y` is a vector 
 #' of length \eqn{3*2=6} with values `c(1, -0.7, -1.5, -0.5, -0.5, -0.3)`. The 
@@ -536,8 +536,8 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'   \item{\code{N}}{Population size}
 #'   \item{\code{J}}{Number of exposure items}
 #'   \item{\code{R}}{Number of exposure categories}
-#'   \item{\code{H}}{Number of stratum (i.e., levels of S)}
-#'   \item{\code{N_s}}{Vector of population sizes for levels of S. Hx1}
+#'   \item{\code{S}}{Number of stratum (i.e., levels of S_i)}
+#'   \item{\code{N_s}}{Vector of population sizes for levels of S_i. Sx1}
 #'   \item{\code{true_K}}{True number of latent classes, K}
 #'   \item{\code{true_Ai}}{`NULL` or vector of additional continuous variable if 
 #'   `a_all` is provided in `V_additional`. Nx1}
@@ -546,8 +546,8 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'   \item{\code{true_Si}}{Vector of true stratum indicators. Nx1}
 #'   \item{\code{true_Ci}}{Vector of true latent class indicators. Nx1}
 #'   \item{\code{true_pi}}{Vector of true pi values overall in the population. Kx1}
-#'   \item{\code{true_pi_s}}{`NULL` or HxK matrix of true pi values within each 
-#'   level of S}
+#'   \item{\code{true_pi_s}}{`NULL` or SxK matrix of true pi values within each 
+#'   level of S_i}
 #'   \item{\code{X_data}}{Matrix of multivariate categorical exposure for all 
 #'   individuals. NxJ}
 #'   \item{\code{true_global_patterns}}{Matrix of true global exposure patterns 
@@ -557,12 +557,12 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'   \item{\code{cluster_id}}{Vector of true cluster indicators. Nx1}
 #'   \item{\code{cluster_size}}{Cluster size}
 #'   \item{\code{true_xi}}{Matrix of probit regression coefficients in mixture 
-#'   reference coding. Kxq, where q is the number of covariate terms in the 
-#'   regression, excluding all terms involving C}
+#'   reference coding. KxQ, where Q is the number of covariate terms in the 
+#'   regression, excluding all terms involving C_i}
 #'   \item{\code{true_Phi}}{Vector of true outcome probabilities for all 
 #'   individuals. Nx1}
 #'   \item{\code{true_Phi_mat}}{`NULL` or matrix of true outcome probabilities
-#'   for individuals aggregated by C and S. KxH}
+#'   for individuals aggregated by C_i and S_i. KxS}
 #' }
 #' If `save_res = TRUE` (default), also saves `sim_pop` as 
 #' `[save_path]_sim_pop.RData`. 
@@ -573,24 +573,25 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' @importFrom SimCorMultRes rbin
 #' @export
 #' @examples 
+#' \dontrun{
 #' ### Example 1: Default values
 #' sim_pop <- simulate_pop(save_res = FALSE)
 #' 
 #' ### Example 2: Similar to default but smaller population size
 #' # Population size and strata dimensions
-#' N = 800; H = 2; N_s = c(600, 200)
+#' N = 800; S = 2; N_s = c(600, 200)
 #' 
-#' # Generate C ~ S
+#' # Generate C_i ~ S_i
 #' K <- 3  
 #' formula_c <- "~ s_all"
-#' V_unique <- data.frame(s_all = as.factor(1:H))
+#' V_unique <- data.frame(s_all = as.factor(1:S))
 #' pi_mat <- matrix(c(0.3, 0.5, 0.2,   
 #'                    0.1, 0.6, 0.3), 
-#'                  byrow = TRUE, nrow = H, ncol = K)
+#'                  byrow = TRUE, nrow = S, ncol = K)
 #' beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
 #'                           V_unique = V_unique)
 #' 
-#' # Generate X ~ C
+#' # Generate X_i ~ C_i
 #' J <- 30; R <- 4
 #' formula_x <- "~ c_all"
 #' V_unique <- data.frame(c_all = as.factor(1:K))
@@ -606,7 +607,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'                            modal_theta_prob = modal_theta_prob, 
 #'                            formula_x = formula_x, V_unique = V_unique)
 #' 
-#' # Generate Y ~ C + S + C:S
+#' # Generate Y_i ~ C_i + S_i + C_i:S_i
 #' formula_y <- "~ c_all * s_all"
 #' beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3)
 #' cluster_size <- 80
@@ -622,13 +623,13 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'                          pop_seed = pop_seed, save_res = FALSE)    
 #'                                               
 #' ### Example 2: Selection-dependent pattern profiles     
-#' # Generate X ~ C + S
+#' # Generate X_i ~ C_i + S_i
 #'  formula_x <- "~ c_all + s_all"
 #'  beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
 #'                                               s_all = c(0, 0.5, 0, 0)))
 #' 
 #' # Create population
-#' sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
+#' sim_pop <- simulate_pop(N = N, S=S, J = J, K = K, R = R, N_s = N_s,
 #'                         modal_theta_prob = modal_theta_prob, 
 #'                         formula_c = formula_c, formula_x = formula_x, 
 #'                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
@@ -636,30 +637,30 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #'                         cluster_size = cluster_size, 
 #'                         pop_seed = pop_seed, save_res = FALSE)
 #' 
-#' ### Example 3: Additional effect modifiers for Y and no clustering      
-#' # Continuous variable A for age centered about 0
+#' ### Example 3: Additional effect modifiers for Y_i and no clustering      
+#' # Continuous variable A_i for age centered about 0
 #' a_all <- stats::rnorm(n = N, mean = 0, sd = 5)
-#' # Binary variable B for physically inactive or active
+#' # Binary variable B_i for physically inactive or active
 #' b_all <- as.factor(stats::rbinom(n = N, size = 1, prob = 0.3) + 1)
-#' # Create dataframe of additional variables A and B
+#' # Create dataframe of additional variables A_i and B_i
 #' V_additional <- data.frame(a_all, b_all)    
 #'               
-#' # Generate Y ~ C + S + A + B + C:S + C:A + C:B
+#' # Generate Y_i ~ C_i + S_i + A_i + B_i + C_i:S_i + C_i:A_i + C_i:B_i
 #' formula_y <- "~ c_all * (s_all + a_all + b_all)"
 #' beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3, -0.04, 0.09, 0.08, 0.4, 
 #'                 -0.7, -0.6)
 #' cluster_size <- 1
 #'                 
 #' # Create population
-#' sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
+#' sim_pop <- simulate_pop(N = N, S=S, J = J, K = K, R = R, N_s = N_s,
 #'                         modal_theta_prob = modal_theta_prob, 
 #'                         formula_c = formula_c, formula_x = formula_x, 
 #'                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
 #'                         beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
 #'                         V_additional = V_additional, cluster_size = cluster_size, 
 #'                         pop_seed = pop_seed, save_res = FALSE)
-#' 
-simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4, 
+#' }
+simulate_pop <- function(N = 80000, S = 2, J = 30, K = 3, R = 4, 
                          N_s = c(60000, 20000),  modal_theta_prob = 0.85, 
                          formula_c = "~ s_all", 
                          formula_x = "~ c_all", 
@@ -676,8 +677,8 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   
   # Catch errors
   # Check number of strata
-  if (length(N_s) != H) {
-    stop("N_s must be a numeric vector of length H")
+  if (length(N_s) != S) {
+    stop("N_s must be a numeric vector of length S")
   }
   # Check modal_theta_prob is between 0 and 1
   if (modal_theta_prob < 0 | modal_theta_prob > 1) {
@@ -724,9 +725,9 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   clust_mode <- modal_theta_prob
   non_mode <- (1 - clust_mode) / (R - 1)
   
-  #================ Create S variable ==========================================
+  #================ Create S_i variable ==========================================
   # Create strata
-  s_all <- unlist(sapply(1:H, function(x) rep(x, times = N_s[x])))
+  s_all <- unlist(sapply(1:S, function(x) rep(x, times = N_s[x])))
   # Dataframe of strata and additional variables
   if (!is.null(V_additional)) {
     V <- data.frame(s_all = as.factor(s_all), V_additional)
@@ -734,19 +735,19 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
     V <- data.frame(s_all = as.factor(s_all))
   }
   
-  #================ Create latent class assignments C variable =================
-  # Set defaults for generating latent class dependent on S and check beta_mat_c
+  #================ Create latent class assignments C_i variable =================
+  # Set defaults for generating latent class dependent on S_i and check beta_mat_c
   # for errors
   if (is.null(beta_mat_c)) {
-    if (K != 3 | H != 2) {
-      stop("If default for beta_mat_c is to be used, K must be equal to 3 and H 
+    if (K != 3 | S != 2) {
+      stop("If default for beta_mat_c is to be used, K must be equal to 3 and S 
            must be equal to 2.")
     }
     # Corresponds to an overall true_pi ~= (0.253, 0.522, 0.225)
-    # Matrix of class assignment probabilities for each level of S
-    pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S=1
-                       0.1, 0.6, 0.3),  # class membership probs for S=2
-                     byrow = TRUE, nrow = H, ncol = K)
+    # Matrix of class membership probabilities for each level of S_i
+    pi_mat <- matrix(c(0.3, 0.5, 0.2,   # class membership probs for S_i=1
+                       0.1, 0.6, 0.3),  # class membership probs for S_i=2
+                     byrow = TRUE, nrow = S, ncol = K)
     beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
                               V_unique = V)
   } else if (!is.matrix(beta_mat_c)) {
@@ -778,13 +779,13 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   true_pi_s <- out_vars_c$pi_split
   true_pi <- out_vars_c$true_pi
   
-  #================ Create multivariate exposure X variable ====================
+  #================ Create multivariate exposure X_i variable ====================
   # Add latent class to data frame of variables
   V <- data.frame(c_all = as.factor(c_all), V)
   # Get design matrix
   design_mat_x <- stats::model.matrix(stats::as.formula(formula_x), data = V)
   
-  # Set defaults for generating exposure X dependent on C and S and check
+  # Set defaults for generating exposure X_i dependent on C_i and S_i and check
   # beta_list_x for errors
   if (is.null(beta_list_x)) {
     if (K != 3) {
@@ -832,19 +833,19 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
     true_global_patterns[j, ] <- apply(out_vars_x$pi_split, 1, which.max)
   }
   
-  #================ Create binary Y outcome variable ===========================
-  # Set defaults for generating exposure Y dependent on C and S and check
+  #================ Create binary Y_i outcome variable ===========================
+  # Set defaults for generating exposure Y_i dependent on C_i and S_i and check
   # xi_mat_y and beta_vec_y for errors
   if (is.null(xi_mat_y)) {
     if (is.null(beta_vec_y)) {
-      if (K != 3 | H != 2) {
-        stop("If default for beta_vec_y is to be used, K must be equal to 3 and H 
+      if (K != 3 | S != 2) {
+        stop("If default for beta_vec_y is to be used, K must be equal to 3 and S 
            must be equal to 2.")
       }
       # Corresponds to 3x2 xi_mat_y with c(1, -0.5, 
       #                                    0.3, -1, 
       #                                    -0.5, -0.8) by row
-      # and probabilities 0.84, 0.62, 0.31 for S=1 and 0.69, 0.24, 0.1 for S=2
+      # and probabilities 0.84, 0.62, 0.31 for S_i=1 and 0.69, 0.24, 0.1 for S_i=2
       beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3)
       
     } else if (!is.vector(beta_vec_y)) {
@@ -882,14 +883,14 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   # xi_mat_y is null, get corresponding values from beta_vec_y
   if (is.null(xi_mat_y)) {
     # xi is in mixture-reference coding (i.e., ref cell coding for each class/row):
-    # xi1*I(C=1) + xi2*I(C=1,S=2) +
-    # + xi3*I(C=2) + xi4*I(C=2,S=2)
-    # + xi5*I(C=3) + xi6*I(C=3,S=2)
-    # Number of covariate terms in the regression, excluding all terms with C
+    # xi1*I(C_i=1) + xi2*I(C_i=1,S_i=2) +
+    # + xi3*I(C_i=2) + xi4*I(C_i=2,S_i=2)
+    # + xi5*I(C_i=3) + xi6*I(C_i=3,S_i=2)
+    # Number of covariate terms in the regression, excluding all terms with C_i
     cov_terms <- colnames(stats::model.matrix(stats::as.formula(formula_y)))
     cov_terms_no_c <- cov_terms[!stringr::str_detect(cov_terms, "c_all")]
-    q <- length(cov_terms_no_c)
-    xi_mat_y <- convert_ref_to_mix(K = K, q = q, est_beta = beta_vec_y)$est_xi
+    Q <- length(cov_terms_no_c)
+    xi_mat_y <- convert_ref_to_mix(K = K, Q = Q, est_beta = beta_vec_y)$est_xi
   }
   
   # Get vector of individual linear predictors
@@ -897,7 +898,7 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   # Get vector of individual underlying outcome probabilities
   true_Phi_under <- stats::pnorm(lin_pred)
   
-  ## Generate outcome Y depending on clustering
+  ## Generate outcome Y_i depending on clustering
   # No clustering in the data
   if (cluster_size == 1) {
     cluster_id <- 1:N
@@ -929,15 +930,15 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
   }
   
   # If no additional confounders or interactions other than c_all*s_all, 
-  # output outcome probabilities individually and aggregated by C and S
+  # output outcome probabilities individually and aggregated by C_i and S_i
   y_covs <- labels(stats::terms(stats::as.formula(formula_y)))
   if (all(y_covs %in% c("c_all", "s_all", "c_all:s_all"))) {
     pop_inds <- 1:N
-    # Matrix of finite population outcome probs aggregated by C and S
-    true_Phi_mat <- matrix(NA, nrow=K, ncol=H)
-    # Observed finite population probs for each individual based on C and S
+    # Matrix of finite population outcome probs aggregated by C_i and S_i
+    true_Phi_mat <- matrix(NA, nrow=K, ncol=S)
+    # Observed finite population probs for each individual based on C_i and S_i
     true_Phi <- numeric(N)
-    for (h in 1:H) {
+    for (h in 1:S) {
       for (k in 1:K) {
         # Individuals in stratum s class k
         N_s_k <- pop_inds[s_all == h & c_all == k]
@@ -962,7 +963,7 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
     true_Bi <- V$b_all
   }
   
-  sim_pop <- list(N = N, J = J, R = R, H = H, N_s = N_s, true_K = K,
+  sim_pop <- list(N = N, J = J, R = R, S = S, N_s = N_s, true_K = K,
                   true_Ai = true_Ai, true_Bi = true_Bi, 
                   true_Si = s_all, true_Ci = c_all, true_pi = true_pi,
                   true_pi_s = true_pi_s, X_data = X_data, 
@@ -992,7 +993,7 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
 #' Either `samp_prop` or `samp_size` must be specified.
 #' @param samp_size Sample size. Default is `NULL`. Either `samp_prop` or 
 #' `samp_size` must be specified.
-#' @param strat Boolean specifying whether to perform stratification by S.
+#' @param strat Boolean specifying whether to perform stratification by S_i.
 #' Default is `TRUE`.
 #' @param strat_dist Vector of relative stratum sizes in the sample. Components 
 #' must be proportions that sum to 1. Default is `c(0.5, 0.5)`, which results in
@@ -1011,8 +1012,8 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
 #'   \item{\code{N}}{Population size}
 #'   \item{\code{J}}{Number of exposure items}
 #'   \item{\code{R}}{Number of exposure categories}
-#'   \item{\code{H}}{Number of stratum (i.e., levels of S)}
-#'   \item{\code{N_s}}{Vector of population sizes for levels of S. Hx1}
+#'   \item{\code{S}}{Number of stratum (i.e., levels of S_i)}
+#'   \item{\code{N_s}}{Vector of population sizes for levels of S_i. Sx1}
 #'   \item{\code{true_K}}{True number of latent classes, K}
 #'   \item{\code{true_Ai}}{`NULL` or vector of additional continuous variable 
 #'   for sampled individuals. nx1}
@@ -1023,8 +1024,8 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
 #'   \item{\code{true_Ci}}{Vector of true latent class indicators for sampled 
 #'   individuals. nx1}
 #'   \item{\code{true_pi}}{Vector of true pi values overall in the population. Kx1}
-#'   \item{\code{true_pi_s}}{`NULL` or HxK matrix of true pi values within each 
-#'   level of S}
+#'   \item{\code{true_pi_s}}{`NULL` or SxK matrix of true pi values within each 
+#'   level of S_i}
 #'   \item{\code{X_data}}{Matrix of multivariate categorical exposure for 
 #'   sampled individuals. nxJ}
 #'   \item{\code{true_global_patterns}}{Matrix of true global exposure patterns 
@@ -1035,12 +1036,12 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
 #'   individuals. nx1}
 #'   \item{\code{cluster_size}}{Cluster size}
 #'   \item{\code{true_xi}}{Matrix of probit regression coefficients in mixture 
-#'   reference coding. Kxq, where q is the number of covariate terms in the 
-#'   regression, excluding all terms involving C}
+#'   reference coding. KxQ, where Q is the number of covariate terms in the 
+#'   regression, excluding all terms involving C_i}
 #'   \item{\code{true_Phi}}{Vector of true outcome probabilities for sampled 
 #'   individuals. nx1}
 #'   \item{\code{true_Phi_mat}}{`NULL` or matrix of true outcome probabilities
-#'   for individuals aggregated by C and S. KxH}
+#'   for individuals aggregated by C_i and S_i. KxS}
 #' }
 #' If `save_res = TRUE` (default), also saves `sim_samp` as 
 #' `[save_path]_sim_samp.RData`. 
@@ -1048,12 +1049,14 @@ simulate_pop <- function(N = 80000, H = 2, J = 30, K = 3, R = 4,
 #' @seealso [simulate_pop()] 
 #' @export
 #' @examples 
+#' \dontrun{
 #' ### Example 1: Default values
 #' # Create population
 #' sim_pop <- simulate_pop(save_res = FALSE)
 #' sim_samp <- simulate_samp(sim_pop = sim_pop, samp_prop = 0.05, strat = TRUE,
 #'                           strat_dist = c(0.5, 0.5), clust = TRUE,
 #'                           samp_seed = 101, save_res = FALSE)
+#' }
 simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL, 
                           strat = TRUE, strat_dist = c(0.5, 0.5), clust = TRUE, 
                           samp_seed = 101, save_res = TRUE, save_path) {
@@ -1070,7 +1073,7 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
     if (is.null(strat_dist)) {
       stop("strat_dist must be specified if strat is TRUE")
     } else if (sum(strat_dist) != 1) {
-      stop("strat_dist must be a vector of length H whose elements sum to 1")
+      stop("strat_dist must be a vector of length S whose elements sum to 1")
     }
   }
   # Check save_res and save_path
@@ -1114,13 +1117,13 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
     
   # Survey design is stratified sampling with unequal probabilities
   } else if (strat & !clust) {
-    if (length(strat_dist) != sim_pop$H) {
-      stop(paste0("strat_dist must be a vector of length H = ", sim_pop$H, 
-                  ", to match the number of levels in stratifying variable S"))
+    if (length(strat_dist) != sim_pop$S) {
+      stop(paste0("strat_dist must be a vector of length S = ", sim_pop$S, 
+                  ", to match the number of levels in stratifying variable S_i"))
     }
     # Get stratum sample sizes
     n_s <- samp_size * strat_dist
-    for (h in 1:sim_pop$H) {
+    for (h in 1:sim_pop$S) {
       # Individuals in stratum h
       pop_s <- pop_inds[sim_pop$true_Si == h]
       # Sample from stratum h
@@ -1160,7 +1163,7 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
                 is a multiple of the cluster size: ", sim_pop$cluster_size, 
                   ". Currently, the strata are of size ", paste0(n_s, collapse = ", "), ". "))
     }
-    for (h in 1:sim_pop$H) {
+    for (h in 1:sim_pop$S) {
       # Clusters in stratum h 
       clus_s <- unique(sim_pop$cluster_id[sim_pop$true_Si == h])
       # Sample clusters from stratum h
@@ -1187,7 +1190,7 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
   
   #================ Save and return output =====================================
   sim_samp <- list(samp_ind = samp_ind, sample_wt = sample_wt, 
-                   N = sim_pop$N, J = sim_pop$J, R = sim_pop$R, H = sim_pop$H, 
+                   N = sim_pop$N, J = sim_pop$J, R = sim_pop$R, S = sim_pop$S, 
                    N_s = sim_pop$N_s, true_K = sim_pop$true_K,
                    true_Ai = true_Ai, true_Bi = true_Bi, true_Si = true_Si,
                    true_Ci = true_Ci,  true_pi = sim_pop$true_pi, 

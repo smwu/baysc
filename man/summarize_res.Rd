@@ -12,7 +12,7 @@ to \code{\link[=swolca]{swolca()}}, \code{\link[=swolca_var_adjust]{swolca_var_a
 
 \item{ci_level}{Numeric from 0 to 1 specifying the credible interval level.
 Default is 0.95, which gives a 95\\% equal-tailed interval composed of the
-2.5\\% and 97.5\\% quantiles. For \code{wolca()} results, this must match the
+2.5\\% and 97.5\\% quantiles. For \code{wolca} objects, this must match the
 \code{ci_level} parameter in the main function.}
 
 \item{digits}{Integer indicating the number of decimal places to be used.

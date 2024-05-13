@@ -4,3 +4,4 @@ testthat
 baysc
 dplyr
 ggplot2
+knitr

@@ -7,7 +7,7 @@
 convert_to_probs(est_xi, glm_form, V_data, cov_name)
 }
 \arguments{
-\item{est_xi}{Matrix of xi parameter estimates. Kxq}
+\item{est_xi}{Matrix of xi parameter estimates. KxQ}
 
 \item{glm_form}{String specifying formula for probit regression, excluding
 outcome and latent class. For example, \code{"~ 1"} for the model with only
@@ -15,7 +15,7 @@ latent class as covariates. All variables in \code{glm_form} must be found in \c
 Do not specify interaction terms for latent class by additional covariates,
 as these terms are already included.}
 
-\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+\item{V_data}{Dataframe of additional regression covariates. nxQ. Factor
 covariates must be converted to factors. If \code{NULL} (default), no additional
 covariates are to be included. All variables in \code{glm_form} must
 be found in \code{V_data}.}
@@ -30,7 +30,7 @@ Returns dataframe \code{Phi_df} of the converted outcome probabilities
 \code{cov_name}. Number of rows is equal to the number of category combinations of
 the key covariate(s). The first K columns include the \eqn{\Phi} values
 for the K latent classes, evaluated at the covariate values listed in the
-remaining q columns. The key covariate(s) are evaluated at all levels and
+remaining Q columns. The key covariate(s) are evaluated at all levels and
 the other covariates are evaluated at their reference levels.
 }
 \description{

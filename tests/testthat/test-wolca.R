@@ -33,25 +33,25 @@ res_svyglm <- wolca_svyglm(res = res_adjust, y_all = y_all,
 
 test_that("adaptive sampler works", {
   expect_equal(res_adapt$K_fixed, 2)
-  expect_equal(max(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 3290) 
-  expect_equal(min(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 2)  
+  expect_equal(max(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 658) 
+  expect_equal(min(table(res_adapt$MCMC_out$c_all_MCMC[4, ])), 1)  
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.51, 0.26, 0.23))
-  expect_equal(max(table(res_fixed$estimates$c_all)), 2156) 
-  expect_equal(min(table(res_fixed$estimates$c_all)), 842)  
+  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.27, 0.52, 0.21))
+  expect_equal(max(table(res_fixed$estimates$c_all)), 442) 
+  expect_equal(min(table(res_fixed$estimates$c_all)), 173)  
 })
 
 test_that("variance adjustment works", {
-  expect_equal(round(res_adjust$estimates_adjust$pi_med, 2), c(0.51, 0.26, 0.22))
-  expect_equal(max(table(res_adjust$estimates_adjust$c_all)), 2156) 
-  expect_equal(min(table(res_adjust$estimates_adjust$c_all)), 842)  
+  expect_equal(round(res_adjust$estimates_adjust$pi_med, 2), c(0.27, 0.52, 0.21))
+  expect_equal(max(table(res_adjust$estimates_adjust$c_all)), 442) 
+  expect_equal(min(table(res_adjust$estimates_adjust$c_all)), 173)  
 })
 
 test_that("wolca svyglm works", {
-  expect_equal(round(c(res_svyglm$estimates_svyglm$xi_est), 2), c(-0.02, 0.74, -0.72))
-  expect_equal(res_svyglm$data_vars$q, 1)
+  expect_equal(round(c(res_svyglm$estimates_svyglm$xi_est), 2), c(0.43, -0.46, -1.39))
+  expect_equal(res_svyglm$data_vars$Q, 1)
 })
 
 # Run wolca with stratum covariate in probit model
@@ -63,8 +63,8 @@ res_svyglm_strat <- wolca_svyglm(res = res_adjust, y_all = y_all,
 
 test_that("wolca svyglm with stratum covariate works", {
   expect_equal(round(c(res_svyglm_strat$estimates_svyglm$xi_est[, 1]), 2), 
-               c(0.28, 0.79, -0.49))
-  expect_equal(res_svyglm_strat$data_vars$q, 2)
+               c(0.41, -0.36, -1.38))
+  expect_equal(res_svyglm_strat$data_vars$Q, 2)
 })
 
 # Run wolca with different categories for different exposure variables
@@ -81,8 +81,8 @@ res_R_j_adjust <- wolca_var_adjust(res = res_R_j, num_reps = 100,
                                     save_res = FALSE, adjust_seed = 1)
 
 test_that("R_j works", {
-  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.51, 0.26, 0.22))
-  expect_equal(max(table(res_R_j$estimates$c_all)), 2156) 
-  expect_equal(min(table(res_R_j$estimates$c_all)), 842) 
+  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.27, 0.53, 0.20))
+  expect_equal(max(table(res_R_j$estimates$c_all)), 442) 
+  expect_equal(min(table(res_R_j$estimates$c_all)), 173) 
 })
 

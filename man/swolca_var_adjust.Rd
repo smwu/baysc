@@ -18,7 +18,7 @@ swolca_var_adjust(
 }
 \arguments{
 \item{res}{An object of class \code{"swolca"}, resulting from a call to \code{\link[=swolca]{swolca()}},
-containing the unadjusted estimates}
+containing the unadjusted estimates.}
 
 \item{alpha}{Hyperparameter for prior for class membership probabilities
 \eqn{\pi}. Default is \code{NULL} and default values are used (see Details below).
@@ -28,17 +28,17 @@ If specified, must be (\code{K_max})x1.}
 \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k}, assumed to be
 the same across classes. Default is \code{NULL} and default values are used (see
 Details below). If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+items and R is the maximum number of levels for the exposure.}
 
 \item{mu0}{Mean hyperparameters for regression coefficients \eqn{\xi_{k\cdot}}
 for each class \eqn{k}. Default is \code{NULL} and default values are used (see
 Details below). If specified, must be a list of \code{K_max} vectors of dimension
-qx1, where q is the number of regression covariates excluding latent class assignment.}
+Qx1, where Q is the number of regression covariates excluding latent class assignment.}
 
 \item{Sig0}{Variance hyperparameters for regression coefficients
 \eqn{\xi_{k\cdot}} for each class \eqn{k}. Default is \code{NULL} and default
 values are used (see Details below). If specified, must be a list of \code{K_max}
-qxq matrices, where q is the number of regression covariates excluding latent
+QxQ matrices, where Q is the number of regression covariates excluding latent
 class assignment.}
 
 \item{num_reps}{Number of bootstrap replicates to use for the variance
@@ -60,10 +60,10 @@ Returns an object \code{res} of class \code{"swolca"}, which includes all output
 \item{\code{pi_red}}{Matrix of adjusted posterior samples for pi. Mx(K_red),
 where M is the number of MCMC iterations after burn-in and thinning.}
 \item{\code{theta_red}}{Array of adjusted posterior samples for theta. MxJx(K_red)xR}
-\item{\code{xi_red}}{Array of adjusted posterior samples for xi. Mx(K_red)xq}
+\item{\code{xi_red}}{Array of adjusted posterior samples for xi. Mx(K_red)xQ}
 \item{\code{pi_med}}{Vector of adjusted posterior median estimates for pi. (K_red)x1}
 \item{\code{theta_med}}{Array of adjusted posterior median estimates for theta. px(K_red)xR}
-\item{\code{xi_med}}{Matrix of adjusted posterior median estimates for xi. (K_red)xq}
+\item{\code{xi_med}}{Matrix of adjusted posterior median estimates for xi. (K_red)xQ}
 \item{\code{Phi_med}}{Vector of adjusted individual outcome probabilities. nx1}
 \item{\code{c_all}}{Vector of final individual class assignments from \code{swolca()}. nx1}
 \item{\code{pred_class_probs}}{Matrix of individual posterior class
@@ -107,7 +107,7 @@ obtained from running \code{\link[=swolca]{swolca()}}, available at \code{res$es
 For \eqn{\pi}, a Dirichlet prior with hyperparameter \eqn{\alpha = 1/K} for
 each component. For \eqn{\theta_{jk\cdot}}, a Dirichlet prior with
 hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the number
-of categories for exposure item j. If \code{R_j < R}, the remaining categories have
+of levels for exposure item j. If \code{R_j < R}, the remaining levels have
 hyperparameter set to 0.01. This is done independently for each exposure item j
 and is assumed to be the same across latent classes. For \eqn{\xi_{k\cdot}}, a
 Multivariate Normal distribution with mean vector hyperparameter \eqn{\mu_0}
@@ -122,6 +122,7 @@ form of large positive or negative values for \eqn{\xi}):
 All replicates contained NAs".
 }
 \examples{
+\dontrun{   
 # Load simulated data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
@@ -145,7 +146,7 @@ res <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
 # Apply variance adjustment to posterior estimates
 res_adjust <- swolca_var_adjust(res = res, num_reps = 100, save_res = FALSE, 
                                 adjust_seed = 1)                        
-
+}
 }
 \references{
 Williams, M. R., & Savitsky, T. D. (2021). Uncertainty Estimation for

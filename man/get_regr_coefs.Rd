@@ -12,7 +12,7 @@ to \code{\link[=swolca]{swolca()}}, \code{\link[=swolca_var_adjust]{swolca_var_a
 
 \item{ci_level}{Numeric from 0 to 1 specifying the credible interval level.
 Default is 0.95, which gives a 95\\% equal-tailed interval composed of the
-2.5\\% and 97.5\\% quantiles. For \code{wolca()} results, this must match the
+2.5\\% and 97.5\\% quantiles. For \code{wolca} objects, this must match the
 \code{ci_level} parameter in the main function.}
 
 \item{digits}{Integer indicating the number of decimal places to be used.
@@ -39,16 +39,16 @@ obtained from the \code{wolca_svyglm()} function}
 converted to standard reference cell coding.
 }
 \details{
-If \code{res} is a \code{swolca} object, any cluster can be chosen as the reference
-cluster level for which to display regression coefficients. Simply run
-\code{reorder_clusters()} with the desired reference level as the first cluster in
-\code{new_order}, and then run \code{get_regr_coefs()} using the reordered \code{res} object.
+If \code{res} is a \code{swolca} object, any latent class can be chosen as the reference
+class level for which to display regression coefficients. Simply run
+\code{\link[=reorder_classes]{reorder_classes()}} with the desired reference level as the first class in
+\code{new_order}, and then run \code{\link[=get_regr_coefs]{get_regr_coefs()}} using the reordered \code{res} object.
 
 If \code{res} is a \code{wolca} object, choosing a different reference level can only
-be done by re-running \code{wolca_syvglm()} with the new ordering. To do this, run
-\code{reorder_clusters()}, then run \code{wolca_svyglm()} to obtain regression
+be done by re-running \code{\link[=wolca_svyglm]{wolca_svyglm()}} with the new ordering. To do this, run
+\code{\link[=reorder_classes]{reorder_classes()}}, then run \code{\link[=wolca_svyglm]{wolca_svyglm()}} to obtain regression
 estimates with a different reference class, and then finally use the
-\code{get_regr_coefs()} function.
+\code{\link[=get_regr_coefs]{get_regr_coefs()}} function.
 }
 \examples{
 data(run_nhanes_swolca_results)
@@ -56,5 +56,5 @@ get_regr_coefs(res = run_nhanes_swolca_results, ci_level = 0.95, digits = 2)
 
 }
 \seealso{
-\code{\link[=reorder_clusters]{reorder_clusters()}} \code{\link[=plot_outcome_probs]{plot_outcome_probs()}} \code{\link[=summarize_res]{summarize_res()}}
+\code{\link[=reorder_classes]{reorder_classes()}} \code{\link[=plot_outcome_probs]{plot_outcome_probs()}} \code{\link[=summarize_res]{summarize_res()}}
 }

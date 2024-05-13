@@ -24,8 +24,8 @@ expect_error(plot_pattern_probs(res = res, categ_labels = c("test", "label")),
              "length of categ_labels must equal the number of exposure categories, R = 4",
              fixed = TRUE)
 
-# Test errors for plot_clus_dist
-expect_error(plot_clus_dist(res = res, class_labels = c("test", "label")),
+# Test errors for plot_class_dist
+expect_error(plot_class_dist(res = res, class_labels = c("test", "label")),
              "length of class_labels must equal the number of latent classes, K = 5",
              fixed = TRUE)
 

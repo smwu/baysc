@@ -16,7 +16,7 @@ get_estimates_wolca(MCMC_out, post_MCMC_out, n, J, x_mat)
 
 \item{post_MCMC_out}{output from \code{post_process_wolca} containing:
 \describe{
-\item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+\item{\code{K_med}}{Median, across iterations, of number of classes with at least \code{class_cutoff} percent of individuals}
 \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
 \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
@@ -52,6 +52,7 @@ estimates are computed across MCMC iterations. Using these median estimates,
 class assignments \code{c_all} are derived.
 }
 \examples{
+   
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data

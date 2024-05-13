@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary_functions.R
 \name{get_cov_props}
 \alias{get_cov_props}
-\title{Get column percentages across latent classes}
+\title{Get the covariate distribution across latent classes}
 \usage{
 get_cov_props(
   svy_design,
@@ -26,34 +26,37 @@ If the covariate is continuous, set this to the empty string \code{""}.}
 \item{col_props}{Boolean indicating if factor variables should have percentages
 reported as column totals (default \code{TRUE}) that provide the percentage of the
 population in each category for a given latent class, or reported as row
-totals that provide the percentage of the population in each latent class for
-a given category.}
+totals (\code{FALSE}) that provide the percentage of the population in each latent
+class for a given category.}
 
-\item{res}{Results from unadjusted or adjusted SWOLCA or WOLCA, necessary for
-\verb{cov == "population}. Otherwise, use default value of \code{NULL}.}
+\item{res}{Results from running \code{\link[=swolca]{swolca()}} or \code{\link[=wolca]{wolca()}}, with or without the
+variance adjustment. This is necessary when \code{cov == "population"} but can
+otherwise be set to the default value of \code{NULL}.}
 
 \item{digits}{Integer indicating the number of decimal places to be used.
 Default is 1, which rounds to the nearest tenth.}
 }
 \value{
 Outputs \code{output} dataframe with number of rows equal to the number of levels
-in the covariate of interest (one row if covariate is continuous), and number
-of columns equal to the number of latent classes, plus an additional column
-for the overall value over all classes.
+in the covariate of interest (one row if the covariate is continuous), and
+number of columns equal to the number of latent classes, plus an additional
+column for the overall value over all classes.
 }
 \description{
 \code{get_cov_props} gives the column means or percentages across latent classes
 for a given demographic variable, calculated for the population using survey
-weights and methods from the \code{survey} package
+weights and methods from the \code{survey} R package. Internal function used in
+\code{\link[=vars_across_class]{vars_across_class()}}.
 }
 \details{
-If the covariate is a factor, outputs percentages for each level. If the
-covariate is continuous, outputs the mean. If the covariate is the population
-class membership proportions (i.e., \code{cov == "population"}), the posterior
-standard deviation is also provided using the results from SWOLCA or WOLCA.
-The standard errors for the other variables are not provided because they
-would be underestimates due to not accounting for variability in the latent
-class assignments. If the covariate is the sample class membership proportions
-(i.e., \code{cov == "sample"}), then the percentages provided are exact.
+If the covariate is a factor, the function outputs percentages for each level.
+If the covariate is continuous, the function outputs the mean for each level.
+If the covariate is the population class membership proportions (i.e.,
+\code{cov == "population"}), the posterior standard deviation is also provided
+using the results from running \code{\link[=swolca]{swolca()}} or \code{\link[=wolca]{wolca()}}. The standard errors
+for the other variables are not provided because they would be underestimates
+due to not accounting for variability in the latent class assignments. If the
+covariate is the sample class membership proportions (i.e., \code{cov == "sample"}),
+then the percentages provided are exact.
 }
 \keyword{internal}

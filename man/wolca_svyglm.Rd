@@ -20,7 +20,7 @@ or \code{\link[=swolca_var_adjust]{swolca_var_adjust()}}}
 
 \item{y_all}{Vector of binary outcomes. nx1}
 
-\item{V_data}{Dataframe of additional regression covariates. nxq. Factor
+\item{V_data}{Dataframe of additional regression covariates. nxQ. Factor
 covariates must be converted to factors. If \code{NULL} (default), no additional
 covariates are to be included. All variables in \code{glm_form} must
 be found in \code{V_data}.}
@@ -44,9 +44,9 @@ Returns an object \code{res} of class \code{"wolca"}, which includes all outputs
 \code{\link[=wolca]{wolca()}} or \code{\link[=wolca_var_adjust]{wolca_var_adjust()}} as well as additional list \code{estimates_syglm}
 containing the following objects:
 \describe{
-\item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xq}
-\item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xq}
-\item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xq}
+\item{\code{xi_est}}{Matrix of estimates for xi. (K_red)xQ}
+\item{\code{xi_est_lb}}{Matrix of confidence interval lower bound estimates for xi. (K_red)xQ}
+\item{\code{xi_est_ub}}{Matrix of confidence interval upper bound estimates for xi. (K_red)xQ}
 \item{\code{fit}}{\code{svyglm} class object with output from the \code{svyglm} regression model}
 \item{\code{fit_summary}}{\code{summary.svyglm} class object with output from
 the \code{summary()} function. If the residual degrees of freedom is negative,
@@ -54,10 +54,10 @@ the degrees of freedom from the survey design is used.}
 }
 List \code{data_vars} of \code{res} is updated to contain the following additional objects:
 \describe{
-\item{\code{q}}{Number of regression covariates excluding class assignment.}
+\item{\code{Q}}{Number of regression covariates excluding class assignment.}
 \item{\code{y_all}}{Vector of binary outcomes; nx1.}
-\item{\code{V_data}}{Dataframe of additional regression covariates; nxq or \code{NULL}.}
-\item{\code{V}}{Regression design matrix without class assignment; nxq.}
+\item{\code{V_data}}{Dataframe of additional regression covariates; nxQ or \code{NULL}.}
+\item{\code{V}}{Regression design matrix without class assignment; nxQ.}
 \item{\code{glm_form}}{String specifying formula for probit regression,
 excluding outcome and latent class.}
 \item{\code{ci_level}}{Confidence interval level for probit regression
@@ -71,7 +71,7 @@ If \code{save_res = TRUE} (default), the updated \code{res} object is saved as
 the file names are the same.
 }
 \description{
-\code{wolca_svyglm} relates latent classes patterns derived from \code{wolca()} to a
+\code{wolca_svyglm} relates latent classes patterns derived from \code{\link[=wolca]{wolca()}} to a
 binary outcome by fitting a survey-weighted probit model.
 }
 \details{
@@ -91,7 +91,7 @@ freedom from the survey design, and the \code{fit_summary} output also uses the
 degrees of freedom from the survey design to obtain p-values. This can happen
 when there are few clusters per stratum and a large number of covariates.
 
-The point and interval estimates are then converted into the mixture
+The point and interval estimates are then converted into mixture
 reference coding format to match the output format from \code{\link[=swolca]{swolca()}}. \code{V_data}
 includes all covariates to include in the probit regression other than latent
 class.
@@ -103,6 +103,7 @@ appended to it, overwriting the unsupervised results if the file names are the
 same.
 }
 \examples{
+\dontrun{   
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
@@ -132,7 +133,7 @@ res_adjust <- wolca_var_adjust(res = res, num_reps = 100, save_res = FALSE,
 res_svyglm <- wolca_svyglm(res = res_adjust, y_all = y_all, 
                            glm_form = glm_form, ci_level = 0.95, 
                            V_data = V_data, save_res = FALSE)
-
+}
 }
 \references{
 Lumley T (2023). “survey: analysis of complex survey samples.” R

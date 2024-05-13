@@ -40,7 +40,7 @@ indicating each individual is their own cluster.}
 indicating no stratification.}
 
 \item{run_sampler}{String specifying which sampler(s) should be run. Must be
-one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
+one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}. See Details.}
 
 \item{K_max}{Upper limit for number of classes. Default is 30.}
 
@@ -48,12 +48,12 @@ one of \code{"both"} (default), \code{"fixed"}, or \code{"adapt"}.}
 
 \item{K_fixed}{True number of classes, if known. Default is \code{NULL}, as it is
 not necessary for the adaptive sampler. If bypassing the adaptive sampler and
-running the fixed sampler directly, need to specify a value here.}
+running the fixed sampler directly, need to specify a value here. See Details.}
 
 \item{fixed_seed}{Numeric seed for fixed sampler. Default is \code{NULL}.}
 
 \item{class_cutoff}{Minimum class size proportion when determining number of
-classes in adaptive sampler. Default is 0.05.}
+classes. Default is 0.05.}
 
 \item{n_runs}{Number of MCMC iterations. Default is 20000.}
 
@@ -71,22 +71,22 @@ e.g., "~/Documents/run". Default is \code{NULL}.}
 
 \item{alpha_adapt}{Adaptive sampler hyperparameter for prior for class
 membership probabilities \eqn{\pi}. Default is \code{NULL} and default values are
-used. If specified, must be (\code{K_max})x1.}
+used (see Details). If specified, must be (\code{K_max})x1.}
 
-\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item consumption
+\item{eta_adapt}{Adaptive sampler hyperparameter for prior for item
 level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
 \eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
-values are used. If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+values are used (see Details). If specified, must be JxR, where J is the
+number of exposure items and R is the maximum number of categories for the exposure.}
 
 \item{alpha_fixed}{Fixed sampler hyperparameter for prior for \eqn{\pi}. Default is
-\code{NULL} and default values are used. If specified, must be (\code{K_fixed})x1.}
+\code{NULL} and default values are used (see Details). If specified, must be (\code{K_fixed})x1.}
 
-\item{eta_fixed}{Fixed sampler hyperparameter for prior for item consumption
-level probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class
-\eqn{k}, assumed to be the same across classes. Default is \code{NULL} and default
-values are used. If specified, must be JxR, where J is the number of exposure
-items and R is the maximum number of categories for the exposure.}
+\item{eta_fixed}{Fixed sampler hyperparameter for prior for item level
+probabilities \eqn{\theta_{jk\cdot}} for each item \eqn{j} and class \eqn{k},
+assumed to be the same across classes. Default is \code{NULL} and default values
+are used (see Details). If specified, must be JxR, where J is the number of
+exposure items and R is the maximum number of categories for the exposure.}
 }
 \value{
 If the fixed sampler is run, returns an object \code{res} of class \code{"wolca"}; a
@@ -138,7 +138,7 @@ saves and returns the results.
 If no survey sample adjustments are desired, leave \code{sampling_wt}, \code{stratum_id},
 and \code{cluster_id} to their default \code{NULL} values.
 
-By default, the function will run two samplers: the adaptive sampler followed
+By default, the function will run two samplers: the adaptive sampler, followed
 by the fixed sampler. The adaptive sampler determines the number of latent
 classes, which is then used in the fixed sampler for parameter estimation.
 If the number of latent classes is already known and only the fixed sampler
@@ -172,8 +172,12 @@ hyperparameter set to 0.01. This is done independently for each exposure item j
 and is assumed to be the same across latent classes. Note that hyperparameters
 for the fixed sampler should probably only be specified if running the
 fixed sampler directly, bypassing the adaptive sampler.
+
+To prevent underflow issues, all \eqn{\theta} parameters are restricted to
+have a minimum value of \eqn{1e-8}.
 }
 \examples{
+\dontrun{   
 # Load data and obtain relevant variables
 data("sim_data")
 data_vars <- sim_data
@@ -188,7 +192,7 @@ res <- wolca(x_mat = x_mat, sampling_wt = sampling_wt,
              cluster_id = cluster_id, stratum_id = stratum_id, 
              run_sampler = "both", adapt_seed = 1, n_runs = 50, burn = 25, 
              thin = 1, save_res = FALSE)
-
+}
 }
 \references{
 Stephenson, B. J. K., Wu, S. M., Dominici, F. (2023). Identifying dietary

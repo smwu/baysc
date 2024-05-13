@@ -16,11 +16,12 @@ Outputs string vector \code{levels} containing the levels of the variable
 of interest. If the variable is not a factor, outputs the empty string \code{""}.
 }
 \description{
-\code{convert_ref_to_mix} converts from reference cell coding to a combination of
-factor variable and reference cell coding, referred to as mixture reference
-coding.
+\code{get_levels} obtains the levels of a specified variable in a dataframe. For
+factor varialbes, the levels are directly returned. For continuous variables,
+the levels are returned as an empty string. Internal function used in
+\code{\link[=vars_across_class]{vars_across_class()}}.
 }
 \seealso{
-\code{\link[=vars_across_clus]{vars_across_clus()}}
+\code{\link[=vars_across_class]{vars_across_class()}}
 }
 \keyword{internal}

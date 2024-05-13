@@ -11,7 +11,7 @@ update_z(z_all, n, V, xi, c_all, y_all)
 
 \item{n}{Number of individuals}
 
-\item{V}{Regression design matrix without class assignment. nxq}
+\item{V}{Regression design matrix without class assignment. nxQ}
 
 \item{xi}{Matrix parameter xi for probit regression coefficients. Kxq}
 

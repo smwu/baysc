@@ -26,6 +26,7 @@
 #' @export
 #'
 #' @examples
+#'    
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
@@ -140,7 +141,7 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
 #' 
 #' @details
 #' First, `K_med`, the median number of classes with at least the `class_cutoff` 
-#' proportion of individuals is obtained over all MCMC iterations. Then, label 
+#' proportion of individuals, is obtained over all MCMC iterations. Then, label 
 #' switching is addressed through a relabeling procedure, where agglomerative 
 #' clustering with Hamming distance is used to group individuals into `K_med` 
 #' clusters and labels are re-assigned based on these clusters. Finally, 
@@ -150,7 +151,7 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
 #' @return
 #' Returns list `post_MCMC_out` containing:
 #' \describe{
-#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least `class_cutoff` percent of individuals}
 #'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
 #'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
@@ -163,6 +164,7 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
 #' @export
 #'
 #' @examples
+#'   
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data
@@ -214,12 +216,44 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
   # Hierarchical clustering dendrogram
   dendrogram <- stats::hclust(stats::as.dist(distMat), method = "complete") 
   # Group individuals into K_med classes
-  red_c_all <- stats::cutree(dendrogram, k = K_med)                  
+  red_c_all <- stats::cutree(dendrogram, k = K_med)     
+  # Modify classes if any classes are less than the cutoff percentage
+  class_prop <- prop.table(table(red_c_all))
+  if (any(class_prop < 0.05)) {
+    # Get classes that are too small
+    small <- which(class_prop < 0.05)
+    # Group individuals into a larger number of classes 
+    red_c_all_temp <- stats::cutree(dendrogram, k = K_med + length(small))
+    red_c_all <- red_c_all_temp
+    class_prop_temp <- prop.table(table(red_c_all_temp))
+    # Get updated classes that are too small
+    small_temp <- sort(which(class_prop_temp < 0.05))
+    for (small_c in 1:length(small_temp)) {
+      c_ind <- small_temp[small_c]
+      class_small <- which(red_c_all_temp == c_ind)
+      # Get nearest class
+      inds <- 1:length(class_prop_temp)
+      class_dist <- sapply(inds, function(x) 
+        mean(distMat[class_small, which(red_c_all_temp == x)]))
+      # Set small class distance to Inf
+      class_dist[small_temp] <- Inf
+      nearest <- which.min(class_dist[-c_ind])
+      red_c_all[red_c_all_temp == c_ind] <- nearest
+    }
+    class_prop <- prop.table(table(red_c_all))
+    K_med <- length(class_prop)
+    # # Check class sizes
+    # prop.table(table(red_c_all))
+  }
+  # Get unique reduced classes to aid relabeling
+  unique_red_classes <- unique(red_c_all)
+  
   # For each iteration, relabel new classes using the most common old class assignment
   relabel_red_classes <- matrix(NA, nrow = M, ncol = K_med)   # Apply new classes to each iteration
   for (k in 1:K_med) {
-    relabel_red_classes[, k] <- apply(as.matrix(MCMC_out$c_all_MCMC[, red_c_all == k]),
-                                      1, get_mode)
+    red_class <- unique_red_classes[k]
+    relabel_red_classes[, k] <- 
+      apply(as.matrix(MCMC_out$c_all_MCMC[, red_c_all == red_class]), 1, get_mode)
   }
   
   # Reduce and reorder parameter estimates using new classes
@@ -257,7 +291,7 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
 #' }
 #' @param post_MCMC_out output from `post_process_wolca` containing:
 #' \describe{
-#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least 5 percent of individuals}
+#'   \item{\code{K_med}}{Median, across iterations, of number of classes with at least `class_cutoff` percent of individuals}
 #'   \item{\code{pi}}{Matrix of reduced and relabeled posterior samples for pi. (n_iter)x(K_med)}
 #'   \item{\code{theta}}{Array of reduced and relabeled posterior samples for theta. (n_iter)xJx(K_med)xR}
 #'   \item{\code{dendrogram}}{Hierarchical clustering dendrogram used for relabeling}
@@ -291,6 +325,7 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
 #' @export
 #'
 #' @examples
+#'    
 #' # Load data and obtain relevant variables
 #' data("sim_data")
 #' data_vars <- sim_data

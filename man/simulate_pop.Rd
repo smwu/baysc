@@ -6,7 +6,7 @@
 \usage{
 simulate_pop(
   N = 80000,
-  H = 2,
+  S = 2,
   J = 30,
   K = 3,
   R = 4,
@@ -29,7 +29,7 @@ simulate_pop(
 \arguments{
 \item{N}{Population size. Default is 80000.}
 
-\item{H}{Number of subpopulations. Default is 2.}
+\item{S}{Number of subpopulations. Default is 2.}
 
 \item{J}{Number of exposure items. Default is 30.}
 
@@ -37,8 +37,8 @@ simulate_pop(
 
 \item{R}{Number of exposure categories for all items. Default is 4.}
 
-\item{N_s}{Population size for each level of categorical variable S.
-Default is \code{c(60000, 20000)}, corresponding to a binary S with H=2 levels.}
+\item{N_s}{Population size for each level of categorical variable S_i.
+Default is \code{c(60000, 20000)}, corresponding to a binary S_i with S=2 levels.}
 
 \item{modal_theta_prob}{Probability between 0 and 1 for the most likely
 exposure category, assumed to be the same for all items. For all other
@@ -47,42 +47,42 @@ categories, 1 - \code{modal_theta_prob} is evenly split across them. Default is
 categories occur with probability \eqn{(1-0.85)/3 = 0.05}}
 
 \item{formula_c}{String specifying formula for multinomial logistic
-regression to create category latent class assignment C. Default is \code{"~ s_all"},
-which generates C dependent on stratum variable S. All variables in the
+regression to create category latent class assignment C_i. Default is \code{"~ s_all"},
+which generates C_i dependent on stratum variable S_i. All variables in the
 formula must be \code{"c_all"}, \code{"s_all"}, or specified in \code{V_additional}.}
 
 \item{formula_x}{String specifying formula for multinomial logistic regression
-to create multivariate categorical exposure X. Default is \code{"~ c_all"},
-which generates X dependent on latent class C. All variables in
+to create multivariate categorical exposure X_i. Default is \code{"~ c_all"},
+which generates X_i dependent on latent class C_i. All variables in
 the formula must be \code{"c_all"}, \code{"s_all"}, or specified in \code{V_additional}.}
 
 \item{formula_y}{String specifying formula for logistic regression to create
-binary outcome Y. Default is \code{"~ c_all * s_all"}, which generates Y dependent
-on latent class C, stratum S, and their interaction. All variables in the
+binary outcome Y_i. Default is \code{"~ c_all * s_all"}, which generates Y_i dependent
+on latent class C_i, stratum S_i, and their interaction. All variables in the
 formula must be \code{"c_all"}, \code{"s_all"}, or specified in \code{V_additional}.}
 
 \item{beta_mat_c}{Coefficient parameters for a multinomial logistic
-regression to generate latent class assignment C. KxQ, where K is the
-number of categories and Q is the number of covariate terms in the regression.
+regression to generate latent class assignment C_i. Kx(Q_full), where K is the
+number of categories and Q_full is the number of covariate terms in the regression.
 Default is \code{NULL} and default values are used. See details.}
 
-\item{beta_list_x}{Coefficient parameters for a multinomial logistic
-regression to generate multivariate exposure X. List of J matrices,
-each of dimension KxQ. Default is \code{NULL} and default values are used. See details.}
+\item{beta_list_x}{Coefficient parameters for a multinomial logistic regression
+to generate multivariate exposure X_i. List of J matrices, each of dimension
+Kx(Q_full). Default is \code{NULL} and default values are used. See details.}
 
 \item{beta_vec_y}{Coefficient parameters for a logistic regression to
-generate binary outcome Y. Qx1. Default is \code{NULL} and
+generate binary outcome Y_i. (Q_full)x1. Default is \code{NULL} and
 default values are used. See details.}
 
 \item{xi_mat_y}{Alternative to \code{xi_mat_y} but in mixture reference coding.
-Default is \code{NULL}. If specified, must have K rows and q columns, where q is
+Default is \code{NULL}. If specified, must have K rows and Q columns, where Q is
 the number of covariate terms in the regression, excluding all terms
-involving C.}
+involving C_i.}
 
-\item{V_additional}{Dataframe with any additional variables other than C and
-S to be used to generate variables. Number of rows should be N. Default is \code{NULL}.}
+\item{V_additional}{Dataframe with any additional variables other than C_i and
+S_i to be used to generate variables. Number of rows should be N. Default is \code{NULL}.}
 
-\item{cluster_size}{Size of clusters for clustering in the outcome, Y, assumed
+\item{cluster_size}{Size of clusters for clustering in the outcome, Y_i, assumed
 to be the same for all clusters. Default is 80, corresponding to 1000
 clusters if N is 80000, assuming exchangeable latent correlation matrix with
 correlation 0.5 on the off-diagonals.}
@@ -100,8 +100,8 @@ Returns list \code{sim_pop} containing:
 \item{\code{N}}{Population size}
 \item{\code{J}}{Number of exposure items}
 \item{\code{R}}{Number of exposure categories}
-\item{\code{H}}{Number of stratum (i.e., levels of S)}
-\item{\code{N_s}}{Vector of population sizes for levels of S. Hx1}
+\item{\code{S}}{Number of stratum (i.e., levels of S_i)}
+\item{\code{N_s}}{Vector of population sizes for levels of S_i. Sx1}
 \item{\code{true_K}}{True number of latent classes, K}
 \item{\code{true_Ai}}{\code{NULL} or vector of additional continuous variable if
 \code{a_all} is provided in \code{V_additional}. Nx1}
@@ -110,8 +110,8 @@ Returns list \code{sim_pop} containing:
 \item{\code{true_Si}}{Vector of true stratum indicators. Nx1}
 \item{\code{true_Ci}}{Vector of true latent class indicators. Nx1}
 \item{\code{true_pi}}{Vector of true pi values overall in the population. Kx1}
-\item{\code{true_pi_s}}{\code{NULL} or HxK matrix of true pi values within each
-level of S}
+\item{\code{true_pi_s}}{\code{NULL} or SxK matrix of true pi values within each
+level of S_i}
 \item{\code{X_data}}{Matrix of multivariate categorical exposure for all
 individuals. NxJ}
 \item{\code{true_global_patterns}}{Matrix of true global exposure patterns
@@ -121,12 +121,12 @@ defined by modal category. JxK}
 \item{\code{cluster_id}}{Vector of true cluster indicators. Nx1}
 \item{\code{cluster_size}}{Cluster size}
 \item{\code{true_xi}}{Matrix of probit regression coefficients in mixture
-reference coding. Kxq, where q is the number of covariate terms in the
-regression, excluding all terms involving C}
+reference coding. KxQ, where Q is the number of covariate terms in the
+regression, excluding all terms involving C_i}
 \item{\code{true_Phi}}{Vector of true outcome probabilities for all
 individuals. Nx1}
 \item{\code{true_Phi_mat}}{\code{NULL} or matrix of true outcome probabilities
-for individuals aggregated by C and S. KxH}
+for individuals aggregated by C_i and S_i. KxS}
 }
 If \code{save_res = TRUE} (default), also saves \code{sim_pop} as
 \verb{[save_path]_sim_pop.RData}.
@@ -138,7 +138,7 @@ specifications
 \details{
 If \code{NULL} (default) is used for \code{beta_mat_c}, \code{beta_list_x}, or \code{beta_mat_y},
 the following default values are used, corresponding to the scenario with K=3
-latent class and H=2 levels for variable S: \code{beta_mat_c} is a 3x2 matrix with
+latent class and S=2 levels for variable S_i: \code{beta_mat_c} is a 3x2 matrix with
 values \code{c(0, 0, 0.5, 1.3, -0.4, 1.5)} by row; \code{beta_list_x} is a list of J=30
 4x4 matrices as in Example 1 provided below; and \code{beta_vec_y} is a vector
 of length \eqn{3*2=6} with values \code{c(1, -0.7, -1.5, -0.5, -0.5, -0.3)}. The
@@ -150,24 +150,25 @@ the file name (e.g., "~/Documents/stratified_classes"). The file name will
 have "sim_pop.RData" appended to it.
 }
 \examples{
+\dontrun{
 ### Example 1: Default values
 sim_pop <- simulate_pop(save_res = FALSE)
 
 ### Example 2: Similar to default but smaller population size
 # Population size and strata dimensions
-N = 800; H = 2; N_s = c(600, 200)
+N = 800; S = 2; N_s = c(600, 200)
 
-# Generate C ~ S
+# Generate C_i ~ S_i
 K <- 3  
 formula_c <- "~ s_all"
-V_unique <- data.frame(s_all = as.factor(1:H))
+V_unique <- data.frame(s_all = as.factor(1:S))
 pi_mat <- matrix(c(0.3, 0.5, 0.2,   
                    0.1, 0.6, 0.3), 
-                 byrow = TRUE, nrow = H, ncol = K)
+                 byrow = TRUE, nrow = S, ncol = K)
 beta_mat_c <- get_betas_c(pi_mat = pi_mat, formula_c = formula_c, 
                           V_unique = V_unique)
 
-# Generate X ~ C
+# Generate X_i ~ C_i
 J <- 30; R <- 4
 formula_x <- "~ c_all"
 V_unique <- data.frame(c_all = as.factor(1:K))
@@ -183,7 +184,7 @@ beta_list_x <- get_betas_x(profiles = profiles, R = R,
                            modal_theta_prob = modal_theta_prob, 
                            formula_x = formula_x, V_unique = V_unique)
 
-# Generate Y ~ C + S + C:S
+# Generate Y_i ~ C_i + S_i + C_i:S_i
 formula_y <- "~ c_all * s_all"
 beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3)
 cluster_size <- 80
@@ -199,13 +200,13 @@ sim_pop <- simulate_pop(N = N, J = J, K = K, R = R, N_s = N_s,
                          pop_seed = pop_seed, save_res = FALSE)    
                                               
 ### Example 2: Selection-dependent pattern profiles     
-# Generate X ~ C + S
+# Generate X_i ~ C_i + S_i
  formula_x <- "~ c_all + s_all"
  beta_list_x <- lapply(1:J, function(j) cbind(beta_list_x[[j]], 
                                               s_all = c(0, 0.5, 0, 0)))
 
 # Create population
-sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
+sim_pop <- simulate_pop(N = N, S=S, J = J, K = K, R = R, N_s = N_s,
                         modal_theta_prob = modal_theta_prob, 
                         formula_c = formula_c, formula_x = formula_x, 
                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
@@ -213,29 +214,29 @@ sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
                         cluster_size = cluster_size, 
                         pop_seed = pop_seed, save_res = FALSE)
 
-### Example 3: Additional effect modifiers for Y and no clustering      
-# Continuous variable A for age centered about 0
+### Example 3: Additional effect modifiers for Y_i and no clustering      
+# Continuous variable A_i for age centered about 0
 a_all <- stats::rnorm(n = N, mean = 0, sd = 5)
-# Binary variable B for physically inactive or active
+# Binary variable B_i for physically inactive or active
 b_all <- as.factor(stats::rbinom(n = N, size = 1, prob = 0.3) + 1)
-# Create dataframe of additional variables A and B
+# Create dataframe of additional variables A_i and B_i
 V_additional <- data.frame(a_all, b_all)    
               
-# Generate Y ~ C + S + A + B + C:S + C:A + C:B
+# Generate Y_i ~ C_i + S_i + A_i + B_i + C_i:S_i + C_i:A_i + C_i:B_i
 formula_y <- "~ c_all * (s_all + a_all + b_all)"
 beta_vec_y <- c(1, -0.7, -1.5, -0.5, -0.5, -0.3, -0.04, 0.09, 0.08, 0.4, 
                 -0.7, -0.6)
 cluster_size <- 1
                 
 # Create population
-sim_pop <- simulate_pop(N = N, H=H, J = J, K = K, R = R, N_s = N_s,
+sim_pop <- simulate_pop(N = N, S=S, J = J, K = K, R = R, N_s = N_s,
                         modal_theta_prob = modal_theta_prob, 
                         formula_c = formula_c, formula_x = formula_x, 
                         formula_y = formula_y, beta_mat_c = beta_mat_c, 
                         beta_list_x = beta_list_x, beta_vec_y = beta_vec_y, 
                         V_additional = V_additional, cluster_size = cluster_size, 
                         pop_seed = pop_seed, save_res = FALSE)
-
+}
 }
 \seealso{
 \code{\link[=simulate_samp]{simulate_samp()}} \code{\link[=create_categ_var]{create_categ_var()}} \code{\link[=get_betas_x]{get_betas_x()}}
