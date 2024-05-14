@@ -93,6 +93,18 @@ hyperparameter  \eqn{\eta_j} equal to \code{rep(1, R_j)} where \code{R_j} is the
 of levels for exposure item j. If \code{R_j < R}, the remaining levels have
 hyperparameter set to 0.01. This is done independently for each exposure item j
 and is assumed to be the same across latent classes.
+
+If the following warning message appears, please run the sampler for more
+iterations as there is instability in the parameter estimates, usually in the
+form of large positive or negative values for \eqn{\xi}):
+"Error in svrVar(thetas, scale, rscales, mse = design$mse, coef = full) :
+All replicates contained NAs".
+
+When running the variance adjustment, the following warning messages may appear:
+"the number of chains is less than 1; sampling not done" and
+"In mrbweights(design$cluster, design$strata, design$fpc, ...) : Design is
+sampled with replacement: only first stage used". These messages do not pose
+an issue to the statistical validity of the methods and can be ignored.
 }
 \examples{
 \dontrun{   

@@ -499,15 +499,15 @@ post_process <- function(MCMC_out, J, R, Q, class_cutoff) {
   red_c_all <- stats::cutree(dendrogram, k = K_med)    
   # Modify classes if any classes are less than the cutoff percentage
   class_prop <- prop.table(table(red_c_all))
-  if (any(class_prop < 0.05)) {
+  if (any(class_prop < class_cutoff)) {
     # Get classes that are too small
-    small <- which(class_prop < 0.05)
+    small <- which(class_prop < class_cutoff)
     # Group individuals into a larger number of classes 
     red_c_all_temp <- stats::cutree(dendrogram, k = K_med + length(small))
     red_c_all <- red_c_all_temp
     class_prop_temp <- prop.table(table(red_c_all_temp))
     # Get updated classes that are too small
-    small_temp <- sort(which(class_prop_temp < 0.05))
+    small_temp <- sort(which(class_prop_temp < class_cutoff))
     for (small_c in 1:length(small_temp)) {
       c_ind <- small_temp[small_c]
       class_small <- which(red_c_all_temp == c_ind)
