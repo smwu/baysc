@@ -1077,13 +1077,23 @@ simulate_samp <- function(sim_pop, samp_prop = 0.05, samp_size = NULL,
     }
   }
   # Check save_res and save_path
+  # Check save_res and save_path
   if (!is.logical(save_res)) {
     stop("save_res must be a boolean specifying if results should be saved")
   } else if (save_res) {
     if (is.null(save_path) | !is.character(save_path)) {
-      stop("save_path must be a string specifying a path, such as '~/Documents/'")
-    } else if (!dir.exists(save_path)) {
-      stop("directory specified in save_path does not exist")
+      stop("save_path must be a string specifying a path and file name, such as 
+           '~/Documents/stratified_classes'")
+    } else {
+      last_slash_ind <- regexpr("\\/[^\\/]*$", save_path)
+      if (!dir.exists(substr(save_path, start = 1, stop = last_slash_ind))) {
+        stop("directory specified in save_path does not exist")
+      }
+      if (last_slash_ind == length(save_path)) {
+        stop("please append the start of a file name to the end of save_path. 
+             For example, '~/Documents/stratified_classes' will produce a saved 
+             file named 'stratified_classes_sim_samp.RData'")
+      }
     }
   }
   

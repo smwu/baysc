@@ -40,7 +40,7 @@ model {
   pi ~ dirichlet(alpha);  // prior for pi
   for (j in 1:J) {        // prior for theta
     for (k in 1:K) {
-      theta[j, k] ~ dirichlet(eta[j, ]);
+      theta[j, k] ~ dirichlet(to_vector(eta[j, ]));
     }
   }
   for (k in 1:K) {
