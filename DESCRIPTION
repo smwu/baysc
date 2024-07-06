@@ -25,10 +25,7 @@ Imports:
     RcppTN,
     rlang,
     rstan (>= 2.21.8),
-    rstantools (>= 2.3.1.1),
-    SimCorMultRes,
     stats,
-    stringr,
     survey (>= 4.2.1),
     tidyr,
     tidyselect,
@@ -52,6 +49,9 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    devtools
+    rstantools (>= 2.3.1.1),
+    devtools,
+    stringr,
+    SimCorMultRes
 Config/testthat/edition: 3
 VignetteBuilder: knitr

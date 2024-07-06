@@ -103,3 +103,4 @@ sim_samp <- simulate_samp(sim_pop = sim_pop, samp_prop = 0.05, strat = TRUE,
 \seealso{
 \code{\link[=simulate_pop]{simulate_pop()}}
 }
+\keyword{internal}

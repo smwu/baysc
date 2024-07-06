@@ -20,7 +20,6 @@ The `wolca()` function (Section 3.1) implements a survey-weighted Bayesian LCA a
 
 We provide an example dataset from the National Health and Nutrition Examination Survey (NHANES) that includes dietary intake and hypertension data for low-income women in the United States, as well as survey sampling weights and information on stratification and clustered sampling in the survey design [@nchs2023homepage]. 
 
-A data simulation function is also available for creating example data for simulation studies but is not described in this vignette. Please see the “Simulating Data” vignette for a detailed description of the data simulation capabilities. 
 
 ## Background and statistical details
 ### Bayesian latent class analysis

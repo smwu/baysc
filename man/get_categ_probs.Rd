@@ -71,3 +71,4 @@ categ_probs_theta_s <- get_categ_probs(beta_mat = beta_list_x[[1]],
 categ_probs_theta
 
 }
+\keyword{internal}

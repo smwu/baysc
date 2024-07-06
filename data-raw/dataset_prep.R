@@ -133,7 +133,7 @@ usethis::use_data(run_nhanes_swolca_results, overwrite = TRUE, compress = "xz")
 
 #================= Code to prepare `sim_data` dataset ==========================
 # Create population with default parameters
-sim_pop <- simulate_pop(save_res = FALSE)
+sim_pop <- simulate_pop(save_res = FALSE, J = 20)
 # Create sample with default parameters
 sim_samp <- simulate_samp(sim_pop = sim_pop, samp_prop = 0.01, save_res = FALSE)
 sim_data <- sim_samp

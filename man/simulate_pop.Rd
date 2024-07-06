@@ -241,3 +241,4 @@ sim_pop <- simulate_pop(N = N, S=S, J = J, K = K, R = R, N_s = N_s,
 \seealso{
 \code{\link[=simulate_samp]{simulate_samp()}} \code{\link[=create_categ_var]{create_categ_var()}} \code{\link[=get_betas_x]{get_betas_x()}}
 }
+\keyword{internal}

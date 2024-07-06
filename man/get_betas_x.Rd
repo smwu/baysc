@@ -70,3 +70,4 @@ beta_list_x[[1]]
 \seealso{
 \code{\link[=simulate_pop]{simulate_pop()}}
 }
+\keyword{internal}

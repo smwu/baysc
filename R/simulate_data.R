@@ -32,6 +32,7 @@
 #' corresponding probability of each category of the categorical outcome variable.  
 #' 
 #' @importFrom stats model.matrix as.formula
+#' @keywords internal
 #' @export
 #' @examples
 #' # Get pi probabilities for C_i ~ S_i
@@ -120,6 +121,7 @@ get_categ_probs <- function(beta_mat, formula, V_unique) {
 #' number of columns equal to the number of levels in the categorical covariate.
 #' 
 #' @importFrom stats terms as.formula model.matrix
+#' @keywords internal
 #' @export
 #' @examples
 #' ## Example 1: latent class C_i depends on stratum variable S_i
@@ -221,6 +223,7 @@ get_betas_c <- function(pi_mat, formula_c, V_unique) {
 #' exposure variable for that item. Each matrix of betas has R rows and number 
 #' of columns equal to the number of columns in the design matrix.
 #' @seealso [simulate_pop()]
+#' @keywords internal
 #' @export
 #' @examples
 #' ## Example 1: X_i ~ C_i
@@ -571,6 +574,7 @@ create_categ_var <- function(beta_mat, design_mat, split_dim = NULL, V = NULL) {
 #' @importFrom stringr str_detect
 #' @importFrom stats terms as.formula model.matrix rnorm rbinom pnorm toeplitz
 #' @importFrom SimCorMultRes rbin
+#' @keywords internal
 #' @export
 #' @examples 
 #' \dontrun{
@@ -1047,6 +1051,7 @@ simulate_pop <- function(N = 80000, S = 2, J = 30, K = 3, R = 4,
 #' `[save_path]_sim_samp.RData`. 
 #' 
 #' @seealso [simulate_pop()] 
+#' @keywords internal
 #' @export
 #' @examples 
 #' \dontrun{

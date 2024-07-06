@@ -715,7 +715,7 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat) {
   pi_red = pi_red / rowSums(pi_red)  
   
   # Get posterior parameter samples for unique classes for theta and xi
-  theta_red <- post_MCMC_out$theta[, , unique_classes, ]
+  theta_red <- post_MCMC_out$theta[, , unique_classes, , drop = FALSE]
   theta_red <- ifelse(theta_red < 1e-8, 1e-8, theta_red) # prevent underflow
   theta_red <- plyr::aaply(theta_red, c(1, 2, 3), function(x) x / sum(x),
                            .drop = FALSE) # Re-normalize

@@ -146,7 +146,7 @@
 #' @format A list with 23 elements:
 #' \describe{
 #'   \item{\code{samp_ind}}{Vector of population indices for sampled 
-#'   individuals. nx1, where n=4000.}
+#'   individuals. nx1, where n=800.}
 #'   \item{\code{sample_wt}}{Vector of sampling weights for sampled 
 #'   individuals. nx1}
 #'   \item{\code{N}}{Population size}
@@ -168,7 +168,7 @@
 #'   \item{\code{true_pi_s}}{`NULL` or HxK matrix of true pi values within each 
 #'   level of S}
 #'   \item{\code{X_data}}{Matrix of multivariate categorical exposure for 
-#'   sampled individuals. nxJ, where J = 30.}
+#'   sampled individuals. nxJ, where J = 20.}
 #'   \item{\code{true_global_patterns}}{Matrix of true global exposure patterns 
 #'   defined by modal category. JxK}
 #'   \item{\code{true_global_thetas}}{Array of true thetas. JxKxR, where R = 4.}

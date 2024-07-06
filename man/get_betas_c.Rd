@@ -54,3 +54,4 @@ V_unique <- NULL
 get_betas_c(pi_mat = pi_mat, formula_c = formula_c, V_unique = V_unique)
 
 }
+\keyword{internal}

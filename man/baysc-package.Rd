@@ -16,20 +16,18 @@ where creation of the pattern profiles is directly informed by the outcome.
 Summary and plotting functions for visualizing output are available, as are
 diagnostic functions for examining convergence of the sampler.
 
-We provide an example dataset from the National Health and Nutrition
-Examination Survey (NHANES) that includes dietary intake and hypertension data
-for low-income women in the United States, as well as survey sampling weights
-and information on stratification and clustering in the survey design. A
-simulated dataset named \code{sim_data} is also provided to help with
-familiarization of the package, and simulation functions \code{\link[=simulate_pop]{simulate_pop()}} and
-\code{\link[=simulate_samp]{simulate_samp()}} are available for creating example data population and
-survey sample data for simulation studies.
+We provide an example dataset, \code{data_nhanes}, from the National Health and
+Nutrition Examination Survey (NHANES) that includes dietary intake and
+hypertension data for low-income women in the United States, as well as survey
+sampling weights and information on stratification and clustering in the
+survey design. A simulated dataset named \code{sim_data} is also provided to help
+with familiarization of the package.
 }
 \details{
 Use the \code{\link[=wolca]{wolca()}} function to run an unsupervised weighted overfitted LCA and
 obtain pattern profiles. \code{\link[=wolca_var_adjust]{wolca_var_adjust()}} provides a post-hoc variance
 adjustment that addresses variance underestimation. To examine the association
-of pattern profiles with a binary outcome through a two-step appraoch, run
+of pattern profiles with a binary outcome through a two-step approach, run
 \code{\link[=wolca_svyglm]{wolca_svyglm()}}.
 
 Use the \code{\link[=swolca]{swolca()}} function to run a supervised weighted overfitted LCA that
