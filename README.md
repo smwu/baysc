@@ -57,8 +57,6 @@ Use the `wolca()` function to run an unsupervised WOLCA and obtain pattern profi
 
 We provide an example dataset from the National Health and Nutrition Examination Survey (NHANES) that includes multivariate categorical dietary intake data as well as binary hypertension data for low-income women in the United States. Survey sampling weights and information on stratification and clustering are included to allow for adjustment for survey design when conducting estimation and inference.
 
-A simulated dataset named `sim_data` is also provided to help with familiarization of the package, and simulation functions `simulate_pop()` and `simulate_samp()` are available for creating example data population and survey sample data for simulation studies, with more information provided in the "[Simulating Data](vignettes/simulating_data.pdf)" vignette.
-
 <div id='id-section5'/>
 
 ## Example
@@ -106,8 +104,6 @@ plot_pattern_profiles(res = res_swolca_adjust)
 regr_coefs <- get_regr_coefs(res = res_swolca_adjust, ci_level = 0.95, digits = 2)
 plot_regr_coefs(regr_coefs = regr_coefs, res = res_swolca_adjust)
 ```
-
-When running the variance adjustment, the following warning messages may appear: *"the number of chains is less than 1; sampling not done"* and *"In mrbweights(design\$cluster, design\$strata, design\$fpc, ...) : Design is sampled with replacement: only first stage used."* These messages do not pose an issue to the statistical validity of the methods and can be ignored.
 
 <div id='id-section6'/>
 
