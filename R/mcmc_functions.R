@@ -361,8 +361,8 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J,
   
   # Discard burn-in
   warmup <- floor(burn / thin)
-  pi_MCMC <- pi_MCMC[-(1:warmup), ]
-  theta_MCMC <- theta_MCMC[-(1:warmup), , , ]
+  pi_MCMC <- pi_MCMC[-(1:warmup), , drop = FALSE]
+  theta_MCMC <- theta_MCMC[-(1:warmup), , , , drop = FALSE]
   xi_MCMC <- xi_MCMC[-(1:warmup), , , drop = FALSE]
   c_all_MCMC <- c_all_MCMC[-(1:warmup), ]
   z_all_MCMC <- z_all_MCMC[-(1:warmup), ]

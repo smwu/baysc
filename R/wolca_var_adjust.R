@@ -246,10 +246,11 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   mod_stan <- stanmodels$WOLCA_main
   
   # Run Stan model
-  # Stan will pass warnings from calling 0 chains, but will still create an 
-  # out_stan object for the 'grad_log_prob()' method
-  out_stan <- rstan::sampling(object = mod_stan, data = data_stan, 
-                              pars = par_stan, chains = 0, iter = 0, refresh = 0)
+  # Suppress Stan warnings from calling 0 chains 
+  # Create an out_stan object for the 'grad_log_prob()' method
+  out_stan <- suppressMessages(
+    rstan::sampling(object = mod_stan, data = data_stan, 
+                              pars = par_stan, chains = 0, iter = 0, refresh = 0))
   
   #=============== Convert to unconstrained parameters =========================
   # Convert params from constrained space to unconstrained space
@@ -310,8 +311,15 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
     V1_pd <- Matrix::nearPD(V1)
     R1 <- chol(V1_pd$mat)
     V1_pd_diff <- sum(abs(eigen(V1)$values - eigen(V1_pd$mat)$values))
-    print(paste0("V1: absolute eigenvalue difference to nearest p.d. matrix: ", 
-                 V1_pd_diff))
+    if (V1_pd_diff > 1) {
+      warning(paste0("V1: absolute eigenvalue difference to nearest p.d. matrix: ", 
+                     V1_pd_diff, 
+                     ". Instability in variance adjustment, likely due to lack of ", 
+                     "smoothness in the posterior. Please run the sampler for ",
+                     "more iterations or do not run the variance adjustment."))
+    }
+    # print(paste0("V1: absolute eigenvalue difference to nearest p.d. matrix: ", 
+    #              V1_pd_diff))
   } else {
     R1 <- chol(V1)
   }
@@ -319,12 +327,14 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
     H_inv_pd <- Matrix::nearPD(H_inv)
     R2_inv <- chol(H_inv_pd$mat)
     H_inv_pd_diff <- sum(abs(eigen(H_inv)$values - eigen(H_inv_pd$mat)$values))
-    print(paste0("H_inv: absolute eigenvalue difference to nearest p.d. matrix: ", 
-                 H_inv_pd_diff))
+    # print(paste0("H_inv: absolute eigenvalue difference to nearest p.d. matrix: ", 
+    #              H_inv_pd_diff))
     if (H_inv_pd_diff > 5) {
-      stop("NaNs created during variance adjustment, likely due to lack of 
-      smoothness in the posterior. Please run the sampler for more iterations or 
-      do not run variance adjustment.")
+      warning(paste0("H_inv: absolute eigenvalue difference to nearest p.d. matrix: ", 
+                     H_inv_pd_diff, 
+                     ". Instability in variance adjustment, likely due to lack of ", 
+                     "smoothness in the posterior. Please run the sampler for ",
+                     "more iterations or do not run the variance adjustment."))
     }
   } else {
     R2_inv <- chol(H_inv)
