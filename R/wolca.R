@@ -91,8 +91,7 @@
 #' `[save_path]_wolca_adapt.RData`. 
 #' 
 #' @importFrom RcppTN rtn
-#' @importFrom LaplacesDemon rinvgamma
-#' @importFrom stats rnorm median confint
+#' @importFrom stats rnorm median confint rgamma
 #' @importFrom survey svydesign svyglm
 #' @export
 #' 

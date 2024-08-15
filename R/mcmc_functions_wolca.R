@@ -320,8 +320,7 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
 #' [wolca_svyglm()] [wolca()] 
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
-#' @importFrom LaplacesDemon rcat
-#' @importFrom stats median
+#' @importFrom stats median rmultinom
 #' @export
 #'
 #' @examples
@@ -427,7 +426,8 @@ get_estimates_wolca <- function(MCMC_out, post_MCMC_out, n, J, x_mat) {
     # Calculate p(c_i=k|-) = p(x,y,c_i=k) / p(x,y)
     pred_class_probs[i, ] <- exp(log_cond_c[i, ] - matrixStats::logSumExp(log_cond_c[i, ]))
     # Update class assignment using the posterior probabilities
-    c_all[i] <- LaplacesDemon::rcat(n = 1, p = pred_class_probs[i, ])
+    c_all[i] <- which(stats::rmultinom(n = 1, size = 1, 
+                                       prob = pred_class_probs[i, ]) == 1)
   }
   
   estimates <- list(K_red = K_red, pi_red = pi_red, theta_red = theta_red,
