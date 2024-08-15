@@ -14,8 +14,8 @@ Imports:
     e1071,
     ggplot2,
     gtools,
-    LaplacesDemon,
     magrittr,
+    MASS,
     Matrix,
     matrixStats,
     methods,
@@ -25,6 +25,7 @@ Imports:
     RcppTN,
     rlang,
     rstan (>= 2.21.8),
+    rstantools (>= 2.3.1.1),
     stats,
     survey (>= 4.2.1),
     tidyr,
@@ -40,7 +41,7 @@ LinkingTo:
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.2
 Depends: 
     R (>= 3.5.0)
 Biarch: true
@@ -49,7 +50,6 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    rstantools (>= 2.3.1.1),
     devtools,
     stringr,
     SimCorMultRes

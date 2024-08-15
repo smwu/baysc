@@ -33,7 +33,8 @@
 #' 
 #' @seealso [init_probit()] [swolca()] [wolca()]
 #' 
-#' @importFrom LaplacesDemon rdirichlet rcat
+#' @importFrom gtools rdirichlet
+#' @importFrom stats rmultinom
 #' @export
 #'
 #' @examples
@@ -45,16 +46,17 @@
 #' 
 init_OLCA <- function(K, n, J, R, alpha, eta) {
   # Prior for pi
-  pi <- c(LaplacesDemon::rdirichlet(n = 1, alpha = alpha))
+  pi <- c(gtools::rdirichlet(n = 1, alpha = alpha))
   
   # Initialize class assignment, c, for individuals
-  c_all <- LaplacesDemon::rcat(n = n, p = pi)
+  c_all <- apply(stats::rmultinom(n = n, size = 1, prob = pi), 2, 
+                 function(x) which(x == 1))
   
   # Prior for theta
   theta <- array(0, dim = c(J, K, R))
   for (j in 1:J) {
     for (k in 1:K) {
-      theta[j, k, ] <- c(LaplacesDemon::rdirichlet(n = 1, alpha = eta[j, ]))
+      theta[j, k, ] <- c(gtools::rdirichlet(n = 1, alpha = eta[j, ]))
     }
   }
   
@@ -100,9 +102,9 @@ init_OLCA <- function(K, n, J, R, alpha, eta) {
 #'
 #' @seealso [init_OLCA()] [swolca()] 
 #' 
-#' @importFrom LaplacesDemon rmvn rinvgamma
+#' @importFrom MASS mvrnorm
 #' @importFrom truncnorm rtruncnorm
-#' @importFrom stats qnorm rnorm
+#' @importFrom stats qnorm rnorm rgamma
 #' @export
 #'
 #' @examples
@@ -138,7 +140,7 @@ init_OLCA <- function(K, n, J, R, alpha, eta) {
 #'   mu0[[k]] <- stats::rnorm(n = Q)
 #'   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
 #'   # components and mean variance 2.5 for a weakly informative prior on xi
-#'   Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+#'   Sig0[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)), 
 #'   nrow = Q, ncol = Q)
 #' }
 #' 
@@ -157,7 +159,7 @@ init_probit <- function(K, n, Q, V, mu0, Sig0, y_all, c_all) {
   
   # Prior for xi. Same prior for each class
   for (k in 1:K) {
-    xi[k, ] <- LaplacesDemon::rmvn(n = 1, mu = mu0[[k]], Sigma = Sig0[[k]])
+    xi[k, ] <- MASS::mvrnorm(n = 1, mu = mu0[[k]], Sigma = Sig0[[k]])
   }
   
   # Initialize probit model latent variable, z, following Albert and Chib (1993)
@@ -223,8 +225,7 @@ init_probit <- function(K, n, Q, V, mu0, Sig0, y_all, c_all) {
 #' @seealso [post_process()] [get_estimates()] [swolca_var_adjust()] [swolca()] 
 #' [run_MCMC_Rcpp_wolca()]
 #' @importFrom gtools permute
-#' @importFrom LaplacesDemon rinvgamma
-#' @importFrom stats rnorm
+#' @importFrom stats rnorm rgamma
 #' @export
 #' 
 #' @references 
@@ -273,7 +274,7 @@ init_probit <- function(K, n, Q, V, mu0, Sig0, y_all, c_all) {
 #'   mu0[[k]] <- stats::rnorm(n = Q)
 #'   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
 #'   # components and mean variance 2.5 for a weakly informative prior on xi
-#'   Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+#'   Sig0[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)), 
 #'   nrow = Q, ncol = Q)
 #' }
 #' 
@@ -461,7 +462,7 @@ run_MCMC_Rcpp <- function(OLCA_params, probit_params, n_runs, burn, thin, K, J,
 #'   mu0[[k]] <- stats::rnorm(n = Q)
 #'   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
 #'   # components and mean variance 2.5 for a weakly informative prior on xi
-#'   Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+#'   Sig0[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)), 
 #'   nrow = Q, ncol = Q)
 #' }
 #' 
@@ -611,8 +612,7 @@ post_process <- function(MCMC_out, J, R, Q, class_cutoff) {
 #' @seealso [run_MCMC_Rcpp()] [post_process()] [swolca_var_adjust()] [swolca()] 
 #' @importFrom plyr aaply
 #' @importFrom matrixStats logSumExp
-#' @importFrom LaplacesDemon rcat
-#' @importFrom stats dnorm median pnorm
+#' @importFrom stats dnorm median pnorm rmultinom
 #' @export
 #' 
 #' @references 
@@ -661,7 +661,7 @@ post_process <- function(MCMC_out, J, R, Q, class_cutoff) {
 #'   mu0[[k]] <- stats::rnorm(n = Q)
 #'   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
 #'   # components and mean variance 2.5 for a weakly informative prior on xi
-#'   Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+#'   Sig0[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)), 
 #'   nrow = Q, ncol = Q)
 #' }
 #' 
@@ -758,7 +758,8 @@ get_estimates <- function(MCMC_out, post_MCMC_out, n, J, V, y_all, x_mat) {
     # Calculate p(c_i=k|-) = p(x,y,c_i=k) / p(x,y)
     pred_class_probs[i, ] <- exp(log_cond_c[i, ] - matrixStats::logSumExp(log_cond_c[i, ]))
     # Update class assignment using the posterior probabilities
-    c_all[i] <- LaplacesDemon::rcat(n = 1, p = pred_class_probs[i, ])
+    c_all[i] <- which(stats::rmultinom(n = 1, size = 1, 
+                                       prob = pred_class_probs[i, ]) == 1)
     # Calculate outcome probabilities P(Y=1|-) using updated class assignment
     Phi_med[i] <- Phi_med_all_c[i, c_all[i]]
   }

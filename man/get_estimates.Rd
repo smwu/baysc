@@ -106,7 +106,7 @@ for (k in 1:K) {
   mu0[[k]] <- stats::rnorm(n = Q)
   # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
   # components and mean variance 2.5 for a weakly informative prior on xi
-  Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25), 
+  Sig0[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)), 
   nrow = Q, ncol = Q)
 }
 

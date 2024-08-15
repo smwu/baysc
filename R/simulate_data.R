@@ -5,7 +5,6 @@
 # Date updated: 2023/04/10
 #===================================================================
 
-# library(LaplacesDemon) # Sample from distributions
 # library(SimCorMultRes) # Simulated correlated binary outcomes
 # library(dplyr)         # Data wrangling and manipulation
 # library(ggpubr)        # Multiple plots side-by-side

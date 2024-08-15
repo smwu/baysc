@@ -184,8 +184,7 @@
 #' @seealso [swolca_var_adjust()] [wolca()]
 #' 
 #' @importFrom RcppTN rtn
-#' @importFrom LaplacesDemon rinvgamma
-#' @importFrom stats rnorm median model.matrix as.formula sd
+#' @importFrom stats rnorm median model.matrix as.formula sd rgamma
 #' @export
 #' 
 #' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
@@ -338,9 +337,10 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
     if (is.null(Sig0_adapt)) {
       Sig0_adapt <- vector("list", K_max)
       for (k in 1:K_max) {
-        # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
-        # components and mean variance 2.5 for a weakly informative prior on xi
-        Sig0_adapt[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25),
+        # InvGamma(shape=3.5, scale=6.25) hyperprior for prior variance of xi. 
+        # Assume uncorrelated components and mean variance 2.5 for a weakly 
+        # informative prior on xi
+        Sig0_adapt[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)),
                                 nrow = Q, ncol = Q)
       }
     }
@@ -425,9 +425,10 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
     if (is.null(Sig0_fixed)) {
       Sig0_fixed <- vector("list", K_fixed)
       for (k in 1:K_fixed) {
-        # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
-        # components and mean variance 2.5 for a weakly informative prior on xi
-        Sig0_fixed[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25),
+        # InvGamma(shape=3.5, scale=6.25) hyperprior for prior variance of xi. 
+        # Assume uncorrelated components and mean variance 2.5 for a weakly 
+        # informative prior on xi
+        Sig0_fixed[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)),
                                 nrow = Q, ncol = Q)
       }
     }

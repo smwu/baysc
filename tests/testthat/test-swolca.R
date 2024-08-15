@@ -45,7 +45,7 @@ res_fixed_strat <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_w
                           thin = 1, save_res = FALSE)
 
 test_that("stratum covariate works", {
-  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.38, 0.43, 0.20))
+  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.35, 0.44, 0.21))
   expect_equal(max(table(res_fixed_strat$estimates$c_all)), 442) 
   expect_equal(min(table(res_fixed_strat$estimates$c_all)), 173) 
 })
@@ -66,7 +66,7 @@ res_R_j_adjust <- swolca_var_adjust(res = res_R_j, num_reps = 100,
                                     save_res = FALSE, adjust_seed = 1)
 
 test_that("R_j works", {
-  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.28, 0.52, 0.20))
+  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.28, 0.52, 0.21))
   expect_equal(max(table(res_R_j$estimates$c_all)), 442) 
   expect_equal(min(table(res_R_j$estimates$c_all)), 173) 
 })
@@ -92,8 +92,8 @@ res_nhanes_adjust <- swolca_var_adjust(res = res_nhanes, num_reps = 100,
                                        save_res = FALSE, adjust_seed = 1)
 test_that("continuous covariate works", {
   expect_equal(round(res_nhanes_adjust$estimates$pi_med, 2), 
-               c(0.14, 0.20, 0.18, 0.21, 0.27))
-  expect_equal(max(table(res_nhanes_adjust$estimates$c_all)), 507) 
-  expect_equal(min(table(res_nhanes_adjust$estimates$c_all)), 316) 
+               c(0.18, 0.24, 0.11, 0.21, 0.27))
+  expect_equal(max(table(res_nhanes_adjust$estimates$c_all)), 513) 
+  expect_equal(min(table(res_nhanes_adjust$estimates$c_all)), 263) 
 })
 

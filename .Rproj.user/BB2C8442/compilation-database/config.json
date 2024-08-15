@@ -11,8 +11,6 @@
         "-DUSE_STANC3",
         "-D_HAS_AUTO_PTR_ETC=0",
         "-I/opt/R/arm64/include",
-        "-I/usr/local/include",
-        "-fopenmp",
         "-I'/Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/library/RcppParallel/include'",
         "-D_REENTRANT",
         "-DSTAN_THREADS",
@@ -35,8 +33,8 @@
     ],
     "pch": "RcppArmadillo",
     "is_cpp": true,
-    "hash": "169819702717024399131698249504",
-    "compiler": "12804845853580840191",
+    "hash": "172371572417236532761723653276",
+    "compiler": "12465587338919104339",
     "rversion": "4.3.1",
     "dbversion": 4
 }

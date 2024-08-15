@@ -175,11 +175,11 @@ grad_par <- function(pwts, svydata, stan_mod, stan_data, par_stan, u_pars) {
 #' file names are the same. 
 #'
 #' @seealso [swolca()]
-#' @importFrom stats rnorm pnorm optimHess vcov median
-#' @importFrom LaplacesDemon rinvgamma
+#' @importFrom stats rnorm pnorm optimHess vcov median rgamma
 #' @importFrom rstan sampling unconstrain_pars grad_log_prob constrain_pars
 #' @importFrom survey svydesign as.svrepdesign withReplicates
 #' @importFrom Matrix nearPD
+#' @importFrom rstantools rstan_config
 #' @export
 #' 
 #' @references 
@@ -340,9 +340,10 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   if (is.null(Sig0)) {
     Sig0 <- vector("list", K)
     for (k in 1:K) {
-      # InvGamma(3.5, 6.25) hyperprior for prior variance of xi. Assume uncorrelated
-      # components and mean variance 2.5 for a weakly informative prior on xi
-      Sig0[[k]] <- diag(LaplacesDemon::rinvgamma(n = Q, shape = 3.5, scale = 6.25),
+      # InvGamma(shape=3.5, scale=6.25) hyperprior for prior variance of xi. 
+      # Assume uncorrelated components and mean variance 2.5 for a weakly 
+      # informative prior on xi
+      Sig0[[k]] <- diag(1/(stats::rgamma(n = Q, shape = 3.5, rate = 6.25)),
                         nrow = Q, ncol = Q)
     }
   }

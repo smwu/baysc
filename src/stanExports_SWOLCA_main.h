@@ -61,7 +61,7 @@ static constexpr std::array<const char*, 97> locations_array__ =
   " (in 'SWOLCA_main', line 38, column 9 to column 10)",
   " (in 'SWOLCA_main', line 38, column 2 to column 18)",
   " (in 'SWOLCA_main', line 40, column 2 to column 24)",
-  " (in 'SWOLCA_main', line 43, column 6 to column 40)",
+  " (in 'SWOLCA_main', line 43, column 6 to column 51)",
   " (in 'SWOLCA_main', line 42, column 19 to line 44, column 5)",
   " (in 'SWOLCA_main', line 42, column 4 to line 44, column 5)",
   " (in 'SWOLCA_main', line 41, column 17 to line 45, column 3)",
@@ -549,9 +549,10 @@ public:
                              stan::model::rvalue(theta, "theta",
                                stan::model::index_uni(j),
                                stan::model::index_uni(k)),
-                             stan::model::rvalue(eta, "eta",
-                               stan::model::index_uni(j),
-                               stan::model::index_omni())));
+                             stan::math::to_vector(
+                               stan::model::rvalue(eta, "eta",
+                                 stan::model::index_uni(j),
+                                 stan::model::index_omni()))));
           }
         }
         current_statement__ = 40;

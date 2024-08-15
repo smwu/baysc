@@ -73,16 +73,6 @@ arma::mat mvrnorm_cpp(const int& n, const arma::vec& mu, const arma::mat& sigma)
 //   return mu.t() + z;
 // }
 
-// // Draw from multivariate Normal distribution
-// // [[Rcpp::export]]
-// arma::mat mvrnorm_cpp3(const int& n, const arma::rowvec& mu, const arma::mat& sigma) {
-//   Environment pkg = Environment::namespace_env("LaplacesDemon");
-//   Function f("rmvn");
-//   // NumericMatrix temp = f(_["n"] = 1, _["mu"] = mu, _["Sigma"] = sigma);
-//   arma::mat temp = as<arma::mat>(f(1, _["mu"] = mu, _["Sigma"] = sigma));
-//   return temp;
-// }
-
 //' Draw from a truncated Normal distribution
 //'
 //' @param n Number of draws

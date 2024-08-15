@@ -99,7 +99,6 @@ unconstrain_wolca <- function(i, K, stan_model, pi, theta) {
 #'
 #' @seealso [wolca()]
 #' @importFrom stats rnorm pnorm optimHess vcov median
-#' @importFrom LaplacesDemon rinvgamma
 #' @importFrom rstan sampling unconstrain_pars grad_log_prob constrain_pars
 #' @importFrom survey svydesign as.svrepdesign withReplicates
 #' @importFrom Matrix nearPD
