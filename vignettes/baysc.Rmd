@@ -55,7 +55,7 @@ Survey weights are incorporated into parameter estimation by up-weighting each i
 $$
 p_{wtd}(\theta|D) \propto p(\theta)\prod_{i=1}^n p(D_i|\theta)^{\tilde{w}_i}
 $$
-The posterior distributions created by this will create variance estimates that are smaller than their true value. In order to obtain accurate variance estimates, a post-processing variance adjustment proposed by @williams2021uncertainty is used post-hoc to recover the true variance based on pseudo-MLE theory. A rescaling and reshaping transformation to the posterior estimates is applied to obtain adjusted estimates that have approximately correct variance. 
+Using the sampling weights to exponentiate the unit likelihood contributions constructs a pseudo or composite likelihood that approximates the population generating likelihood on the observed sample [@savitsky2016bayesian]. The posterior distributions created by this will create variance estimates that are smaller than their true value. In order to obtain accurate variance estimates, a post-processing variance adjustment proposed by @williams2021uncertainty is used post-hoc to recover the true variance based on pseudo-MLE theory. A rescaling and reshaping transformation to the posterior estimates is applied to obtain adjusted estimates that have approximately correct variance. 
 
 ## Package installation
 The `baysc` package can be installed and loaded by running the following code. 
