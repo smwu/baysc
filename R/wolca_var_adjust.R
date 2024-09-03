@@ -155,7 +155,7 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
     stop("variance adjustment has already been performed, since res$estimates is not NULL")
   }
   # Check num_reps
-  if ((num_reps %% 100 != 0) | num_reps < 1) {
+  if ((num_reps %% 1 != 0) | num_reps < 1) {
     stop("num_reps must be a whole number greater than 0, recommended to be at least 50. 
     More replicates will lead to more accurate results but will take longer to run.")
   }

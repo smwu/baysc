@@ -128,11 +128,11 @@ wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95,
   stratum_id <- res$data_vars$stratum_id
   cluster_id <- res$data_vars$cluster_id
   x_mat <- res$data_vars$x_mat
-  w_all <- res$data_vars$w_all
+  sampling_wt <- res$data_vars$sampling_wt
   
   # If no additional covariates, set V_data to be a column of all ones
   if (is.null(V_data)) {
-    V_data <- as.data.frame(matrix(1, nrow = length(w_all)))
+    V_data <- as.data.frame(matrix(1, nrow = length(sampling_wt)))
   }
   
   # Catch errors
@@ -158,24 +158,25 @@ wolca_svyglm <- function(res, y_all, V_data = NULL, glm_form, ci_level = 0.95,
     # Survey data frame for specifying survey design
     svy_data <- data.frame(stratum_id = factor(stratum_id), 
                            cluster_id = factor(cluster_id),
-                           x_mat = x_mat, y_all = y_all, w_all = w_all)
+                           x_mat = x_mat, y_all = y_all, 
+                           sampling_wt = sampling_wt)
     # Add latent class assignment variable to survey data
     svy_data$c_all <- factor(estimates$c_all)
     # Add additional covariates
     svy_data <- cbind(svy_data, V_data)
     # Specify survey design
     svydes <- survey::svydesign(ids = ~cluster_id, strata = ~stratum_id, 
-                                weights = ~w_all, data = svy_data)
+                                weights = ~sampling_wt, data = svy_data)
   } else { # No stratifying variable
     # Survey data frame for specifying survey design
     svy_data <- data.frame(cluster_id = cluster_id, x_mat = x_mat, 
-                           y_all = y_all, w_all = w_all)
+                           y_all = y_all, sampling_wt = sampling_wt)
     # Add latent class assignment variable to survey data
     svy_data$c_all <- factor(estimates$c_all)
     # Add additional covariates
     svy_data <- cbind(svy_data, V_data)
     # Specify survey design
-    svydes <- survey::svydesign(ids = ~cluster_id, weights = ~w_all, 
+    svydes <- survey::svydesign(ids = ~cluster_id, weights = ~sampling_wt, 
                                 data = svy_data)    
   }
   
