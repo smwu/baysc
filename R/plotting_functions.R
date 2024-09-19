@@ -296,7 +296,7 @@ plot_class_dist <- function(res, class_labels = NULL,
   }
   
   # Obtain pi estimates
-  if (!is.null(res$estimates)) {
+  if (!is.null(res$estimates_adjust)) {
     # Adjusted estimates 
     pi_red <- as.data.frame(res$estimates_adjust$pi_red)
   } else {

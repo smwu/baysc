@@ -339,19 +339,20 @@ get_cov_props <- function(svy_design, cov, var_levels, col_props = TRUE,
     # Get posterior SD of the class proportions, using adjusted or unadjusted
     if (!is.null(res$estimates_adjust)) {
       output[, -n_cols] <- unlist(apply(res$estimates_adjust$pi_red, 2, function(x) 
-        paste0(format(round(mean(x)*100, digits), nsmall = digits), " (", 
-               format(round(stats::sd(x)*100, digits), nsmall = digits), ")")))
+        paste0(format(round(mean(x, na.rm = TRUE)*100, digits), nsmall = digits), " (", 
+               format(round(stats::sd(x, na.rm = TRUE)*100, digits), nsmall = digits), ")")))
     } else {
       output[, -n_cols] <- unlist(apply(res$estimates$pi_red, 2, function(x) 
-        paste0(format(round(mean(x)*100, digits), nsmall = digits), " (", 
-               format(round(stats::sd(x)*100, digits), nsmall = digits), ")")))
+        paste0(format(round(mean(x, na.rm = TRUE)*100, digits), nsmall = digits), " (", 
+               format(round(stats::sd(x, na.rm = TRUE)*100, digits), nsmall = digits), ")")))
     }
   # If continuous covariate, estimate population mean for each class
   } else if (!is.factor(svy_design$variables[[cov]])) {
     temp_tot <- as.data.frame(survey::svymean(stats::as.formula(paste0("~", cov)), 
-                                              svy_design))
+                                              svy_design, na.rm = TRUE))
     temp_class <- as.data.frame(survey::svyby(stats::as.formula(paste0("~", cov)), 
-                                              ~Class, svy_design, survey::svymean))
+                                              ~Class, svy_design, survey::svymean, 
+                                              na.rm = TRUE))
     output[, n_cols] <- format(round(temp_tot$mean, digits), nsmall = digits)
     output[, -n_cols] <- sapply(1:(n_cols-1), function(x)
       format(round(temp_class[x, 1 + 1:n_levels], digits), nsmall = digits))
@@ -360,16 +361,17 @@ get_cov_props <- function(svy_design, cov, var_levels, col_props = TRUE,
     if (col_props) {
       # column proportions (category proportions for a given class)
       temp_tot <- as.data.frame(survey::svymean(stats::as.formula(paste0("~", cov)), 
-                                                svy_design))
+                                                svy_design, na.rm = TRUE))
       temp_class <- as.data.frame(survey::svyby(stats::as.formula(paste0("~", cov)), 
-                                                ~Class, svy_design, survey::svymean))
+                                                ~Class, svy_design, survey::svymean, 
+                                                na.rm = TRUE))
       output[, n_cols] <- format(round(temp_tot$mean*100, digits), nsmall = digits)
       output[, -n_cols] <- as.data.frame(sapply(1:(n_cols-1), function(x)
         format(round(temp_class[x, 1 + 1:n_levels]*100, digits), nsmall = digits)))
     } else {
       # row proportions (class proportions for a given category)
       temp_class <- as.data.frame(survey::svyby(~Class,  stats::as.formula(paste0("~", cov)), 
-                                                svy_design, survey::svymean))
+                                                svy_design, survey::svymean, na.rm = TRUE))
       output[, n_cols] <- 100
       output[, -n_cols] <- format(round(temp_class[1:n_levels, 2:n_cols]*100, 
                                        digits), nsmall = digits)
