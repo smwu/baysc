@@ -53,8 +53,6 @@ manual_CI <- function(model_object, svy_df, ci = 0.95){
 #' are only performed on relevant variables.
 #' 
 #' @inheritParams swolca
-#' @param model String specifying which model is used. Must be one of `swolca` 
-#' (default) or `wolca`
 #' @return The function stops and an error message is displayed if the input 
 #' variables are not acceptable
 #' @details All parameters are set to `NULL` by default so that error checks 
@@ -511,9 +509,9 @@ convert_to_probs <- function(est_xi, glm_form, V_data, cov_name) {
 #' 
 #' `get_ci` is a helper function that formats confidence or credible intervals
 #' @param post_samp Numeric vector of posterior samples
-#' @param lb Lower bound quantile of interval estimate. Default is 0.025 
+#' @param quant_lb Lower bound quantile of interval estimate. Default is 0.025 
 #' corresponding to a 95% interval
-#' @param ub Upper bound quantile of interval estimate. Default is 0.975 
+#' @param quant_ub Upper bound quantile of interval estimate. Default is 0.975 
 #' corresponding to a 95% interval
 #' @param digits Number of digits to round to. Default is 2.
 #' @param string Boolean indicating if the interval should be returned as a 

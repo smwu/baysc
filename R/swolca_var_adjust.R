@@ -8,7 +8,7 @@
 #' @param stan_model Stan model
 #' @param pi MCMC matrix output for pi; MxK
 #' @param theta MCMC array output for theta; MxJxKxR
-#' @param xi: MCMC matrix output for xi; MxKxS
+#' @param xi MCMC matrix output for xi; MxKxS
 #' 
 #' @return Outputs vector of unconstrained parameters
 #' @importFrom rstan unconstrain_pars
@@ -406,8 +406,13 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   }
   
   # Create svrepdesign
-  svyrep <- survey::as.svrepdesign(design = svydes, type = "mrbbootstrap", 
-                                   replicates = num_reps)
+  # Replace warning with message
+  svyrep <- suppressWarnings(survey::as.svrepdesign(design = svydes, 
+                                                    type = "mrbbootstrap", 
+                                   replicates = num_reps))
+  message(paste0("Note: In mrbweights(design$cluster, design$strata, design$fpc, ...) : ",
+                 "Design is sampled with replacement: only first stage used"))
+  
   # Get survey replicates
   rep_temp <- survey::withReplicates(design = svyrep, theta = grad_par, 
                                      stan_mod = mod_stan, stan_data = data_stan, 
@@ -480,11 +485,20 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
   theta_red_adj <- array(NA, dim=c(M, J, K, R))
   xi_red_adj <- array(NA, dim=c(M, K, Q))
   for (i in 1:M) {
-    ##### FIX WITH CUSTOMIZED ERROR
-    constr_pars <- rstan::constrain_pars(out_stan, par_adj[i,])
-    pi_red_adj[i, ] <- constr_pars$pi
-    theta_red_adj[i,,,] <- constr_pars$theta
-    xi_red_adj[i,,] <- constr_pars$xi
+    # Add customized error to constrain parameters procedure, replacing
+    # "Error: Exception: categorical_rng: Probabilities parameter is not a valid 
+    # simplex. sum(Probabilities parameter) = nan, but should be 1"
+    constr_pars <- tryCatch(rstan::constrain_pars(out_stan, par_adj[i,]), 
+                      error = function(e) e)
+    if (!is.null(constr_pars$message)) {  # error message
+      stop(paste0("Instability in variance adjustment, likely due to lack of ", 
+                     "smoothness in the posterior. Please run the sampler for ",
+                     "more iterations or do not run the variance adjustment."))
+    } else {
+      pi_red_adj[i, ] <- constr_pars$pi
+      theta_red_adj[i,,,] <- constr_pars$theta
+      xi_red_adj[i,,] <- constr_pars$xi
+    }
   }
   
   #=============== Output adjusted parameters ==================================

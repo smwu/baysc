@@ -47,6 +47,13 @@ Analysis. arXiv preprint arXiv:2310.01575.
 \author{
 \strong{Maintainer}: Stephanie Wu \email{stephwu18@gmail.com} (\href{https://orcid.org/0000-0001-5110-8407}{ORCID})
 
+Other contributors:
+\itemize{
+  \item Matthew Williams \email{mrwilliams@rti.org} (\href{https://orcid.org/0000-0001-8894-1240}{ORCID}) [contributor]
+  \item Terrance Savitsky \email{savitsky.terrance@bls.gov} (\href{https://orcid.org/0000-0003-1843-3106}{ORCID}) [contributor]
+  \item Briana Stephenson \email{bstephenson@hsph.harvard.edu} (\href{https://orcid.org/0000-0002-6147-1039}{ORCID}) [contributor]
+}
+
 }
 \keyword{internal}
 \keyword{package}

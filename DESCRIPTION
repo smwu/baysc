@@ -2,10 +2,13 @@ Package: baysc
 Type: Package
 Title: Bayesian Survey Clustering
 Version: 1.0
-Date: 2023-10-24
+Date: 2024-09-26
 Authors@R: c(
-    person("Stephanie", "Wu", email = "stephwu18@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5110-8407")))
-Description: An R package for running Bayesian clustering methods using survey data. 
+    person(given = "Stephanie", family = "Wu", email = "stephwu18@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5110-8407")), 
+    person(given = "Matthew", family = "Williams", email = "mrwilliams@rti.org", role = "ctb", comment = c(ORCID = "0000-0001-8894-1240")),
+    person(given = "Terrance", family = "Savitsky", email = "savitsky.terrance@bls.gov", role = "ctb", comment = c(ORCID = "0000-0003-1843-3106")), 
+    person(given = "Briana", family = "Stephenson", email = "bstephenson@hsph.harvard.edu", role = "ctb", comment = c(ORCID = "0000-0002-6147-1039")))
+Description: An R package for running Bayesian clustering methods using survey data. Detailed instructions can be found in the vignette. A Bayesian latent class analysis is available for eliciting underlying pattern profiles incorporating survey sampling weights and other survey design elements. Options also exist for relating the pattern profiles to a binary outcome, either through a two-step approach after cluster is completed, or in a one-step approach where creation of the pattern profiles is directly informed by the outcome. Summary and plotting functions for visualizing output are available, as are diagnostic functions for examining convergence of the sampler. The package includes an example dataset from the National Health and Nutrition Examination Survey with dietary intake and hypertension data for low-income women in the United States, as well as a simulated dataset to help with familiarization of the package.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

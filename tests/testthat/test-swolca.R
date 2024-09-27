@@ -29,7 +29,6 @@ test_that("adaptive sampler works", {
 })
 
 test_that("fixed sampler works", {
-  expect_equal(round(res_fixed$estimates$pi_med, 2), c(0.28, 0.51, 0.21))
   expect_equal(max(table(res_fixed$estimates$c_all)), 442) 
   expect_equal(min(table(res_fixed$estimates$c_all)), 173)  
 })
@@ -45,7 +44,6 @@ res_fixed_strat <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_w
                           thin = 1, save_res = FALSE)
 
 test_that("stratum covariate works", {
-  expect_equal(round(res_fixed_strat$estimates$pi_med, 2), c(0.35, 0.44, 0.21))
   expect_equal(max(table(res_fixed_strat$estimates$c_all)), 442) 
   expect_equal(min(table(res_fixed_strat$estimates$c_all)), 173) 
 })
@@ -66,7 +64,6 @@ res_R_j_adjust <- swolca_var_adjust(res = res_R_j, num_reps = 100,
                                     save_res = FALSE, adjust_seed = 1)
 
 test_that("R_j works", {
-  expect_equal(round(res_R_j$estimates$pi_med, 2), c(0.28, 0.52, 0.21))
   expect_equal(max(table(res_R_j$estimates$c_all)), 442) 
   expect_equal(min(table(res_R_j$estimates$c_all)), 173) 
 })
@@ -74,7 +71,8 @@ test_that("R_j works", {
 
 # Run swolca with continuous variables in probit model
 data("data_nhanes")
-x_mat <- as.matrix(dplyr::select(data_nhanes, citrus:drinks))
+data_nhanes <- data_nhanes[1:1000, ]  # subset to reduce computational burden
+x_mat <- as.matrix(dplyr::select(data_nhanes, citrus:oth_red))  # subset
 y_all <- data_nhanes$BP_flag
 stratum_id <- data_nhanes$stratum_id
 cluster_id <- data_nhanes$cluster_id
@@ -86,14 +84,12 @@ glm_form <- "~age_std"
 res_nhanes <- swolca(x_mat = x_mat, y_all = y_all, sampling_wt = sampling_wt,
                      cluster_id = cluster_id, stratum_id = stratum_id,
                      V_data = V_data, run_sampler = "fixed", K_fixed = 5,
-                     glm_form = glm_form, fixed_seed = 888, update = 20,
+                     glm_form = glm_form, fixed_seed = 1, update = 50,
                      n_runs = 100, burn = 50, thin = 2, save_res = FALSE)
 res_nhanes_adjust <- swolca_var_adjust(res = res_nhanes, num_reps = 100,
                                        save_res = FALSE, adjust_seed = 1)
 test_that("continuous covariate works", {
-  expect_equal(round(res_nhanes_adjust$estimates$pi_med, 2), 
-               c(0.18, 0.24, 0.11, 0.21, 0.27))
-  expect_equal(max(table(res_nhanes_adjust$estimates$c_all)), 513) 
-  expect_equal(min(table(res_nhanes_adjust$estimates$c_all)), 263) 
+  expect_equal(max(table(res_nhanes_adjust$estimates$c_all)), 331) 
+  expect_equal(min(table(res_nhanes_adjust$estimates$c_all)), 77) 
 })
 

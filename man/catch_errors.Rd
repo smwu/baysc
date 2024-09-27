@@ -134,9 +134,6 @@ every \code{update} iterations. Default is 10.}
 
 \item{save_path}{String specifying directory and file name to save results,
 e.g., "~/Documents/run". Default is \code{NULL}.}
-
-\item{model}{String specifying which model is used. Must be one of \code{swolca}
-(default) or \code{wolca}}
 }
 \value{
 The function stops and an error message is displayed if the input
