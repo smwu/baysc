@@ -40,47 +40,68 @@
 reorder_classes <- function(res, new_order) {
   # Check object class
   if (!inherits(res, c("swolca", "wolca"))) {
-    stop("res must be an object of class `swolca` or `wolca`, resulting 
-         from a call to one of these functions")
+    stop(paste0("res must be an object of class `swolca` or `wolca`, ",
+                "resulting from a call to one of these functions"))
   } else if ((inherits(res, "wolca")) & !is.null(res$estimates_svyglm)) {
     warning(paste0("For WOLCA, reordering of classes should be done before ",
                 "calling wolca_svyglm(). res$estimates_svyglm should be NULL ",
                 "prior to running this function."))
   }
   
+  # Check ordering input
+  if (any(sort(unique(new_order)) != sort(unique(res$estimates$c_all)))) {
+    stop("New ordering must have same number of classes and unique values as old ordering.")
+  }
   # Initialize res_new object
   res_new <- res
+  K <- length(new_order)
+  
   if (!is.null(res$estimates_adjust)) {
     # Adjusted estimates 
     # Reorder classes for all pi and theta estimates
-    res_new$estimates_adjust$pi_red <- res$estimates_adjust$pi_red[, new_order]
-    res_new$estimates_adjust$theta_red <- res$estimates_adjust$theta_red[, , new_order, ]
-    res_new$estimates_adjust$pi_med <- res$estimates_adjust$pi_med[new_order]
-    res_new$estimates_adjust$theta_med <- res$estimates_adjust$theta_med[, new_order, ]
+    res_new$estimates_adjust$pi_red <- 
+      res$estimates_adjust$pi_red[, new_order, drop = FALSE]
+    res_new$estimates_adjust$theta_red <- 
+      res$estimates_adjust$theta_red[, , new_order, , drop = FALSE]
+    res_new$estimates_adjust$pi_med <- 
+      res$estimates_adjust$pi_med[new_order, drop = FALSE]
+    res_new$estimates_adjust$theta_med <- 
+      res$estimates_adjust$theta_med[, new_order, , drop = FALSE]
+    
     # Reorder latent class assignment
-    for (i in 1:5) {
-      res_new$estimates_adjust$c_all[res$estimates_adjust$c_all == new_order[i]] <- i
+    for (i in 1:K) {
+      res_new$estimates_adjust$c_all[res$estimates_adjust$c_all == 
+                                       new_order[i]] <- i
     }
     if (is(res, "swolca")) {
       # If `swolca`, reorder classes for all xi estimates.
-      res_new$estimates_adjust$xi_red <- res$estimates_adjust$xi_red[, new_order, ]
-      res_new$estimates_adjust$xi_med <- res$estimates_adjust$xi_med[new_order, ]
+      res_new$estimates_adjust$xi_red <- 
+        res$estimates_adjust$xi_red[, new_order, , drop = FALSE]
+      res_new$estimates_adjust$xi_med <- 
+        res$estimates_adjust$xi_med[new_order, , drop = FALSE]
     }
   } else {
     # Unadjusted estimates 
     # Reorder classes for all pi and theta estimates
-    res_new$estimates$pi_red <- res$estimates$pi_red[, new_order]
-    res_new$estimates$theta_red <- res$estimates$theta_red[, , new_order, ]
-    res_new$estimates$pi_med <- res$estimates$pi_med[new_order]
-    res_new$estimates$theta_med <- res$estimates$theta_med[, new_order, ]
+    res_new$estimates$pi_red <- 
+      res$estimates$pi_red[, new_order, drop = FALSE]
+    res_new$estimates$theta_red <- 
+      res$estimates$theta_red[, , new_order, , drop = FALSE]
+    res_new$estimates$pi_med <- 
+      res$estimates$pi_med[new_order, drop = FALSE]
+    res_new$estimates$theta_med <- 
+      res$estimates$theta_med[, new_order, , drop = FALSE]
+    
     # Reorder latent class assignment
-    for (i in 1:5) {
+    for (i in 1:K) {
       res_new$estimates$c_all[res$estimates$c_all == new_order[i]] <- i
     }
     if (is(res, "swolca")) {
       # If `swolca`, reorder classes for all xi estimates.
-      res_new$estimates$xi_red <- res$estimates$xi_red[, new_order, ]
-      res_new$estimates$xi_med <- res$estimates$xi_med[new_order, ]
+      res_new$estimates$xi_red <- 
+        res$estimates$xi_red[, new_order, , drop = FALSE]
+      res_new$estimates$xi_med <- 
+        res$estimates$xi_med[new_order, , drop = FALSE]
     }
   }
   
@@ -177,6 +198,13 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
     if (ci_level != res$data_vars$ci_level) {
       stop("ci_level must match the specified ci_level in the wolca() function")
     }
+    svyglm_coefs <- rownames(res$estimates_svyglm$fit_summary$coefficients)
+    if (!all(beta[, 1] == svyglm_coefs)) {
+      warning(paste0("Coefficients from glm_form are: ", 
+                     paste0(colnames(model_matrix), collapse = ", "), 
+                     ".\nThese do not match the wolca_svyglm coefficients, which are: ", 
+                     paste0(svyglm_coefs, collapse = ", ")))
+    }
     colnames(beta) <- c("Covariate", "Estimate", "LB", "UB", "p-value")
     beta[, c(2, 5)] <- res$estimates_svyglm$fit_summary$coefficients[, c(1, 4)]
     beta[, 2] <- format(round(beta[, 2], digits), digits)  
@@ -207,27 +235,34 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
                      get_prob_pos(est_red[, 1, 1]))
     
     # Latent class main effect estimates
-    for (i in 2:K) {
-      beta[i, -1] <- c(stats::median(est_red[, i, 1] - est_red[, 1, 1]),
-                       get_ci(est_red[, i, 1] - est_red[, 1, 1], digits = digits),
-                       get_prob_pos(est_red[, i, 1] - est_red[, 1, 1], digits = digits))
+    if (K > 1) {
+      for (i in 2:K) {
+        beta[i, -1] <- c(stats::median(est_red[, i, 1] - est_red[, 1, 1]),
+                         get_ci(est_red[, i, 1] - est_red[, 1, 1], digits = digits),
+                         get_prob_pos(est_red[, i, 1] - est_red[, 1, 1], digits = digits))
+      }
     }
     
     # Additional covariates main effect estimates
-    for (i in 2:Q) {
-      beta[K + (i-1), -1] <- c(est_xi[1, i], get_ci(est_red[, 1, i]),
-                               get_prob_pos(est_red[, 1, i]))
-    }
-    
-    # Additional covariates latent class interaction terms
-    for (i in 2:Q) {
-      for (j in 2:K) {
-        beta[Q + (i-1)*(K-1) + (j-1), -1] <- 
-          c(stats::median(est_red[, j, i] - est_red[, 1, i]),
-            get_ci(est_red[, j, i] - est_red[, 1, i], digits = digits),
-            get_prob_pos(est_red[, j, i] - est_red[, 1, i], digits = digits))
+    if (Q >= 2) {
+      for (i in 2:Q) {
+        beta[K + (i-1), -1] <- c(est_xi[1, i], get_ci(est_red[, 1, i]),
+                                 get_prob_pos(est_red[, 1, i]))
+      }
+      
+      # Additional covariates latent class interaction terms
+      for (i in 2:Q) {
+        if (K > 1) {
+          for (j in 2:K) {
+            beta[Q + (i-1)*(K-1) + (j-1), -1] <- 
+              c(stats::median(est_red[, j, i] - est_red[, 1, i]),
+                get_ci(est_red[, j, i] - est_red[, 1, i], digits = digits),
+                get_prob_pos(est_red[, j, i] - est_red[, 1, i], digits = digits))
+          }
+        }
       }
     }
+    
     beta$Estimate <- as.numeric(beta$Estimate)
     beta$LB <- as.numeric(beta$LB)
     beta$UB <- as.numeric(beta$UB)
@@ -460,8 +495,8 @@ get_cov_props <- function(svy_design, cov, var_levels, col_props = TRUE,
 #'                               cluster_id = data_nhanes$cluster_id,
 #'                               digits = 1, col_props = TRUE, res = res)
 #'                  
-vars_across_class <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id, 
-                             digits = 1, col_props = TRUE, res) {
+vars_across_class <- function(c_all, cov_df, sampling_wt, res, stratum_id = NULL, 
+                              cluster_id = NULL, digits = 1, col_props = TRUE) {
   if (!is.factor(c_all)) {
     stop("c_all must be a factor")
   }
@@ -482,10 +517,19 @@ vars_across_class <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id
   num_cols <- length(levels(c_all)) + 3
   
   # Set survey design
-  svy_design <- survey::svydesign(id = ~cluster_id,
-                                  weights = ~sampling_wt,
-                                  strata=~stratum_id,
-                                  data = data.frame(cov_df, Class = c_all))
+  if (is.null(cluster_id)) {
+    cluster_id = 1:length(c_all)
+  }
+  if (is.null(stratum_id)) {
+    svy_design <- survey::svydesign(ids = ~cluster_id,
+                                    weights = ~sampling_wt,
+                                    data = data.frame(cov_df, Class = c_all))
+  } else {
+    svy_design <- survey::svydesign(ids = ~cluster_id,
+                                    weights = ~sampling_wt,
+                                    strata= ~stratum_id,
+                                    data = data.frame(cov_df, Class = c_all))
+  }
   
   # Initialize dataframe
   output_df <- as.data.frame(matrix(NA, nrow = num_rows, ncol = num_cols))
@@ -523,11 +567,10 @@ vars_across_class <- function(c_all, cov_df, sampling_wt, stratum_id, cluster_id
 }
 
 
-#' Obtains table of regression coefficients
+#' Obtains table of model estimates
 #' 
 #' @description
-#' `summarize_res` produces a summary table of the regression coefficients,
-#' converted to standard reference cell coding. 
+#' `summarize_res` produces a summary table of the model estimates. 
 #' 
 #' @inheritParams plot_pattern_profiles
 #' @param ci_level Numeric from 0 to 1 specifying the credible interval level. 

@@ -12,6 +12,7 @@ plot_pattern_probs(
   class_labels = NULL,
   class_title = "Dietary Pattern",
   y_title = "Consumption Level Probability",
+  num_rows = 4,
   ...
 )
 }
@@ -37,6 +38,8 @@ Default is \code{"Dietary Pattern"}.}
 
 \item{y_title}{String specifying the title for the y-axis. Default is
 \code{"Consumption Level Probability"}.}
+
+\item{num_rows}{Number of rows in the display. Default is \code{4}.}
 
 \item{\dots}{Additional arguments passed}
 }

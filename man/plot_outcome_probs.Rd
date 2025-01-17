@@ -24,7 +24,8 @@ to \code{\link[=swolca]{swolca()}}, \code{\link[=swolca_var_adjust]{swolca_var_a
 
 \item{cov_name}{String specifying the covariate to plot. To plot
 interactions between two covariates, specify a string vector with both
-covariate names. Covariates must be included in \code{glm_form} and \code{V_data}.}
+covariate names. Covariates must be included in \code{glm_form} and \code{V_data}.
+If no additional covariates are used in the model, please set \code{cov_name = NULL}.}
 
 \item{ci_level}{Optional number from 0 to 1 specifying the confidence/credible
 interval level. Default is \code{0.95}, which gives a 95\\% equal-tailed interval

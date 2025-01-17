@@ -31,7 +31,9 @@ Returns dataframe \code{Phi_df} of the converted outcome probabilities
 the key covariate(s). The first K columns include the \eqn{\Phi} values
 for the K latent classes, evaluated at the covariate values listed in the
 remaining Q columns. The key covariate(s) are evaluated at all levels and
-the other covariates are evaluated at their reference levels.
+the other covariates are evaluated at their reference levels. If no additional
+covariates are present in the model, \code{Phi_df} has one row and its columns
+correspond to the \eqn{\Phi} values for the K latent classes.
 }
 \description{
 Convert regression estimates \eqn{\xi} from mixture reference coding to

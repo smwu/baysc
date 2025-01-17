@@ -8,11 +8,11 @@ vars_across_class(
   c_all,
   cov_df,
   sampling_wt,
-  stratum_id,
-  cluster_id,
+  res,
+  stratum_id = NULL,
+  cluster_id = NULL,
   digits = 1,
-  col_props = TRUE,
-  res
+  col_props = TRUE
 )
 }
 \arguments{
@@ -29,6 +29,9 @@ output table.}
 \item{sampling_wt}{Vector of survey sampling weights. nx1. Default is \code{NULL},
 indicating no sampling weights and setting all weights to 1.}
 
+\item{res}{Results from \code{\link[=swolca]{swolca()}}, \code{\link[=wolca]{wolca()}}, \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} or
+\code{\link[=wolca_var_adjust]{wolca_var_adjust()}}.}
+
 \item{stratum_id}{Vector of individual stratum IDs. nx1. Default is \code{NULL},
 indicating no stratification.}
 
@@ -43,9 +46,6 @@ reported as column totals (default \code{TRUE}) that provide the percentage of t
 population in each category for a given latent class, or reported as row
 totals (\code{FALSE}) that provide the percentage of the population in each latent
 class for a given category.}
-
-\item{res}{Results from \code{\link[=swolca]{swolca()}}, \code{\link[=wolca]{wolca()}}, \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} or
-\code{\link[=wolca_var_adjust]{wolca_var_adjust()}}.}
 }
 \value{
 Outputs dataframe \code{output_df} displaying the distribution of variables across

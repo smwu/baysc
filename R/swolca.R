@@ -254,6 +254,17 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
   #================= Read in data ==============================================
   print("Read in data")
   
+  # Check type of x_mat
+  if (is.data.frame(x_mat)) {
+    print("Convert x_mat from dataframe to matrix")
+    x_mat <- as.matrix(x_mat)
+  } else if (!is.matrix(x_mat)) {
+    stop("x_mat must be a matrix")
+  }
+  if (!is.numeric(x_mat)) {
+    stop("x_mat must be a numeric matrix")
+  }
+  
   # Obtain dimensions
   n <- dim(x_mat)[1]        # Number of individuals
   J <- dim(x_mat)[2]        # Number of exposure items
@@ -287,7 +298,7 @@ swolca <- function(x_mat, y_all, sampling_wt = NULL, cluster_id = NULL,
       warning(paste0("Standard deviation for continuous covariate ", colnames(V)[i], 
                      " is greater than 5 and may result in estimation errors. ",
                      "To avoid these errors, consider standardizing the variable to have mean 0 ",
-                     "and standard deviaiton 1 or converting the variable into a categorical form."))
+                     "and standard deviation 1 or converting the variable into a categorical form."))
     }
   }
   

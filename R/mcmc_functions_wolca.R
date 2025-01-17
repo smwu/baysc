@@ -64,7 +64,7 @@
 run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
                                 w_all, x_mat, alpha, eta, update = 10) {
   # Number of MCMC iterations to store
-  n_storage <- ceiling(n_runs / thin)  
+  n_storage <- floor(n_runs / thin)  
   
   # Initialize variables
   pi_MCMC <- matrix(NA, nrow = n_storage, ncol = K)
@@ -111,9 +111,9 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
   }
   
   # Discard burn-in
-  warmup <- ceiling(burn / thin)
-  pi_MCMC <- pi_MCMC[-(1:warmup), ]
-  theta_MCMC <- theta_MCMC[-(1:warmup), , , ]
+  warmup <- floor(burn / thin)
+  pi_MCMC <- pi_MCMC[-(1:warmup), , drop = FALSE]
+  theta_MCMC <- theta_MCMC[-(1:warmup), , , , drop = FALSE]
   c_all_MCMC <- c_all_MCMC[-(1:warmup), ]
   
   MCMC_out <- list(pi_MCMC = pi_MCMC, theta_MCMC = theta_MCMC,

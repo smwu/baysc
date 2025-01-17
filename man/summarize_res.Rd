@@ -2,7 +2,7 @@
 % Please edit documentation in R/summary_functions.R
 \name{summarize_res}
 \alias{summarize_res}
-\title{Obtains table of regression coefficients}
+\title{Obtains table of model estimates}
 \usage{
 summarize_res(res, ci_level = 0.95, digits = 2)
 }
@@ -26,8 +26,7 @@ parameters are listed first, followed by \eqn{\theta} (item level probability)
 parameters and \eqn{\xi} (regression coefficient) parameters.
 }
 \description{
-\code{summarize_res} produces a summary table of the regression coefficients,
-converted to standard reference cell coding.
+\code{summarize_res} produces a summary table of the model estimates.
 }
 \examples{
 data(run_nhanes_swolca_results)

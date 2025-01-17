@@ -30,6 +30,7 @@
 #' @importFrom ggplot2 ggplot aes geom_tile scale_fill_brewer labs 
 #' theme_classic scale_x_discrete theme element_text
 #' @importFrom tidyr gather
+#' @importFrom dplyr mutate
 #' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #' @export
@@ -106,7 +107,8 @@ plot_pattern_profiles <- function(res, item_labels = NULL, item_title = "Item",
   
   # Create plot
   mode_plot <- mode_item_probs %>% 
-    tidyr::gather("Class", "Level", -Item) 
+    tidyr::gather("Class", "Level", -Item) %>%
+    dplyr::mutate(Class = factor(Class, levels = class_labels))
   mode_plot %>% ggplot2::ggplot(ggplot2::aes(x=Class, 
                                              y=factor(Item, 
                                                       levels = rev(item_labels)), 
@@ -138,6 +140,7 @@ plot_pattern_profiles <- function(res, item_labels = NULL, item_title = "Item",
 #' @inheritParams plot_pattern_profiles
 #' @param y_title String specifying the title for the y-axis. Default is 
 #' `"Consumption Level Probability"`.
+#' @param num_rows Number of rows in the display. Default is `4`.
 #' @param \dots Additional arguments passed
 #' 
 #' @return
@@ -176,7 +179,8 @@ plot_pattern_probs <- function(res, item_labels = NULL, categ_labels = NULL,
                                categ_title = "Consumption Level",
                                class_labels = NULL,
                                class_title = "Dietary Pattern", 
-                               y_title = "Consumption Level Probability", ...) {
+                               y_title = "Consumption Level Probability", 
+                               num_rows = 4, ...) {
   
   # Check object class
   if (!(class(res) %in% c("swolca", "wolca"))) {
@@ -233,7 +237,7 @@ plot_pattern_probs <- function(res, item_labels = NULL, categ_labels = NULL,
                                  y = Probability,
                                  fill = factor(Level))) + 
     ggplot2::geom_bar(stat = "identity", position = "stack") + 
-    ggplot2::facet_wrap(factor(Item, labels = item_labels) ~ ., nrow = 4) + 
+    ggplot2::facet_wrap(factor(Item, labels = item_labels) ~ ., nrow = num_rows) + 
     ggplot2::scale_fill_brewer(type="seq", palette="RdYlBu", direction = -1,
                                name = categ_title, labels = categ_labels) +
     ggplot2::theme_bw() + 
@@ -368,6 +372,7 @@ plot_class_dist <- function(res, class_labels = NULL,
 #' 
 #' @importFrom ggplot2 ggplot aes theme_bw geom_point theme element_text 
 #' geom_hline geom_errorbar scale_color_brewer
+#' @importFrom tidyselect all_of
 #' @importFrom magrittr %>%
 #' @export
 #'
@@ -406,7 +411,7 @@ plot_regr_coefs <- function(regr_coefs, res, cov_labels = NULL, ...) {
   }
   # If no covariate labels are specified, original labels are used
   if (is.null(cov_labels)) {
-    cov_labels <- levels(as.factor(regr_coefs$Covariate))
+    cov_labels <- regr_coefs$Covariate
   } else {
     # Check covariate labels 
     if ((length(cov_labels) != length(regr_coefs$Covariate)) | 
@@ -461,7 +466,8 @@ plot_regr_coefs <- function(regr_coefs, res, cov_labels = NULL, ...) {
 #' @inheritParams plot_pattern_profiles
 #' @param cov_name String specifying the covariate to plot. To plot 
 #' interactions between two covariates, specify a string vector with both 
-#' covariate names. Covariates must be included in `glm_form` and `V_data`.
+#' covariate names. Covariates must be included in `glm_form` and `V_data`. 
+#' If no additional covariates are used in the model, please set `cov_name = NULL`.
 #' @param ci_level Optional number from 0 to 1 specifying the confidence/credible 
 #' interval level. Default is `0.95`, which gives a 95\% equal-tailed interval 
 #' composed of the 2.5\% and 97.5\% quantiles. For `"wolca"` objects, this must 
@@ -561,27 +567,32 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
     quant_ub <- 1 - quant_lb
   } 
   
-  # Check cov_name and cov_labels
-  if (!(length(cov_name) %in% c(1, 2)) | !(is.character(cov_name[[1]]))) {
-    stop("cov_name must be a string vector of length 1 or 2")
-  } 
-  if (!is.null(cov_labels)) {
-    # Convert cov_labels to list with one string vector if necessary
-    if (!is.list(cov_labels)) {
-      cov_labels <- list(cov_labels)
-    }
-    if (!(length(cov_labels) %in% c(1, 2)) | !(is.character(cov_labels[[1]]))) {
-      print(cov_labels)
-      stop("cov_labels must be a list of length 1 or 2 composed of string vectors")
-    } else if (length(cov_name) != length(cov_labels)) {
-      stop(paste0("cov_name is a vector of length ", length(cov_name), 
-                  ", while cov_labels is a list of length ", length(cov_labels), 
-                  ". The two must be of the same length."))
+  # Check cov_name and cov_labels if additional covariate(s)
+  if (!is.null(cov_name)) { 
+    if (!(length(cov_name) %in% c(1, 2)) | !(is.character(cov_name[[1]]))) {
+      stop(paste0("cov_name must be a string vector of length 1 or 2, ", 
+                  "or if no additional covariates are used in the model, ",
+                  "please set cov_name to NULL."))
+    } 
+    if (!is.null(cov_labels)) {
+      # Convert cov_labels to list with one string vector if necessary
+      if (!is.list(cov_labels)) {
+        cov_labels <- list(cov_labels)
+      }
+      if (!(length(cov_labels) %in% c(1, 2)) | !(is.character(cov_labels[[1]]))) {
+        print(cov_labels)
+        stop("cov_labels must be a list of length 1 or 2 composed of string vectors")
+      } else if (length(cov_name) != length(cov_labels)) {
+        stop(paste0("cov_name is a vector of length ", length(cov_name), 
+                    ", while cov_labels is a list of length ", length(cov_labels), 
+                    ". The two must be of the same length."))
+      }
     }
   }
+
   
+  ## Obtain xi median and lower bound and upper bound estimates 
   
-  # Obtain xi median and lower bound and upper bound estimates 
   # Obtain xi for `wolca()`
   if (is(res, "wolca")) {
     if (is.null(res$estimates_svyglm)) {
@@ -628,12 +639,12 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
   }
   # Convert to long format with a single Class column for plotting
   Phi_df_long <- Phi_df %>%
-    tidyr::pivot_longer(cols = 1:K, names_to = "Class", values_to = "Phi")
+    tidyr::pivot_longer(cols = tidyselect::all_of(1:K), names_to = "Class", values_to = "Phi")
   if (!is.null(ci_level)) {
     Phi_lb_long <- Phi_lb %>%
-      tidyr::pivot_longer(cols = 1:K, names_to = "Class", values_to = "Phi_lb")
+      tidyr::pivot_longer(cols = tidyselect::all_of(1:K), names_to = "Class", values_to = "Phi_lb")
     Phi_ub_long <- Phi_ub %>%
-      tidyr::pivot_longer(cols = 1:K, names_to = "Class", values_to = "Phi_ub")
+      tidyr::pivot_longer(cols = tidyselect::all_of(1:K), names_to = "Class", values_to = "Phi_ub")
     # Get names of all columns except "Phi", "Phi_lb", or "Phi_ub"
     col_names <- colnames(Phi_df_long)[-ncol(Phi_df_long)]
     # Combine the Phi dataframes
@@ -643,24 +654,8 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
   }
   
   
-  # Default labels
-  # Set x_title to cov_name if not specified
-  if (is.null(x_title)) {
-    x_title <- cov_name[1]
-  }
-  # Set cov_label to be the existing factor levels if NULL
-  if (is.null(cov_labels)) {
-    cov_labels <- lapply(cov_name, function(x) levels(res$data_vars$V_data[[x]]))
-  # Otherwise, check that cov_label vectors are the correct length
-  } else {
-    for (i in 1:length(cov_labels)) {
-      num_categs <- length(levels(res$data_vars$V_data[[cov_name[i]]]))
-      if (length(cov_labels[[i]]) != num_categs) {
-        stop(paste0("length of cov_labels for covariate ", cov_name[i], 
-                    " must equal the number of categories: ", num_categs))
-      }
-    }
-  }
+  ## Default labels
+  
   # Set class_labels to be 1:K if not specified
   if (is.null(class_labels)) {
     class_labels <- 1:K
@@ -668,31 +663,83 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
     stop(paste0("length of class_labels must equal the number of latent classes, K = ", K))
   }
   
-  
-  # Initialize variables to NULL to avoid global binding notes in R CMD check
-  Class <- Cov1 <- Cov2 <- Phi <- NULL
-  # Relabel the x-axis variable and facet labels if necessary
-  Phi_df_long$Cov1 <- factor(Phi_df_long$Cov1, labels = cov_labels[[1]])
-  if (length(cov_name) == 2) {
-    Phi_df_long$Cov2 <- factor(Phi_df_long$Cov2, labels = cov_labels[[2]])
+  if (is.null(cov_name)) {  # no additional covariates
+    # Set x_title if not specified
+    if (is.null(x_title)) {
+      x_title <- class_title
+    }
+  } else {  # additional covariates
+    # Set x_title to cov_name if not specified
+    if (is.null(x_title)) {
+      x_title <- cov_name[1]
+    } 
+    
+    # Set cov_label to be the existing factor levels if NULL
+    if (is.null(cov_labels)) {
+      cov_labels <- lapply(cov_name, function(x) levels(res$data_vars$V_data[[x]]))
+      # Otherwise, check that cov_label vectors are the correct length
+    } else {
+      for (i in 1:length(cov_labels)) {
+        num_categs <- length(levels(res$data_vars$V_data[[cov_name[i]]]))
+        if (length(cov_labels[[i]]) != num_categs) {
+          stop(paste0("length of cov_labels for covariate ", cov_name[i], 
+                      " must equal the number of categories: ", num_categs))
+        }
+      }
+    }
   }
-  # Create plot for one key covariate
-  g <- Phi_df_long %>%
-    ggplot2::ggplot(ggplot2::aes(x = Cov1, y = Phi, group = Class, col = Class)) +
-    ggplot2::theme_bw() +
-    ggplot2::scale_color_brewer(palette = "Set2", labels = class_labels) +
-    ggplot2::labs(col = class_title, x = x_title, y = y_title) +
-    ggplot2::geom_point(size = 2, position = ggplot2::position_dodge(width = 0.5)) +
-    ggplot2::theme(text = ggplot2::element_text(size = 15),
-                   axis.text.x = ggplot2::element_text(size = 10, color = "black"),
-                   axis.text.y = ggplot2::element_text(size = 10, color = "black"),
-                   axis.title.x = ggplot2::element_text(size = 12, color = "black",
-                                                        face = "bold"),
-                   axis.title.y = ggplot2::element_text(size = 12, color = "black",
-                                                        face = "bold"),
-                   legend.title = ggplot2::element_text(size = 12, color = "black"),
-                   legend.text = ggplot2::element_text(size = 11, color = "black"),
-                   legend.position = "top")
+  
+  ## Plotting
+  
+  if (is.null(cov_name)) {  # no additional covariates
+    # Initialize variables to NULL to avoid global binding notes in R CMD check
+    Class <- Phi <- NULL
+    # Create plot for only the latent classes
+    g <- Phi_df_long %>%
+      ggplot2::ggplot(ggplot2::aes(x = Class, y = Phi, col = Class)) +
+      ggplot2::theme_bw() +
+      ggplot2::scale_color_brewer(palette = "Set2", labels = class_labels) +
+      ggplot2::labs(col = class_title, x = x_title, y = y_title) +
+      ggplot2::geom_point(size = 2, position = ggplot2::position_dodge(width = 0.5)) +
+      ggplot2::theme(text = ggplot2::element_text(size = 15),
+                     axis.text.x = ggplot2::element_text(size = 10, color = "black"),
+                     axis.text.y = ggplot2::element_text(size = 10, color = "black"),
+                     axis.title.x = ggplot2::element_text(size = 12, color = "black",
+                                                          face = "bold"),
+                     axis.title.y = ggplot2::element_text(size = 12, color = "black",
+                                                          face = "bold"),
+                     legend.title = ggplot2::element_text(size = 12, color = "black"),
+                     legend.text = ggplot2::element_text(size = 11, color = "black"),
+                     legend.position = "top")
+    
+  } else {  # additional covariates
+    # Initialize variables to NULL to avoid global binding notes in R CMD check
+    Class <- Cov1 <- Cov2 <- Phi <- NULL
+    # Relabel the x-axis variable and facet labels if necessary
+    Phi_df_long$Cov1 <- factor(Phi_df_long$Cov1, labels = cov_labels[[1]])
+    if (length(cov_name) == 2) {
+      Phi_df_long$Cov2 <- factor(Phi_df_long$Cov2, labels = cov_labels[[2]])
+    }
+    # Create plot for one key covariate
+    g <- Phi_df_long %>%
+      ggplot2::ggplot(ggplot2::aes(x = Cov1, y = Phi, group = Class, col = Class)) +
+      ggplot2::theme_bw() +
+      ggplot2::scale_color_brewer(palette = "Set2", labels = class_labels) +
+      ggplot2::labs(col = class_title, x = x_title, y = y_title) +
+      ggplot2::geom_point(size = 2, position = ggplot2::position_dodge(width = 0.5)) +
+      ggplot2::theme(text = ggplot2::element_text(size = 15),
+                     axis.text.x = ggplot2::element_text(size = 10, color = "black"),
+                     axis.text.y = ggplot2::element_text(size = 10, color = "black"),
+                     axis.title.x = ggplot2::element_text(size = 12, color = "black",
+                                                          face = "bold"),
+                     axis.title.y = ggplot2::element_text(size = 12, color = "black",
+                                                          face = "bold"),
+                     legend.title = ggplot2::element_text(size = 12, color = "black"),
+                     legend.text = ggplot2::element_text(size = 11, color = "black"),
+                     legend.position = "top")
+    
+  }
+  
     
   # Add faceting and labels if two key covariates
   if (length(cov_name) == 2) {
@@ -705,8 +752,8 @@ plot_outcome_probs <- function(res, cov_name, ci_level = 0.95, add_lines = FALSE
                                     width = 0.5, alpha = 0.7,
                                     position = ggplot2::position_dodge(width = 0.5))
   }
-  # Add lines connecting points
-  if (add_lines) {
+  # Add lines connecting points between groups if additional covariate(s) specified
+  if (add_lines & !is.null(cov_name)) {
     g <- g + ggplot2::geom_line(linewidth = 0.7, alpha = 0.3,
                                 position = ggplot2::position_dodge(width = 0.5))
   }

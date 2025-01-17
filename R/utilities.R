@@ -81,12 +81,21 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     if (!is.matrix(x_mat)) {
       stop("x_mat must be a matrix")
     }
+    if (!is.numeric(x_mat)) {
+      stop("x_mat must be a numeric matrix")
+    }
     
     # Obtain dimensions
     n <- dim(x_mat)[1]        # Number of individuals
     J <- dim(x_mat)[2]        # Number of exposure items
     R <- max(apply(x_mat, 2,  # Number of exposure categories
                    function(x) length(unique(x))))  
+    
+    # Check values for x_mat
+    if(!all(sort(unique(c(x_mat))) == 1:R)) {
+      warning(paste0("The values of x_mat do not range from 1 to ", R, 
+                     ". Please double check that the values are correct."))
+    }
     
     # Check sampler specification
     if (!is.null(run_sampler)) {
@@ -126,12 +135,18 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
       if (!is.vector(y_all)) {
         stop("y_all must be a vector")
       }
+      if (!is.numeric(y_all)) {
+        stop("y_all must be a numeric vector")
+      }
     }
     
     # Check same number of individuals for x and sampling weights
     if (!is.null(sampling_wt)) {
       if (!is.vector(sampling_wt)) {
         stop("sampling_wt must be a vector")
+      }
+      if (!is.numeric(sampling_wt)) {
+        stop("sampling_wt must be a numeric vector")
       }
       if (n != length(sampling_wt)) {
         stop("number of rows in x_mat must match length of sampling_wt")
@@ -146,6 +161,9 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
       if (!is.vector(cluster_id)) {
         stop("cluster_id must be a vector")
       }
+      if (!is.numeric(cluster_id)) {
+        stop("cluster_id must be a numeric vector")
+      }
       if (n != length(cluster_id)) {
         stop("number of rows in x_mat must match length of cluster_id")
       }
@@ -155,6 +173,9 @@ catch_errors <- function(x_mat = NULL, y_all = NULL, sampling_wt = NULL,
     if (!is.null(stratum_id)) {
       if (!is.vector(stratum_id)) {
         stop("stratum_id must be a vector")
+      }
+      if (!is.numeric(stratum_id)) {
+        stop("stratum_id must be a numeric vector")
       }
       if (n != length(stratum_id)) {
         stop("number of rows in x_mat must match length of stratum_id")
@@ -452,7 +473,9 @@ convert_mix_to_ref <- function(est_xi) {
 #' the key covariate(s). The first K columns include the \eqn{\Phi} values 
 #' for the K latent classes, evaluated at the covariate values listed in the 
 #' remaining Q columns. The key covariate(s) are evaluated at all levels and 
-#' the other covariates are evaluated at their reference levels. 
+#' the other covariates are evaluated at their reference levels. If no additional
+#' covariates are present in the model, `Phi_df` has one row and its columns 
+#' correspond to the \eqn{\Phi} values for the K latent classes.
 #' 
 #' @importFrom stats terms as.formula model.matrix pnorm
 #' @keywords internal
@@ -470,35 +493,43 @@ convert_to_probs <- function(est_xi, glm_form, V_data, cov_name) {
   
   # Number of latent classes
   K <- nrow(est_xi)
-  # Get all covariate names
-  cov_names <- labels(stats::terms(stats::as.formula(glm_form)))
-  # Get names of other covariates not highlighted in the plot
-  oth_names <- cov_names[cov_names != cov_name]
   
-  # Get levels for the key covariate(s)
-  cov_levels <- lapply(cov_name, function(x) levels(V_data[[x]]))
-  num_cov_levels <- nrow(expand.grid(cov_levels))
-  # Get levels for the other covariates
-  oth_levels <- lapply(oth_names, function(x) levels(V_data[[x]]))
-  all_levels <- append(cov_levels, oth_levels)
-  # All combinations of the levels of all covariates
-  all_level_comb <- expand.grid(all_levels)
-  colnames(all_level_comb) <- c(cov_name, oth_names)
-  
-  # Create design matrix from glm formula with new covariate level combinations
-  all_model_mat <- stats::model.matrix(stats::as.formula(glm_form), all_level_comb)
-  # Obtain Phi values corresponding to the new covariate level combinations
-  all_Phi_df <- as.data.frame(sapply(1:K, function(k) 
-    stats::pnorm(all_model_mat %*% est_xi[k, ])))
-  colnames(all_Phi_df) <- paste0("Class", 1:K)
-  # Rename the key covariate(s) for ease with plotting
-  colnames(all_level_comb)[1:length(cov_name)] <- paste0("Cov", 1:length(cov_name))
-
-  # Create new df of desired covariate combinations and corresponding Phi values
-  Phi_df <- cbind(all_Phi_df, all_level_comb)
-  # Restrict to levels of the key covariate(s) and key only the reference level 
-  # values for the remaining covariates 
-  Phi_df <- Phi_df[1:num_cov_levels, ]
+  if (is.null(cov_name)) { # no additional covariates
+    # Obtain Phi values corresponding to the new covariate level combinations
+    Phi_df <- as.data.frame(stats::pnorm(t(est_xi)))
+    colnames(Phi_df) <- paste0("Class", 1:K)
+    
+  } else {  # additional covariates
+    # Get all covariate names
+    cov_names <- labels(stats::terms(stats::as.formula(glm_form)))
+    # Get names of other covariates not highlighted in the plot
+    oth_names <- cov_names[cov_names != cov_name]
+    
+    # Get levels for the key covariate(s)
+    cov_levels <- lapply(cov_name, function(x) levels(V_data[[x]]))
+    num_cov_levels <- nrow(expand.grid(cov_levels))
+    # Get levels for the other covariates
+    oth_levels <- lapply(oth_names, function(x) levels(V_data[[x]]))
+    all_levels <- append(cov_levels, oth_levels)
+    # All combinations of the levels of all covariates
+    all_level_comb <- expand.grid(all_levels)
+    colnames(all_level_comb) <- c(cov_name, oth_names)
+    
+    # Create design matrix from glm formula with new covariate level combinations
+    all_model_mat <- stats::model.matrix(stats::as.formula(glm_form), all_level_comb)
+    # Obtain Phi values corresponding to the new covariate level combinations
+    all_Phi_df <- as.data.frame(sapply(1:K, function(k) 
+      stats::pnorm(all_model_mat %*% est_xi[k, ])))
+    colnames(all_Phi_df) <- paste0("Class", 1:K)
+    # Rename the key covariate(s) for ease with plotting
+    colnames(all_level_comb)[1:length(cov_name)] <- paste0("Cov", 1:length(cov_name))
+    
+    # Create new df of desired covariate combinations and corresponding Phi values
+    Phi_df <- cbind(all_Phi_df, all_level_comb)
+    # Restrict to levels of the key covariate(s) and key only the reference level 
+    # values for the remaining covariates 
+    Phi_df <- Phi_df[1:num_cov_levels, ]
+  }
   
   return(Phi_df)
   

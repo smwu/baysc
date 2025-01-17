@@ -136,6 +136,17 @@ wolca <- function(x_mat, sampling_wt = NULL, cluster_id = NULL, stratum_id = NUL
 
   #================= Read in data ==============================================
   print("Read in data")
+  
+  # Check type of x_mat
+  if (is.data.frame(x_mat)) {
+    print("Convert x_mat from dataframe to matrix")
+    x_mat <- as.matrix(x_mat)
+  } else if (!is.matrix(x_mat)) {
+    stop("x_mat must be a matrix")
+  }
+  if (!is.numeric(x_mat)) {
+    stop("x_mat must be a numeric matrix")
+  }
 
   # Obtain dimensions
   n <- dim(x_mat)[1]        # Number of individuals
