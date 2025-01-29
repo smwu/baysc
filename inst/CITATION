@@ -1,0 +1,12 @@
+citEntry(
+  entry = "Manual", 
+  title = "baysc: Bayesian Survey Clustering", 
+  author = c(
+  person(given = "Stephanie", family = "Wu", email = "stephwu18@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5110-8407")), 
+  person(given = "Matthew", family = "Williams", email = "mrwilliams@rti.org", role = "ctb", comment = c(ORCID = "0000-0001-8894-1240")),
+  person(given = "Terrance", family = "Savitsky", email = "savitsky.terrance@bls.gov", role = "ctb", comment = c(ORCID = "0000-0003-1843-3106")), 
+  person(given = "Briana", family = "Stephenson", email = "bstephenson@hsph.harvard.edu", role = "ctb", comment = c(ORCID = "0000-0002-6147-1039"))), 
+  year = "2025", 
+  note = "R package version 1.0", 
+  url = "https://github.com/smwu/baysc"
+)
