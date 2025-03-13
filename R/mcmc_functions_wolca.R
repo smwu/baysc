@@ -237,7 +237,7 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
         mean(distMat[class_small, which(red_c_all_temp == x)]))
       # Set small class distance to Inf
       class_dist[small_temp] <- Inf
-      nearest <- which.min(class_dist[-c_ind])
+      nearest <- which.min(class_dist)
       red_c_all[red_c_all_temp == c_ind] <- nearest
     }
     class_prop <- prop.table(table(red_c_all))

@@ -6,9 +6,9 @@ An R package for running Bayesian supervised and unsupervised clustering methods
 
 **Contributors**: Matthew R. Williams ([mrwilliams\@rti.org](mailto:mrwilliams@rti.org){.email}); Terrance D. Savitsky ([savitsky.terrance\@bls.gov](mailto:savitsky.terrance@bls.gov){.email}); Briana J.K. Stephenson ([bstephenson\@hsph.harvard.edu](mailto:bstephenson@hsph.harvard.edu){.email})
 
-| Citation                                                                                                                                                                                                                                                   | Link                                              |
-|------------------------------------------------|-----------------------|
-| Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2023). Derivation of outcome-dependent dietary patterns for low-income women obtained from survey data using a Supervised Weighted Overfitted Latent Class Analysis. *ArXiv:2310.01575*. | [Link to paper](https://arxiv.org/abs/2310.01575) |
+| Citation                                                                                                                                                                                                                                                                                                    | Link                                                                              |
+|-----------------------------------------------------|-------------------|
+| Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2024). Derivation of outcome-dependent dietary patterns for low-income women obtained from survey data using a supervised weighted overfitted latent class analysis. Biometrics, 80(4), ujae122, <https://doi.org/10.1093/biomtc/ujae122> | [Link to paper](https://academic.oup.com/biometrics/article/80/4/ujae122/7848296) |
 
 ## Table of content
 
