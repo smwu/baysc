@@ -38,6 +38,7 @@ Returns list \code{estimates} containing:
 \item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
 \item{\code{c_all}}{Vector of final individual class assignments. nx1}
 \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+\item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1}
 }
 }
 \description{

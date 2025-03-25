@@ -165,3 +165,17 @@ update_loglik <- function(loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y
     invisible(.Call(`_baysc_update_loglik`, loglik, n, J, c_all, theta, x_mat, pi, z_all, V, xi, y_all))
 }
 
+#' Update individual log-likelihood
+#' 
+#' `update_loglik_wolca` updates the vector of individual log-likelihoods for 
+#' WOLCA using the updated parameters and latent variables.
+#' 
+#' @inheritParams update_c_wolca
+#' 
+#' @return Updated `loglik` vector after using the updated parameters and 
+#' latent variables.
+#' @keywords internal
+update_loglik_wolca <- function(loglik, n, J, c_all, theta, x_mat, pi) {
+    invisible(.Call(`_baysc_update_loglik_wolca`, loglik, n, J, c_all, theta, x_mat, pi))
+}
+

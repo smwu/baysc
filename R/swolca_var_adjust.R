@@ -527,6 +527,23 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
     Phi_med_adj[i] <- Phi_med_all_c[i, c_all[i]] 
   }
   
+  # Update individual log-likelihood
+  z_all <- res$MCMC_out$z_all_MCMC[M, ]
+  loglik_med <- numeric(n)  # Individual log-likelihood
+  for (i in 1:n) {
+    c_i <- c_all[i]
+    # Calculate theta component of individual log-likelihood
+    log_theta_comp <- 0
+    for (j in 1:J) {
+      log_theta_comp <- log_theta_comp + log(theta_med_adj[j, c_i, x_mat[i, j]])
+    }
+    # Calculate individual log-likelihood using median estimates
+    loglik_med[i] <- log(pi_med_adj[c_i]) + log_theta_comp +
+      log(stats::dnorm(z_all[i], mean = V[i, ] %*% xi_med_adj[c_i, ])) + 
+      log(y_all[i]*(z_all[i] > 0) + (1 - y_all[i])*(z_all[i] <= 0))
+  }
+  
+  
   #================= Save and return output ====================================
   # Stop runtime tracker
   runtime <- Sys.time() - start_time
@@ -539,7 +556,7 @@ swolca_var_adjust <- function(res, alpha = NULL, eta = NULL, mu0 = NULL,
                           theta_med = theta_med_adj, xi_med = xi_med_adj, 
                           Phi_med = Phi_med_adj, c_all = c_all,
                           pred_class_probs = res$estimates$pred_class_probs,
-                          log_lik_med = res$estimates$loglik_med)
+                          loglik_med = loglik_med)
   
   res$estimates_adjust <- estimates_adjust
   class(res) <- "swolca"

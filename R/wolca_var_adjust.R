@@ -387,6 +387,20 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   theta_med_adj <- plyr::aaply(theta_med_adj, c(1, 2), function(x) x / sum(x),
                                .drop = FALSE)  # Re-normalize
   
+  # Update individual log-likelihood
+  c_all <- res$estimates$c_all
+  loglik_med <- numeric(n)  # Individual log-likelihood
+  for (i in 1:n) {
+    c_i <- c_all[i]
+    # Calculate theta component of individual log-likelihood
+    log_theta_comp <- 0
+    for (j in 1:J) {
+      log_theta_comp <- log_theta_comp + log(theta_med_adj[j, c_i, x_mat[i, j]])
+    }
+    # Calculate individual log-likelihood using median estimates
+    loglik_med[i] <- log(pi_med_adj[c_i]) + log_theta_comp
+  }
+  
   #================= Save and return output ====================================
   # Stop runtime tracker
   runtime <- Sys.time() - start_time
@@ -397,7 +411,8 @@ wolca_var_adjust <- function(res, alpha = NULL, eta = NULL, num_reps = 100,
   estimates_adjust <- list(pi_red = pi_red_adj, theta_red = theta_red_adj, 
                           pi_med = pi_med_adj, theta_med = theta_med_adj, 
                           c_all = res$estimates$c_all,
-                          pred_class_probs = res$estimates$pred_class_probs)
+                          pred_class_probs = res$estimates$pred_class_probs,
+                          loglik_med = loglik_med)
   
   res$estimates_adjust <- estimates_adjust
   class(res) <- "wolca"

@@ -12,6 +12,7 @@ post_process_wolca(MCMC_out, J, R, class_cutoff)
 \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
 \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+\item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 }}
 
 \item{J}{Number of exposure items}

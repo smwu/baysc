@@ -829,7 +829,7 @@ get_dic <- function(res) {
     estimates <- res$estimates
   }
   
-  dic <- -6 * median(res$MCMC_out$loglik_MCMC) + 4 * sum(estimates$log_lik_med)
+  dic <- -6 * median(res$MCMC_out$loglik_MCMC) + 4 * sum(estimates$loglik_med)
   
   return(dic)
 }

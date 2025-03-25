@@ -18,6 +18,7 @@
 #'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 #'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
 #'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+#'   \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 #' }
 #'
 #' @seealso [run_MCMC_Rcpp()] [post_process_wolca()] [get_estimates_wolca()] 
@@ -70,6 +71,8 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
   pi_MCMC <- matrix(NA, nrow = n_storage, ncol = K)
   theta_MCMC <- array(NA, dim = c(n_storage, J, K, R))
   c_all_MCMC <- z_all_MCMC <- matrix(NA, nrow = n_storage, ncol = n)
+  loglik_MCMC <- numeric(n_storage)
+  loglik <- numeric(n)     # Individual log-likelihood
   
   # Initialized values
   pi <- OLCA_params$pi
@@ -83,6 +86,8 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
                    x_mat = x_mat, pi = pi)
     update_theta(theta = theta, J = J, K = K, R = R, eta = eta,
                  w_all = w_all, c_all = c_all, x_mat = x_mat)
+    update_loglik_wolca(loglik = loglik, n = n, J = J, c_all = c_all, 
+                        theta = theta, x_mat = x_mat, pi = pi)
     
     #============== Store posterior values based on thinning  ==================
     if (m %% thin == 0) {
@@ -90,6 +95,7 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
       pi_MCMC[m_thin, ] <- pi
       theta_MCMC[m_thin, , , ] <- theta
       c_all_MCMC[m_thin, ] <- c_all
+      loglik_MCMC[m_thin] <- sum(loglik)
     }
     
     #============== Relabel classes every 10 iterations to encourage mixing ====
@@ -115,9 +121,10 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
   pi_MCMC <- pi_MCMC[-(1:warmup), , drop = FALSE]
   theta_MCMC <- theta_MCMC[-(1:warmup), , , , drop = FALSE]
   c_all_MCMC <- c_all_MCMC[-(1:warmup), ]
+  loglik_MCMC <- loglik_MCMC[-(1:warmup)]
   
   MCMC_out <- list(pi_MCMC = pi_MCMC, theta_MCMC = theta_MCMC,
-                   c_all_MCMC = c_all_MCMC)
+                   c_all_MCMC = c_all_MCMC, loglik_MCMC = loglik_MCMC)
   return(MCMC_out)
 }
 
@@ -137,6 +144,7 @@ run_MCMC_Rcpp_wolca <- function(OLCA_params, n_runs, burn, thin, K, J, R, n,
 #'   \item{\code{pi_MCMC}}{Matrix of posterior samples for pi. (n_iter)xK}
 #'   \item{\code{theta_MCMC}}{Array of posterior samples for theta. (n_iter)xJxKxR}
 #'   \item{\code{c_all_MCMC}}{Matrix of posterior samples for c_all. (n_iter)xn}
+#'   \item{\code{loglik_MCMC}}{Vector of posterior samples for log-likelihood. (n_iter)x1}
 #' }
 #' 
 #' @details
@@ -314,6 +322,7 @@ post_process_wolca <- function(MCMC_out, J, R, class_cutoff) {
 #'   \item{\code{theta_med}}{Array of posterior median estimates for theta. Jx(K_red)xR}
 #'   \item{\code{c_all}}{Vector of final individual class assignments. nx1}
 #'   \item{\code{pred_class_probs}}{Matrix of individual posterior class probabilities. nx(K_red)}
+#'   \item{\code{loglik_med}}{Vector of final indiviudal log-likehoods. nx1} 
 #' }
 #'
 #' @seealso [get_estimates()] [run_MCMC_Rcpp_wolca()] [post_process_wolca()] 
@@ -430,9 +439,22 @@ get_estimates_wolca <- function(MCMC_out, post_MCMC_out, n, J, x_mat) {
                                        prob = pred_class_probs[i, ]) == 1)
   }
   
+  #============== Update individual log-likelihood  ============================
+  loglik_med <- numeric(n)  # Individual log-likelihood
+  for (i in 1:n) {
+    c_i <- c_all[i]
+    # Calculate theta component of individual log-likelihood
+    log_theta_comp <- 0
+    for (j in 1:J) {
+      log_theta_comp <- log_theta_comp + log(theta_med[j, c_i, x_mat[i, j]])
+    }
+    # Calculate individual log-likelihood using median estimates
+    loglik_med[i] <- log(pi_med[c_i]) + log_theta_comp 
+  }
+  
   estimates <- list(K_red = K_red, pi_red = pi_red, theta_red = theta_red,
                     pi_med = pi_med, theta_med = theta_med, c_all = c_all,
-                    pred_class_probs = pred_class_probs)
+                    pred_class_probs = pred_class_probs, loglik_med = loglik_med)
   
   return(estimates)
 }

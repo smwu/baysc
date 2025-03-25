@@ -411,6 +411,39 @@ void update_loglik(arma::vec& loglik, const int& n, const int& J,
   // return loglik;
 }
 
+
+//' Update individual log-likelihood
+//' 
+//' `update_loglik_wolca` updates the vector of individual log-likelihoods for 
+//' WOLCA using the updated parameters and latent variables.
+//' 
+//' @inheritParams update_c_wolca
+//' 
+//' @return Updated `loglik` vector after using the updated parameters and 
+//' latent variables.
+//' @keywords internal
+// [[Rcpp::export]]
+void update_loglik_wolca(arma::vec& loglik, const int& n, const int& J, 
+                  const arma::vec& c_all, const arma::cube& theta, 
+                  const arma::mat& x_mat, const arma::vec& pi) {
+ for (int i = 0; i < n; i++) {
+   // Rcout << "i: " << i;
+   int c_i = c_all(i);
+   // Rcout << "c_i: " << c_i;
+   // Calculate theta component of individual log-likelihood
+   // Calculate theta component of individual log-likelihood for class k
+   double log_theta_comp = 0.0;
+   for (int j = 0; j < J; j++) {
+     // Subtract 1 due to 0-based indexing
+     log_theta_comp += log(theta(j, c_i - 1, x_mat(i, j) - 1));
+   }
+   // Update individual log-likelihood for class k
+   loglik(i) = log(pi(c_i - 1)) + log_theta_comp;
+ }
+ // return loglik;
+}
+
+
 // // Update c test
 // // [[Rcpp::export]]
 // void update_c_test(arma::vec& c_all, const int& n, const int& K, const int& J,

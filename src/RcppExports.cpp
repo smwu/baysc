@@ -195,6 +195,22 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// update_loglik_wolca
+void update_loglik_wolca(arma::vec& loglik, const int& n, const int& J, const arma::vec& c_all, const arma::cube& theta, const arma::mat& x_mat, const arma::vec& pi);
+RcppExport SEXP _baysc_update_loglik_wolca(SEXP loglikSEXP, SEXP nSEXP, SEXP JSEXP, SEXP c_allSEXP, SEXP thetaSEXP, SEXP x_matSEXP, SEXP piSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec& >::type loglik(loglikSEXP);
+    Rcpp::traits::input_parameter< const int& >::type n(nSEXP);
+    Rcpp::traits::input_parameter< const int& >::type J(JSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type c_all(c_allSEXP);
+    Rcpp::traits::input_parameter< const arma::cube& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type x_mat(x_matSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type pi(piSEXP);
+    update_loglik_wolca(loglik, n, J, c_all, theta, x_mat, pi);
+    return R_NilValue;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_stan_fit4SWOLCA_main_mod();
 RcppExport SEXP _rcpp_module_boot_stan_fit4WOLCA_main_mod();
@@ -212,6 +228,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_baysc_update_xi", (DL_FUNC) &_baysc_update_xi, 9},
     {"_baysc_update_z", (DL_FUNC) &_baysc_update_z, 6},
     {"_baysc_update_loglik", (DL_FUNC) &_baysc_update_loglik, 11},
+    {"_baysc_update_loglik_wolca", (DL_FUNC) &_baysc_update_loglik_wolca, 7},
     {"_rcpp_module_boot_stan_fit4SWOLCA_main_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4SWOLCA_main_mod, 0},
     {"_rcpp_module_boot_stan_fit4WOLCA_main_mod", (DL_FUNC) &_rcpp_module_boot_stan_fit4WOLCA_main_mod, 0},
     {NULL, NULL, 0}
