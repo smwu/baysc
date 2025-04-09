@@ -36,13 +36,13 @@ of the pattern profiles. \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} p
 adjustment that addresses variance underestimation.
 
 More information about the methods can be found in the vignettes and in
-Wu et al. (2023).
+Wu et al. (2024).
 }
 \references{
-Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2023).
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2024).
 Derivation of outcome-dependent dietary patterns for low-income women
-obtained from survey data using a Supervised Weighted Overfitted Latent Class
-Analysis. arXiv preprint arXiv:2310.01575.
+obtained from survey data using a supervised weighted overfitted latent class
+analysis. Biometrics, 80(4), ujae122.
 }
 \author{
 \strong{Maintainer}: Stephanie Wu \email{stephwu18@gmail.com} (\href{https://orcid.org/0000-0001-5110-8407}{ORCID})

@@ -131,7 +131,7 @@ If \code{save_res = TRUE} (default), also saves \code{res} as
 }
 \description{
 \code{wolca} runs an unsupervised weighted overfitted latent class analysis
-(WOLCA) described in Wu et al. (2023) and Stephenson et al. (2023), then
+(WOLCA) described in Wu et al. (2024) and Stephenson et al. (2023), then
 saves and returns the results.
 }
 \details{
@@ -200,8 +200,8 @@ consumption patterns from survey data: a Bayesian nonparametric latent class
 model. Journal of the Royal Statistical Society Series A: Statistics in
 Society, qnad135.
 
-Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
-(2023). Derivation of outcome-dependent dietary patterns for low-income women
-obtained from survey data using a Supervised Weighted Overfitted Latent Class
-Analysis. arXiv preprint arXiv:2310.01575.
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2024).
+Derivation of outcome-dependent dietary patterns for low-income women
+obtained from survey data using a supervised weighted overfitted latent class
+analysis. Biometrics, 80(4), ujae122.
 }

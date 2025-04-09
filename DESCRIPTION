@@ -2,7 +2,7 @@ Package: baysc
 Type: Package
 Title: baysc: Bayesian Survey Clustering
 Version: 1.0
-Date: 2025-01-29
+Date: 2025-04-09
 Authors@R: c(
     person(given = "Stephanie", family = "Wu", email = "stephwu18@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5110-8407")), 
     person(given = "Matthew", family = "Williams", email = "mrwilliams@rti.org", role = "ctb", comment = c(ORCID = "0000-0001-8894-1240")),

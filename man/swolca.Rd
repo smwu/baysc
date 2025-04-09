@@ -182,7 +182,7 @@ If \code{save_res = TRUE} (default), also saves \code{res} as
 }
 \description{
 \code{swolca} runs a supervised weighted overfitted latent class analysis (SWOLCA)
-described in Wu et al. (2023) and saves and returns the results. For proper
+described in Wu et al. (2024) and saves and returns the results. For proper
 variance estimation, please run \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} after.
 }
 \details{
@@ -290,9 +290,9 @@ res_nhanes_adjust <- swolca_var_adjust(res = res_nhanes, num_reps = 100,
 }
 \references{
 Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J.
-(2023). Derivation of outcome-dependent dietary patterns for low-income women
-obtained from survey data using a Supervised Weighted Overfitted Latent Class
-Analysis. arXiv preprint arXiv:2310.01575.
+(2024). Derivation of outcome-dependent dietary patterns for low-income women
+obtained from survey data using a supervised weighted overfitted latent class
+analysis. Biometrics, 80(4), ujae122.
 }
 \seealso{
 \code{\link[=swolca_var_adjust]{swolca_var_adjust()}} \code{\link[=wolca]{wolca()}}

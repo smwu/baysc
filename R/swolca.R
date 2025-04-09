@@ -2,7 +2,7 @@
 #'
 #' @description
 #' `swolca` runs a supervised weighted overfitted latent class analysis (SWOLCA)
-#' described in Wu et al. (2023) and saves and returns the results. For proper 
+#' described in Wu et al. (2024) and saves and returns the results. For proper 
 #' variance estimation, please run [swolca_var_adjust()] after.
 #'
 #' @param x_mat Matrix of multivariate categorical exposures. nxJ
@@ -188,9 +188,9 @@
 #' @export
 #' 
 #' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
-#' (2023). Derivation of outcome-dependent dietary patterns for low-income women 
-#' obtained from survey data using a Supervised Weighted Overfitted Latent Class 
-#' Analysis. arXiv preprint arXiv:2310.01575.
+#' (2024). Derivation of outcome-dependent dietary patterns for low-income women 
+#' obtained from survey data using a supervised weighted overfitted latent class 
+#' analysis. Biometrics, 80(4), ujae122.
 #'
 #' @examples
 #' \dontrun{   

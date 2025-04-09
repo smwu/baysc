@@ -124,11 +124,11 @@
 #'   told have high BP}
 #' }
 #' @source https://github.com/smwu/SWOLCA/tree/main/Data. For more information 
-#' on dataset preparation, see Wu et al. (2023)
+#' on dataset preparation, see Wu et al. (2024)
 #' @references Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. 
-#' (2023). Derivation of outcome-dependent dietary patterns for low-income women 
-#' obtained from survey data using a Supervised Weighted Overfitted Latent Class 
-#' Analysis. arXiv preprint arXiv:2310.01575.
+#' (2024). Derivation of outcome-dependent dietary patterns for low-income women 
+#' obtained from survey data using a supervised weighted overfitted latent class 
+#' analysis. Biometrics, 80(4), ujae122.
 #' @keywords datasets
 #' @examples 
 #' data(data_nhanes)
