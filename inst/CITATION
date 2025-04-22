@@ -1,5 +1,5 @@
-citEntry(
-  entry = "Manual", 
+bibentry(
+  bibtype = "Manual", 
   title = "baysc: Bayesian Survey Clustering", 
   author = c(
   person(given = "Stephanie", family = "Wu", email = "stephwu18@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5110-8407")), 
