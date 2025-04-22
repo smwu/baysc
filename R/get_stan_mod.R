@@ -27,7 +27,6 @@ rstantools_model_WOLCA_main <- function() {
 #' Get all stan models available in the package.
 #' @return Returns `stanmodels` object
 #' @name stanmodels
-#' @importFrom rstantools rstan_config
 #' @keywords internal
 #' @export
 #' 
