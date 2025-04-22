@@ -3,3 +3,4 @@
 ^data-raw$
 ^vignettes/baysc_joss\.Rmd$
 ^\.github$
+^LICENSE\.md$
