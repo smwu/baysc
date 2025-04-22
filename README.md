@@ -41,7 +41,7 @@ library(baysc)
 
 ## Functions
 
-Use the `wolca()` function to run an unsupervised WOLCA and obtain pattern profiles. `wolca_var_adjust()` provides a post-hoc variance adjustment that enables correct uncertainty estimation. To examine the association of pattern profiles with a binary outcome through a two-step appraoch, run `wolca_svyglm()`. Use the `swolca()` function to run a SWOLCA model that allows information about the binary outcome to directly inform the creation of the pattern profiles. `swolca_var_adjust()` provides a post-hoc variance adjustment that enbales correct uncertainty estimation. Detailed information about the functions and related statistical details can be found in the vignette, "[An introduction to the basyc package](vignettes/baysc.pdf)," and in the paper linked above.
+Use the `wolca()` function to run an unsupervised WOLCA and obtain pattern profiles. `wolca_var_adjust()` provides a post-hoc variance adjustment that enables correct uncertainty estimation. To examine the association of pattern profiles with a binary outcome through a two-step appraoch, run `wolca_svyglm()`. Use the `swolca()` function to run a SWOLCA model that allows information about the binary outcome to directly inform the creation of the pattern profiles. `swolca_var_adjust()` provides a post-hoc variance adjustment that enbales correct uncertainty estimation. Detailed information about the functions and related statistical details can be found in the vignette, "[An introduction to the baysc package](https://raw.githubusercontent.com/smwu/baysc/refs/heads/main/vignettes/baysc.pdf)," and in the paper linked above.
 
 <div id='id-section4'/>
 
