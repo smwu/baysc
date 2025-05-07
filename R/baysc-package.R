@@ -43,7 +43,6 @@
 #' analysis. Biometrics, 80(4), ujae122.
 #' 
 #' @keywords package
-#' @importFrom rstantools rstan_config
 #' @importFrom RcppParallel RcppParallelLibs
 #' 
 #' @keywords internal

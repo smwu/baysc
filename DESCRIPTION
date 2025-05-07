@@ -1,18 +1,35 @@
-Package: baysc
 Type: Package
-Title: baysc: Bayesian Survey Clustering
+Package: baysc
+Title: Bayesian Survey Clustering
 Version: 1.0
-Date: 2025-04-09
 Authors@R: c(
-    person(given = "Stephanie", family = "Wu", email = "stephwu18@gmail.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0001-5110-8407")), 
-    person(given = "Matthew", family = "Williams", email = "mrwilliams@rti.org", role = "ctb", comment = c(ORCID = "0000-0001-8894-1240")),
-    person(given = "Terrance", family = "Savitsky", email = "savitsky.terrance@bls.gov", role = "ctb", comment = c(ORCID = "0000-0003-1843-3106")), 
-    person(given = "Briana", family = "Stephenson", email = "bstephenson@hsph.harvard.edu", role = "ctb", comment = c(ORCID = "0000-0002-6147-1039")))
-Description: An R package for running Bayesian clustering methods using survey data. Detailed instructions can be found in the vignette. A Bayesian latent class analysis is available for eliciting underlying pattern profiles incorporating survey sampling weights and other survey design elements. Options also exist for relating the pattern profiles to a binary outcome, either through a two-step approach after cluster is completed, or in a one-step approach where creation of the pattern profiles is directly informed by the outcome. Summary and plotting functions for visualizing output are available, as are diagnostic functions for examining convergence of the sampler. The package includes an example dataset from the National Health and Nutrition Examination Survey with dietary intake and hypertension data for low-income women in the United States, as well as a simulated dataset to help with familiarization of the package.
+    person("Stephanie", "Wu", , "stephwu18@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-5110-8407")),
+    person("Matthew", "Williams", , "mrwilliams@rti.org", role = "ctb",
+           comment = c(ORCID = "0000-0001-8894-1240")),
+    person("Terrance", "Savitsky", , "savitsky.terrance@bls.gov", role = "ctb",
+           comment = c(ORCID = "0000-0003-1843-3106")),
+    person("Briana", "Stephenson", , "bstephenson@hsph.harvard.edu", role = "ctb",
+           comment = c(ORCID = "0000-0002-6147-1039"))
+  )
+Description: An R package for running Bayesian clustering methods using
+    survey data. Detailed instructions can be found in the vignette. A
+    Bayesian latent class analysis is available for eliciting underlying
+    pattern profiles incorporating survey sampling weights and other
+    survey design elements. Options also exist for relating the pattern
+    profiles to a binary outcome, either through a two-step approach after
+    cluster is completed, or in a one-step approach where creation of the
+    pattern profiles is directly informed by the outcome. Summary and
+    plotting functions for visualizing output are available, as are
+    diagnostic functions for examining convergence of the sampler. The
+    package includes an example dataset from the National Health and
+    Nutrition Examination Survey with dietary intake and hypertension data
+    for low-income women in the United States, as well as a simulated
+    dataset to help with familiarization of the package.
 License: MIT + file LICENSE
-Encoding: UTF-8
-LazyData: true
-Imports: 
+Depends: 
+    R (>= 3.5.0)
+Imports:
     dplyr,
     e1071,
     ggplot2,
@@ -28,12 +45,19 @@ Imports:
     RcppTN,
     rlang,
     rstan (>= 2.21.8),
-    rstantools (>= 2.3.1.1),
     stats,
     survey (>= 4.2.1),
     tidyr,
     tidyselect,
     truncnorm
+Suggests: 
+    devtools,
+    knitr,
+    rmarkdown,
+    rstantools (>= 2.3.1.1),
+    SimCorMultRes,
+    stringr,
+    testthat (>= 3.0.0)
 LinkingTo: 
     BH (>= 1.66.0),
     Rcpp (>= 0.12.0),
@@ -43,18 +67,12 @@ LinkingTo:
     RcppTN,
     rstan (>= 2.18.1),
     StanHeaders (>= 2.18.0)
+VignetteBuilder: 
+    knitr
+Biarch: true
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Depends: 
-    R (>= 3.5.0)
-Biarch: true
 SystemRequirements: GNU make
-Suggests: 
-    testthat (>= 3.0.0),
-    knitr,
-    rmarkdown,
-    devtools,
-    stringr,
-    SimCorMultRes
-Config/testthat/edition: 3
-VignetteBuilder: knitr

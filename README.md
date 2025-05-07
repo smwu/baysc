@@ -6,9 +6,8 @@ An R package for running Bayesian supervised and unsupervised clustering methods
 
 **Contributors**: Matthew R. Williams ([mrwilliams\@rti.org](mailto:mrwilliams@rti.org){.email}); Terrance D. Savitsky ([savitsky.terrance\@bls.gov](mailto:savitsky.terrance@bls.gov){.email}); Briana J.K. Stephenson ([bstephenson\@hsph.harvard.edu](mailto:bstephenson@hsph.harvard.edu){.email})
 
-| Citation                                                                                                                                                                                                                                                                                                    | Link                                                                              |
-|-----------------------------------------------------|-------------------|
-| Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2024). Derivation of outcome-dependent dietary patterns for low-income women obtained from survey data using a supervised weighted overfitted latent class analysis. Biometrics, 80(4), ujae122, <https://doi.org/10.1093/biomtc/ujae122> | [Link to paper](https://academic.oup.com/biometrics/article/80/4/ujae122/7848296) |
+**Citation**
+Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2024). Derivation of outcome-dependent dietary patterns for low-income women obtained from survey data using a supervised weighted overfitted latent class analysis. Biometrics, 80(4), ujae122, <https://doi.org/10.1093/biomtc/ujae122>
 
 ## Table of content
 
@@ -42,7 +41,7 @@ library(baysc)
 
 ## Functions
 
-Use the `wolca()` function to run an unsupervised WOLCA and obtain pattern profiles. `wolca_var_adjust()` provides a post-hoc variance adjustment that enables correct uncertainty estimation. To examine the association of pattern profiles with a binary outcome through a two-step appraoch, run `wolca_svyglm()`. Use the `swolca()` function to run a SWOLCA model that allows information about the binary outcome to directly inform the creation of the pattern profiles. `swolca_var_adjust()` provides a post-hoc variance adjustment that enbales correct uncertainty estimation. Detailed information about the functions and related statistical details can be found in the vignette, "[An introduction to the basyc package](vignettes/baysc.pdf)," and in the paper linked above.
+Use the `wolca()` function to run an unsupervised WOLCA and obtain pattern profiles. `wolca_var_adjust()` provides a post-hoc variance adjustment that enables correct uncertainty estimation. To examine the association of pattern profiles with a binary outcome through a two-step appraoch, run `wolca_svyglm()`. Use the `swolca()` function to run a SWOLCA model that allows information about the binary outcome to directly inform the creation of the pattern profiles. `swolca_var_adjust()` provides a post-hoc variance adjustment that enbales correct uncertainty estimation. Detailed information about the functions and related statistical details can be found in the vignette, "[An introduction to the baysc package](https://raw.githubusercontent.com/smwu/baysc/refs/heads/main/vignettes/baysc.pdf)," and in the paper linked above.
 
 <div id='id-section4'/>
 

@@ -77,7 +77,6 @@ library(knitr)
 
 ```{r, echo = FALSE, results = FALSE, warning = FALSE, message = FALSE}
 library(devtools)
-load_all()
 library(baysc)
 library(dplyr)
 library(ggplot2)
