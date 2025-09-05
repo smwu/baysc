@@ -3,7 +3,7 @@ Package: baysc
 Title: Bayesian Survey Clustering
 Version: 1.0
 Authors@R: c(
-    person("Stephanie", "Wu", , "stephwu18@gmail.com", role = c("aut", "cre"),
+    person("Stephanie", "Wu", , "stephanie.wu@ucl.ac.uk", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-5110-8407")),
     person("Matthew", "Williams", , "mrwilliams@rti.org", role = "ctb",
            comment = c(ORCID = "0000-0001-8894-1240")),

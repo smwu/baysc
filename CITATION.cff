@@ -1,0 +1,51 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: 'baysc: BAYesian Survey Clustering'
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Stephanie
+    family-names: Wu
+    email: stephanie.wu@ucl.ac.uk
+    name-particle: Stephanie
+    affiliation: UCL
+    orcid: 'https://orcid.org/0000-0001-5110-8407'
+  - given-names: Matthew
+    family-names: Williams
+    email: mrwilliams@rti.org
+    orcid: 'https://orcid.org/0000-0001-8894-1240'
+    affiliation: RTI International
+  - given-names: Terrance
+    family-names: Savitsky
+    email: savitsky.terrance@bls.gov
+    orcid: 'https://orcid.org/0000-0003-1843-3106'
+    affiliation: Bureau of Labor Statistics
+  - given-names: Briana
+    family-names: Stephenson
+    email: bstephenson@hsph.harvard.edu
+    affiliation: Harvard University
+    orcid: 'https://orcid.org/0000-0002-6147-1039'
+repository-code: 'https://github.com/smwu/baysc'
+abstract: >-
+  R package 'baysc' runs Bayesian clustering methods using
+  survey data. Detailed instructions can be found in the
+  vignette. A Bayesian latent class analysis is available
+  for eliciting underlying pattern profiles incorporating
+  survey sampling weights and other survey design elements.
+  Options also exist for relating the pattern profiles to a
+  binary outcome, either through a two-step approach after
+  cluster is completed, or in a one-step approach where
+  creation of the pattern profiles is directly informed by
+  the outcome. Summary and plotting functions for
+  visualizing output are available, as are diagnostic
+  functions for examining convergence of the sampler. The
+  package includes an example dataset from the National
+  Health and Nutrition Examination Survey with dietary
+  intake and hypertension data for low-income women in the
+  United States, as well as a simulated dataset to help with
+  familiarization of the package.
+license: MIT
