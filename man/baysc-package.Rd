@@ -45,7 +45,7 @@ obtained from survey data using a supervised weighted overfitted latent class
 analysis. Biometrics, 80(4), ujae122.
 }
 \author{
-\strong{Maintainer}: Stephanie Wu \email{stephwu18@gmail.com} (\href{https://orcid.org/0000-0001-5110-8407}{ORCID})
+\strong{Maintainer}: Stephanie Wu \email{stephanie.wu@ucl.ac.uk} (\href{https://orcid.org/0000-0001-5110-8407}{ORCID})
 
 Other contributors:
 \itemize{
