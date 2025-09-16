@@ -419,17 +419,32 @@ convert_ref_to_mix <- function(K, Q, est_beta, ci_beta = NULL) {
 #' reference cell coding.
 #' 
 #' @param est_xi Matrix of xi parameter estimates in mixture reference coding. KxQ
+#' @param var_order String vector specifying order of variable names in reference 
+#' cell coding output. (K*Q)x1
 #' @return Returns vector `est_beta` of the probit regression coefficients
 #' converted into reference cell coding with interactions. (K*Q)x1
 #' 
 #' @keywords internal
 #' @export
-convert_mix_to_ref <- function(est_xi) {
-  est_beta <- est_xi
+convert_mix_to_ref <- function(est_xi, var_order) {
+  K <- nrow(est_xi)
+  Q <- ncol(est_xi)
+  est_beta_mat <- est_xi
   for (i in 2:nrow(est_xi)) {
-    est_beta[i, ] <- est_xi[i, ] - est_xi[1, ]
+    est_beta_mat[i, ] <- est_xi[i, ] - est_xi[1, ]
   }
-  est_beta <- c(est_beta)
+  # Convert to vector in order of var_order
+  if (Q == 1) {
+    est_beta <- c(est_beta_mat)
+  } else {  # Q > 1
+    # Main effects
+    est_beta <- c(est_beta_mat[1:K, 1], est_beta_mat[1, 2:Q])
+    # Interaction terms
+    for (q in 2:Q) {
+      est_beta <- c(est_beta, est_beta_mat[2:K, q])
+    }
+  }
+  names(est_beta) <- var_order
   return(est_beta)
   
   ## Alternative method
