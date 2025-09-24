@@ -208,9 +208,11 @@ get_regr_coefs <- function(res, ci_level = 0.95, digits = 2) {
     colnames(beta) <- c("Covariate", "Estimate", "LB", "UB", "p-value")
     beta[, c(2, 5)] <- res$estimates_svyglm$fit_summary$coefficients[, c(1, 4)]
     beta[, 2] <- format(round(beta[, 2], digits), digits)  
-    beta[, 3] <- format(round(convert_mix_to_ref(res$estimates_svyglm$xi_est_lb), 
+    beta[, 3] <- format(round(convert_mix_to_ref(res$estimates_svyglm$xi_est_lb,
+                                                 var_order = colnames(model_matrix)), 
                               digits), digits)
-    beta[, 4] <- format(round(convert_mix_to_ref(res$estimates_svyglm$xi_est_ub),
+    beta[, 4] <- format(round(convert_mix_to_ref(res$estimates_svyglm$xi_est_ub, 
+                                                 var_order = colnames(model_matrix)),
                               digits), digits)
     beta[, 5] <- ifelse(beta[, 5] < 10^(-digits), paste0("<", 10^(-digits)), 
                         format(round(beta[, 5], digits), digits))

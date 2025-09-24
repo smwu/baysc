@@ -4,10 +4,13 @@
 \alias{convert_mix_to_ref}
 \title{Convert from mixture reference coding to reference cell coding}
 \usage{
-convert_mix_to_ref(est_xi)
+convert_mix_to_ref(est_xi, var_order)
 }
 \arguments{
 \item{est_xi}{Matrix of xi parameter estimates in mixture reference coding. KxQ}
+
+\item{var_order}{String vector specifying order of variable names in reference
+cell coding output. (K*Q)x1}
 }
 \value{
 Returns vector \code{est_beta} of the probit regression coefficients
