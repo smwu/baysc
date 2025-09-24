@@ -1,5 +1,9 @@
 # **baysc**: BAYesian Survey Clustering
 
+<!-- badges: start -->
+[![R-CMD-check](https://github.com/smwu/baysc/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/smwu/baysc/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 An R package for running Bayesian supervised and unsupervised clustering methods on survey data.
 
 **Maintainer**: Stephanie M. Wu ([swu\@g.harvard.edu](mailto:swu@g.harvard.edu){.email})
