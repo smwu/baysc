@@ -1,16 +1,16 @@
 ---
 title: "An introduction to the baysc package"
-date: "September 24, 2025"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
   rmarkdown::html_vignette:
-    number_sections: true
-    toc: true
+    number_sections: yes
+    toc: yes
     df_print: "paged"
+bibliography: baysc.bib
 vignette: >
   %\VignetteIndexEntry{An introduction to the baysc package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-bibliography: baysc.bib
 ---
 
 # Introduction
@@ -27,10 +27,9 @@ We provide an example dataset from the National Health and Nutrition Examination
 ### Bayesian latent class analysis
 Latent class analysis (LCA), also known as a finite mixture model for categorical data, summarizes data from correlated categorical variables into a few underlying patterns that capture key differences between individuals in the data. Each individual is assigned to exactly one latent class (i.e., cluster). For each class, a pattern profile is created from the most probable category of each input variable. For instance, if the multivariate categorical input is food items consumed at levels “None”, “Low”, “Medium”, and “High”, then each class has a pattern profile consisting of the most probable consumption level for every food item among those belonging to that class, and these pattern profiles can be interpreted as dietary patterns. 
 
-<div class="figure">
-<img src="lca_diagram.png" alt="Figure: Diagram of latent class analysis" width="100%" />
-<p class="caption">Figure: Diagram of latent class analysis</p>
-</div>
+```{r lca_diagram, echo=FALSE, fig.cap="Figure: Diagram of latent class analysis", out.width = '100%'}
+knitr::include_graphics("lca_diagram.png")
+```
 
 Let $i\in \{1,\ldots,n\}$ index individuals in the sample, $j \in \{1, \ldots, J\}$ index items, and $r \in \{1, \ldots, R_j\}$ index levels for item $j$. Latent class membership is characterized by $c_i \in \{1,\ldots, K\}$ for individual $i$, where $K$ denotes the number of latent classes. Parameter $\pi_k$ is the probability of membership in class $k$, with $\sum_{k=1}^K \pi_k =1$. The exposure is a multivariate categorical variable with $J$ items, $(x_{i1}, \ldots, x_{iJ})^T$, where each item follows a Multinomial distribution with $R_j$ levels, each observed with item level probability $\theta_{jkr}$, with $\sum_{r=1}^{R}\theta_{jkr}=1$ for all $j \in \{1, \ldots, J\}$ and $k \in \{1, \ldots, K\}$. LCA relies on the local independence assumption that items are independent conditional on dietary pattern assignment, and the global clustering assumption that individuals assigned to the same pattern share behaviors for all food items. The individual complete likelihood is given by
 $$
@@ -61,8 +60,7 @@ Using the sampling weights to exponentiate the unit likelihood contributions con
 ## Package installation
 The `baysc` package can be installed and loaded by running the following code. 
 
-
-``` r
+```{r install, eval = FALSE}
 # If R package `devtools` is not installed, uncomment the following line:
 # `install.packages(devtools)`
 
@@ -77,7 +75,13 @@ library(ggplot2)
 library(knitr)
 ```
 
-
+```{r libraries, echo = FALSE, results = FALSE, warning = FALSE, message = FALSE}
+library(devtools)
+library(baysc)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+```
 
 During installation, the following errors may arise:
 
@@ -91,22 +95,16 @@ The example NHANES dataset contains dietary intake as a multivariate categorical
 
 To load the dataset, run the following code:
 
-
-``` r
+```{r load_data}
 # Load NHANES dataset
 data("data_nhanes")
 # Number of individuals
 nrow(data_nhanes)
 ```
 
-```
-## [1] 2004
-```
-
 ### Define observed exposure and outcome data
 
-
-``` r
+```{r data_vars}
 # Exposure matrix of categorical intake for each individual across 28 food groups
 x_mat <- data_nhanes[, c("citrus", "oth_fruit", "fruit_juice", "dark_green", "tomatoes", "oth_red", "potatoes", "oth_starchy", "oth_veg", "whole_grain", "ref_grain", "meat", "cured_meats", "organ", "poultry", "seafood_high", "seafood_low", "eggs", "soybean", "nuts", "leg_protein", "milk", "yogurt", "cheese", "oils", "solid_fats", "add_sugars", "drinks")]
 x_mat <- as.matrix(x_mat)
@@ -117,8 +115,7 @@ y_all <- data_nhanes$BP_flag
 ### Define survey design variables
 Define survey design variables on stratification, clustered sampling, and sampling weights. If there is no survey design information, these variables can be left as `NULL` (default). For the cluster indicators, use indicators for the first stage of sampling and do not nest the indicators within strata. The variance computation will only use the first stage of clustering and will assume sampling to be with replacement at the first stage. 
 
-
-``` r
+```{r survey_vars}
 # Survey stratum indicators
 stratum_id <- data_nhanes$stratum_id
 # Survey cluster indicators
@@ -130,8 +127,7 @@ sampling_wt <- data_nhanes$sample_wt
 ### Define additional regression variables
 Create a dataframe of additional confounders to adjust for when evaluating the diet-hypertension exposure-outcome association, and define a regression formula for including these additional confounders. In this example, we adjust for age, race/ethnicity, smoking status, and physical activity.
 
-
-``` r
+```{r conf_vars}
 # Create dataframe of additional confounders
 V_data <- data_nhanes %>% select(age_cat, racethnic, smoker, physactive)
 # Regression formula for additional confounders
@@ -146,8 +142,7 @@ We use the `wolca()` function to run an unsupervised weighted overfitted latent 
 
 When running the model, there are two samplers that can be run: an adaptive sampler and a fixed sampler. The adaptive sampler is used to determine the number of latent classes using a data-driven process with a sparsity-inducing Dirichlet prior. Once the number of latent classes is determined, the fixed sampler is run using the set number of classes and produces output for estimation and inference. Note that the final number of classes determined by the fixed sampler may be smaller than the number of classes obtained from the adaptive sampler. 
 
-
-``` r
+```{r wolca, eval = FALSE, warning=FALSE, cache=TRUE, results=FALSE, message = FALSE}
 # Run WOLCA 
 res_wolca <- wolca(x_mat = x_mat, sampling_wt = sampling_wt,
                    cluster_id = cluster_id, stratum_id = stratum_id,
@@ -190,8 +185,7 @@ Users can ignore the following warning messages: "the design is sampled with rep
 After the pattern profiles have been created, if interest lies in relating these pattern profiles to a binary outcome, such as presence or absence of hypertension (i.e., high blood pressure), then a crude approach is to apply a two-step approach, also known as the “classify-analyze” paradigm. Step 1 involves an unsupervised clustering as described in [Section 2.2.1](#wolca). Step 2 involves a survey-weighted regression model using the `svyglm()` function in the `survey` package [@lumley2023survey]. One word of caution: this approach can result in imprecise estimates and estimates that are attenuated due to the measurement error in the first classification step that is unaccounted for. See @nylund2019prediction for more discussion of this issue. 
 
 The following code can be used to find the association between latent classes and a binary outcome:
-
-``` r
+```{r wolca_svyglm, eval = FALSE, cache=TRUE, warning = FALSE}
 # Run weighted outcome regression model
 res_wolca_svyglm <- wolca_svyglm(res = res_wolca_adjust, y_all = y_all, 
                                  V_data = V_data, glm_form = glm_form, 
@@ -214,8 +208,7 @@ As an alternative to the two-step approach in [Section 2.2.2](#wolca_svyglm), a 
 
 If continuous variables are incorporated into the binary outcome model, any such variables with standard deviation greater than 5 may result in errors in the variance adjustment. To avoid these errors, consider standardizing the variable to have mean 0 and standard deviation 1 or converting the variable into a categorical form. 
 
-
-``` r
+```{r swolca, cache = TRUE, results = FALSE, warning = FALSE, message = FALSE}
 # Run SWOLCA 
 res_swolca <- swolca(x_mat = x_mat, y_all = y_all, V_data = V_data, 
                      glm_form = glm_form, sampling_wt = sampling_wt, 
@@ -261,8 +254,7 @@ When running the `swolca_var_adjust()` variance adjustment, some warning message
 
 ### Option to adapt `wolca()` and `swolca()` for unweighted analyses when no survey weights are available
 If no survey weights are available and we would like to perform analyses without accounting for survey design, we can simply leave the input arguments of `sampling_wt`, `cluster_id`, and `stratum_id` blank, since they are by default set to `NULL`. This will automatically set all weights equal to 1, corresponding to an unweighted model. Since no survey design information is available, the `wolca_var_adjust()` and `swolca_var_adjust()` functions cannot be run and the estimates will not be correct for the broader population, only for the study sample. Variances may also be underestimated due to unaccounted-for clustered sampling. 
-
-``` r
+```{r unwt, cache = TRUE, results = FALSE, warning = FALSE, eval = FALSE}
 # Run SWOLCA without survey weights
 res_swolca_unwt <- swolca(x_mat = x_mat, y_all = y_all, V_data = V_data, 
                           glm_form = glm_form, run_sampler = "both", K_max = 30,
@@ -275,20 +267,13 @@ We demonstrate plotting and summarization functions using the `res_swolca_adjust
 
 ### Plot the pattern profiles
 For each latent class, there is a pattern profile defined by the category with the highest posterior probability, also referred to as the modal $\theta$, for each item. To visualize these pattern profiles, use the `plot_pattern_profiles` function.
-
-``` r
+```{r plot_pattern_profiles, fig.width = 4.5, fig.height = 7, fig.align = 'center', fig.cap="Figure: Latent class pattern profiles"}
 plot_pattern_profiles(res = res_swolca_adjust)
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/plot_pattern_profiles-1.png" alt="Figure: Latent class pattern profiles"  />
-<p class="caption">Figure: Latent class pattern profiles</p>
-</div>
-
 We can also specify labels for the items, categories, and latent classes
 
-
-``` r
+```{r profiles_labels, fig.width = 6.5, fig.height = 8, fig.align = 'center', fig.cap="Figure: Latent class pattern profiles with custom labels"}
 # Item labels
 item_title <- "Item"
 item_labels <- c("Citrus/Melon/Berries", "Other Fruits", "Fruit Juice", 
@@ -312,55 +297,28 @@ plot_pattern_profiles(res = res_swolca_adjust,
                       class_labels = class_labels, class_title = class_title)
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/profiles_labels-1.png" alt="Figure: Latent class pattern profiles with custom labels"  />
-<p class="caption">Figure: Latent class pattern profiles with custom labels</p>
-</div>
-
 For the NHANES example using the `swolca()` supervised clustering function, we can interpret these 5 patterns as diet-hypertension patterns where individuals following the same pattern share similar dietary intake and hypertension status. If the `wolca()` unsupervised clustering function had been used, these patterns would be interpreted as solely diet patterns where individuals following the same pattern share similar dietary intake. Since survey design was accounted for, these patterns should be representative of the patterns in the broader population.
 
 To examine to what extent the data support the pattern profiles, we can view the specific distribution of posterior probabilities across the item categories for each item, for each class This allows us to examine how much evidence supports the category with the highest posterior probability compared to the other categories. If there is no evidence supporting one category over the others, then all the probabilities will be equal to $1/R_j$, where $R_j$ is the number of categories for item $j$. For example, the distribution for Item 2 for class 1 is pretty even across the 4 consumption levels, indicating that class 1 still has a fair amount of heterogeneity in consumption of Item 2. If the data strongly support a category, the posterior probability for that category will be much closer to 1 (e.g., 0.8). For example, the probability Item 14 is consumed at level "None" is very high for those in classes 4 and 5. 
 
-
-``` r
+```{r plot_pattern_probs, fig.width = 7, fig.height = 6, fig.align = 'center', fig.cap="Figure: Item probabilities for each latent class pattern"}
 plot_pattern_probs(res = res_swolca_adjust, item_labels = item_labels,
                    categ_labels = categ_labels) + 
   theme(strip.text.x = element_text(size = 7))  # font size for item labels
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/plot_pattern_probs-1.png" alt="Figure: Item probabilities for each latent class pattern"  />
-<p class="caption">Figure: Item probabilities for each latent class pattern</p>
-</div>
-
 ### Obtain individual class assignments
 For each individual in the sample, we can obtain their final class assignment as well the posterior probability of them belonging to each class. This information can be used to check class separation metrics such as entropy [@wang2017performance] or the average latent class posterior probability [@muthen2000integrating], both recommended to be above 0.8 for adequate class separation [@weller2020latent]. Note that these metrics are NOT generalizable to the broader population and are limited to describing individuals included in the dataset. 
 
-
-``` r
+```{r class_assign}
 # Class assignments for first 3 individuals
 res_swolca_adjust$estimates_adjust$c_all[1:3]
-```
-
-```
-## [1] 1 2 3
-```
-
-``` r
 # Posterior class probabilities for first 3 individuals, rounded to 3 decimals
 round(res_swolca_adjust$estimates_adjust$pred_class_probs[1:3, ], 3)
 ```
 
-```
-##       [,1]  [,2]  [,3] [,4] [,5]
-## [1,] 0.999 0.000 0.001    0    0
-## [2,] 0.000 0.958 0.042    0    0
-## [3,] 0.001 0.147 0.851    0    0
-```
-
 A dendrogram displaying the distances between classes can also be created. The distance is the number of MCMC iterations with differing class assignments (after discarding burn-in and thinning). The dendrogram displays the hierarchical clustering setup, where individuals first are all assigned to their own class, and then classes are systematically merged together starting from classes that have the smallest distance between them. The preliminary number of latent classes selected is displayed by the rectangles, with each individual assigned to a class. A final merging step between classes that have the exact same modal pattern was done to merge any duplicate classes. 
-
-``` r
+```{r dendrogram, fig.width = 5, fig.height = 4, fig.align = 'center', fig.cap="Figure: Dendrogram of class separation"}
 # Get dendrogram
 dend <- res_swolca_adjust$post_MCMC_out$dendrogram
 # Get preliminary number of latent classes
@@ -373,62 +331,30 @@ plot(as.dendrogram(dend), ylab = "Distance")
 rect.hclust(dend, k = K_med, border = 2:(2 + K_med - 1))
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/dendrogram-1.png" alt="Figure: Dendrogram of class separation"  />
-<p class="caption">Figure: Dendrogram of class separation</p>
-</div>
-
 ### Reorder classes
 If desired, we can also change the order of the classes. For example, we may want to swap the first and fifth dietary patterns so that the patterns with more "high" consumption (red) are visually displayed together. One might also want to change the order of classes to define a new baseline class for the regression model. To switch the order so that the first class is now fifth and the fifth class is now first, we can use the `reorder_classes()` function with `new_order = c(5, 2, 3, 4, 1)`. This will change the order so that all subsequent plotting functions will follow the new order, with the previously fifth class now displayed first. Individual class assignments will also follow the new order. That is, individuals who were previously assigned to class 5 will now be assigned to class 1, and vice versa.   
-
-``` r
+```{r reorder_classes, fig.width = 5, fig.height = 8, fig.align = 'center', fig.cap="Figure: Latent class pattern profiles with reordered classes"}
 # Reorder latent classes
 res_swolca_adjust <- reorder_classes(res = res_swolca_adjust, 
                                       new_order = c(5, 2, 3, 4, 1))
 # Class assignments for first 3 individuals
 res_swolca_adjust$estimates_adjust$c_all[1:3]
-```
-
-```
-## [1] 5 2 3
-```
-
-``` r
 # Pattern profiles with first and third classes swapped
 plot_pattern_profiles(res = res_swolca_adjust)
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/reorder_classes-1.png" alt="Figure: Latent class pattern profiles with reordered classes"  />
-<p class="caption">Figure: Latent class pattern profiles with reordered classes</p>
-</div>
-
 ### Plot distribution of classes
 To examine how common the classes are in the broader population, the `plot_class_dist() ` function displays boxplots for the estimated proportion of the population belonging to each class (i.e., latent class membership probabilities, $\pi$) across the iterations of the MCMC sampler. 
-
-``` r
+```{r plot_class_dist, fig.width = 5, fig.height = 4, fig.align = 'center', fig.cap="Figure: Distribution of latent classes in the population"}
 plot_class_dist(res = res_swolca_adjust)
-```
-
-<div class="figure" style="text-align: center">
-<img src="figure/plot_class_dist-1.png" alt="Figure: Distribution of latent classes in the population"  />
-<p class="caption">Figure: Distribution of latent classes in the population</p>
-</div>
-
-``` r
 # Median estimated population class proportions
 round(res_swolca_adjust$estimates_adjust$pi_med, 3)
-```
-
-```
-## [1] 0.251 0.216 0.188 0.195 0.151
 ```
 
 ### Display distribution of additional variables across classes
 We can create a table to examine the distribution of additional variables across the derived classes. In this example, we create a table of the distribution of age, race and ethnicity, physical activity, and smoking status across five derived dietary patterns. For these distributions, the data are weighted so that the proportions are representative of the distribution of the variables across classes in the population. To see the proportions in the sample, specify `population = FALSE`. The proportion of the classes in the population is also displayed in this table, using the same data as the `plot_class_dist()` function.
 
-
-``` r
+```{r vars_across_class}
 # Convert class assignment variable from model output to a factor
 c_all <- factor(res_swolca_adjust$estimates_adjust$c_all, 
                 levels = 1:5, labels = paste0("C", 1:5))
@@ -453,26 +379,6 @@ output_df <- vars_across_class(c_all = c_all, cov_df = cov_df,
 knitr::kable(output_df)
 ```
 
-
-
-|Variable              |Level           |C1         |C2         |C3          |C4         |C5          |Overall |
-|:---------------------|:---------------|:----------|:----------|:-----------|:----------|:-----------|:-------|
-|N: % (posterior SD %) |                |23.8 (5.9) |21.1 (8.1) |18.9 (13.4) |18.1 (5.1) |18.0 (16.6) |        |
-|n: %                  |                |25.2       |23.1       |13.3        |21.5       |17.0        |        |
-|Age: Mean             |                |44.0       |43.8       |47.0        |50.1       |47.4        |46.2    |
-|Age_Group: %          |[20, 40)        |46.3       |49.5       |37.8        |31.1       |41.9        |41.9    |
-|                      |[40, 60)        |30.7       |26.7       |38.6        |40.5       |27.4        |32.6    |
-|                      |>=60            |23.0       |23.8       |23.5        |28.5       |30.7        |25.5    |
-|Race_Ethnicity: %     |NH White        |51.1       |44.1       |64.0        |46.7       |41.9        |49.3    |
-|                      |NH Black        |17.6       |16.4       |10.7        |15.5       |20.8        |16.3    |
-|                      |NH Asian        |3.1        |5.2        |2.3         |7.5        |11.4        |5.6     |
-|                      |Hispanic/Latino |23.0       |28.7       |20.6        |21.8       |22.7        |23.6    |
-|                      |Other/Mixed     |5.1        |5.6        |2.3         |8.5        |3.2         |5.2     |
-|Current_Smoker: %     |No              |74.4       |78.4       |64.5        |71.1       |77.3        |73.5    |
-|                      |Yes             |25.6       |21.6       |35.5        |28.9       |22.7        |26.5    |
-|Physical_Activity: %  |Inactive        |45.5       |44.5       |44.4        |47.1       |42.9        |45.1    |
-|                      |Active          |54.5       |55.5       |55.6        |52.9       |57.1        |54.9    |
-
 Parameters used for `vars_across_class()`:
 
 - `c_all`: nx1 factor vector of latent class assignments, typically obtained from the `swolca()`, `wolca()`, `swolca_var_adjust()` or `wolca_var_adjust()` functions. Factor levels should be labeled with the names that are to appear in the output table.
@@ -490,43 +396,21 @@ Note that this is *not* possible with the two-step `wolca_svyglm()` method. Plea
 
 In this example, we display a summary of the probit regression coefficients using class 1 as the reference. We also display the 95\% credible intervals (`ci_level = 0.95`) and round the table values to two decimal points (`digits = 2`). To save space, we only display the first 10 regression coefficients in the output. 
 
-
-``` r
+```{r get_regr_coefs}
 # Get table of regression coefficients
 regr_coefs <- get_regr_coefs(res = res_swolca_adjust, ci_level = 0.95, digits = 2)
 regr_coefs[1:10, ]
 ```
 
-```
-##      Covariate Estimate    LB    UB P(xi > 0)
-## 1  (Intercept)    -1.13 -1.48 -0.72     <0.01
-## 2       c_all2    -0.10 -1.19  1.24      0.42
-## 3       c_all3     0.08 -0.75  1.26      0.62
-## 4       c_all4     0.28 -0.57  1.09      0.66
-## 5       c_all5     0.24 -2.36  1.76      0.62
-## 6     age_cat2     1.09  0.82  1.38      1.00
-## 7     age_cat3     2.13  1.47  2.58      1.00
-## 8   racethnic2     0.44 -0.13  1.08      0.94
-## 9   racethnic3     0.06 -0.59  1.12      0.56
-## 10  racethnic4    -0.16 -0.48  0.20      0.20
-```
-
 To visualize this in the form of a boxplot, use the `plot_regr_coefs()` function.
 
-
-``` r
+```{r plot_regr_coefs, fig.width = 7, fig.height = 5, fig.align = 'center', fig.cap="Figure: Outcome regression coefficients "}
 plot_regr_coefs(regr_coefs = regr_coefs, res = res_swolca_adjust)
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/plot_regr_coefs-1.png" alt="Figure: Outcome regression coefficients "  />
-<p class="caption">Figure: Outcome regression coefficients </p>
-</div>
-
 If we want to change the labels for the covariates, we can do so with the `cov_labels` argument. We can also modify other aspects of the plot, such as moving the legend position, by using typical arguments from the `ggplot2` package. 
 
-
-``` r
+```{r coefs_labels, fig.width = 7, fig.height = 5, fig.align = 'center', fig.cap="Figure: Outcome regression coefficients with custom labels"}
 # Define new vector of covariate labels
 class_dummies <- paste0("C", 2:5)
 age_dummies <- paste0("Age", c("40_60", "60"))
@@ -544,15 +428,9 @@ regr_plot <- plot_regr_coefs(regr_coefs = regr_coefs, res = res_swolca_adjust,
 regr_plot + ggplot2::theme(legend.position = "top")
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/coefs_labels-1.png" alt="Figure: Outcome regression coefficients with custom labels"  />
-<p class="caption">Figure: Outcome regression coefficients with custom labels</p>
-</div>
-
 Alternatively, for categorical covariates, rather than plotting the regression coefficients, we can evaluate the probit regression model at all levels of the covariate and then plot the conditional probability of the outcome using the `plot_outcome_probs()` function. This displays the probability of the outcome for the different classes, evaluated at all levels of a categorical covariate, with all other covariates evaluated at their reference level. In this example, we plot the probability of hypertension for the five dietary patterns across levels of age, with error bars for the 95\% credible intervals. 
 
-
-``` r
+```{r plot_outcome_probs, fig.width = 5, fig.height = 4, fig.align = 'center', fig.cap="Figure: Outcome probabilities for levels of a categorical covariate"}
 class_labels <- paste0("C", 1:5)
 age_cat_categs <- c("[20,40)", "[40,60)", ">=60")
 plot_outcome_probs(res = res_swolca_adjust, cov_name = "age_cat",
@@ -560,15 +438,9 @@ plot_outcome_probs(res = res_swolca_adjust, cov_name = "age_cat",
                    x_title = "Age Group")
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/plot_outcome_probs-1.png" alt="Figure: Outcome probabilities for levels of a categorical covariate"  />
-<p class="caption">Figure: Outcome probabilities for levels of a categorical covariate</p>
-</div>
-
 We can also display the probability of outcome plots for two categorical covariates at the same time, assessing for any interactions. We can add lines connecting the points between levels of "Age" using the `add_lines = TRUE` parameter, and remove the error bars by setting `ci_level = NULL`. 
 
-
-``` r
+```{r probs_two, fig.width = 7, fig.height = 5, fig.align = 'center', fig.cap="Figure: Outcome probabilities for levels of two categorical covariates"}
 racethnic_categs <- c("NH White", "NH Black", "NH Asian", "Hispanic/Latino", 
                       "Other/Mixed")
 p <- plot_outcome_probs(res = res_swolca_adjust, cov_name = c("age_cat", "racethnic"),
@@ -578,32 +450,15 @@ p <- plot_outcome_probs(res = res_swolca_adjust, cov_name = c("age_cat", "raceth
 print(p + ggplot2::theme(axis.text.x = ggplot2::element_text(size = 9)))
 ```
 
-<div class="figure" style="text-align: center">
-<img src="figure/probs_two-1.png" alt="Figure: Outcome probabilities for levels of two categorical covariates"  />
-<p class="caption">Figure: Outcome probabilities for levels of two categorical covariates</p>
-</div>
-
 
 ## Obtain performance diagnostics and additional output {#diagnostics}
 Total runtime and the deviance information criteria (DIC) goodness-of-fit measure for model selection are available within the package using the following functions. 
 
-
-``` r
+```{r runtime}
 # Runtime
 res_swolca_adjust$runtime
-```
-
-```
-## Time difference of 10.97209 mins
-```
-
-``` r
 # Deviance information criteria for model goodness-of-fit
 get_dic(res_swolca_adjust)
-```
-
-```
-## [1] 125463.1
 ```
 
 A list of the raw posterior point and interval estimates for all parameters can be obtained. We set a credible interval level of 95\% and round the estimates to two digits. The parameters consist of:
@@ -613,94 +468,37 @@ A list of the raw posterior point and interval estimates for all parameters can 
 - $\xi_{k1}, \ldots, \xi_{kQ}$: coefficients in the binary outcome probit regression with $Q$ covariates. $\xi$ parameters are returned in a $KxQ$-dimensional matrix.
 
 Thus, a total of $K + (J*K*R) + (K*Q) = 610$ estimates are available for this example. To conserve space, we only display the first three estimates for $\pi$, $\theta$, and $\xi$ here. $\pi$ estimates are labeled with "pi_k", $\theta$ estimates are labeled with "theta_j_k_r", and $\xi$ estimates are labeled with "xi_k_q". $k$ ranges from 1 to $K$, $j$ from 1 to $J$, $r$ from 1 to $R$, and $q$ from 1 to $Q$.
-
-``` r
+```{r summarize_res}
 # Extract summary of parameter estimates
 estimates_df <- summarize_res(res = res_swolca_adjust, ci_level = 0.95, digits = 2)
 # First few pi estimates
 estimates_df[1:3, ]
-```
-
-```
-##   Parameter Estimate Lower Bound Upper Bound
-## 1      pi_1     0.25        0.10        0.33
-## 2      pi_2     0.22        0.03        0.34
-## 3      pi_3     0.19        0.02        0.47
-```
-
-``` r
 # First few theta estimates
 estimates_df[6:9, ]
-```
-
-```
-##     Parameter Estimate Lower Bound Upper Bound
-## 6 theta_1_1_1     0.65        0.43        0.76
-## 7 theta_2_1_1     0.46        0.29        0.59
-## 8 theta_3_1_1     0.44        0.38        0.52
-## 9 theta_4_1_1     0.58        0.41        0.70
-```
-
-``` r
 # First few xi estimates
 estimates_df[566:569, ]
 ```
 
-```
-##     Parameter Estimate Lower Bound Upper Bound
-## 566    xi_1_1    -1.13       -1.48       -0.72
-## 567    xi_2_1    -1.24       -2.27        0.15
-## 568    xi_3_1    -1.02       -1.78       -0.15
-## 569    xi_4_1    -0.86       -1.54       -0.21
-```
-
 We can also extract the MCMC iteration values for all parameters that were obtained through the MCMC sampler. For SWOLCA, this will be $\pi$, $\theta$, and $\xi$. For WOLCA, this will be only $\pi$ and $\theta$.
 
-
-``` r
+```{r get_param_mcmc}
 # Extract parameter MCMC iteration values
 param_mcmc <- get_param_mcmc(res_swolca_adjust)
 # Display first 10 iterations of pi
 param_mcmc$pi_mcmc[1:10, ]
 ```
 
-```
-##           pi_1       pi_2         pi_3      pi_4       pi_5
-## 1  0.199337680 0.29798426 0.1279449684 0.2206540 0.15407908
-## 2  0.256967542 0.30446362 0.2021383390 0.1572870 0.07914354
-## 3  0.263425322 0.08413522 0.4648721743 0.1231027 0.06446456
-## 4  0.221394758 0.23644027 0.1722512104 0.2167745 0.15313927
-## 5  0.269240234 0.18652288 0.2918798644 0.1791225 0.07323449
-## 6  0.311260177 0.19111240 0.2805098911 0.1457299 0.07138768
-## 7  0.008695988 0.01466584 0.0003048905 0.0195115 0.95682179
-## 8  0.196751600 0.24555358 0.0486972000 0.2042066 0.30479104
-## 9  0.277954303 0.22683991 0.1138511948 0.2062676 0.17508698
-## 10 0.245779276 0.27931692 0.0645889321 0.1847761 0.22553878
-```
-
 Bayesian model diagnostics such as traceplots and autocorrelation plots can be created for all estimates to examine whether the MCMC sampler has adequately converged. For example, we display code to create traceplots and autocorrelation plots for the five class membership probability parameters, $\pi_1,\ldots, \pi_5$. 
-
-``` r
+```{r traceplots, fig.width = 5, fig.height = 4, fig.align = 'center', fig.cap="Figure: Traceplots for pi"}
 # Specify selection of pi_1 to pi_5
 param_names <- colnames(param_mcmc$pi_mcmc)
 # Create traceplots
 create_traceplot(param_mcmc = param_mcmc, param_names = param_names)
 ```
-
-<div class="figure" style="text-align: center">
-<img src="figure/traceplots-1.png" alt="Figure: Traceplots for pi"  />
-<p class="caption">Figure: Traceplots for pi</p>
-</div>
-
-``` r
+```{r acf_plots, fig.width = 5, fig.height = 4, fig.align = 'center', fig.cap="Figure: ACF plots for pi"}
 # Create ACF plots
 create_acfplot(param_mcmc = param_mcmc, param_names = param_names)
 ```
-
-<div class="figure" style="text-align: center">
-<img src="figure/acf_plots-1.png" alt="Figure: ACF plots for pi"  />
-<p class="caption">Figure: ACF plots for pi</p>
-</div>
 
 # References
 
@@ -715,26 +513,23 @@ For users experiencing a "library 'gfortran' not found" error message during ins
 2. Go through the instructions to install R, entering in passwords if necessary. 
 3. Install Xcode by opening Terminal and running the following in the command line: `sudo xcode-select --install` . This will install the latest release version of Apple’s Command Line Tools for Xcode, which includes Apple Clang. 
 4. Download the GNU Fortran binary .tar.xz file at this link: [https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0](https://github.com/R-macos/gcc-12-branch/releases/tag/12.2-darwin-r0). Install GNU fortran by running the following code in the command line:
-
-``` default
+````{verbatim}
 curl -LO https://github.com/R-macos/gcc-12-branch/releases/download/12.2-darwin-r0/gfortran-12.2-darwin20-r0-universal.tar.xz
 sudo tar xvf gfortran-12.2-darwin20-r0-universal.tar.xz -C /
 sudo ln -sfn $(xcrun --show-sdk-path) /opt/gfortran/SDK
-```
+````
 5. Check your Apple Clang version by running the following in the command line: `clang --version`. 
 6. Download OpenMP at [https://mac.r-project.org/openmp/](https://mac.r-project.org/openmp/) by clicking on the Release.tar.gz link corresponding to your Apple Clang version. 
 7. Install OpenMP by running the following in the command line, making sure to include the correct version. For example, for Apple clang version 15.0.0 (i.e., clang 1500.x), the corresponding OpenMP version is *16.0.4*, so the commands would be:
-
-``` default
+````{verbatim}
 curl -LO https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Release.tar.gz
 sudo mkdir -p /opt/R/$(uname -m)
 sudo tar -xvf openmp-16.0.4-darwin20-Release.tar.gz --strip-components=2 -C /opt/R/$(uname -m)
-```
+````
 8. Navigate to the R Makevars file by running in command line: `cd ~/.R/Makevars`. If the file does not exist, create it by running `mkdir ~/.R/Makevars`.
 9. In command line, run `vi`, add the below lines to the file, then save and exit out of the file by typing `ESC` followed by `:wq`.
-
-``` default
+````{verbatim}
 CPPFLAGS += -Xclang -fopenmp
 LDFLAGS += -lomp
-```
+````
 10. Retry the `baysc` package installation by running `devtools::install_github("smwu/baysc")` in R. 

@@ -1,6 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^data-raw$
+^JOSS$
 ^vignettes/baysc_joss\.Rmd$
+^vignettes/cache$
+^vignettes/figure$
 ^\.github$
 ^LICENSE\.md$
