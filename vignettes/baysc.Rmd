@@ -138,7 +138,7 @@ glm_form <- "~ age_cat + racethnic + smoker + physactive"
 The following sections describe how to use the main functions in the `baysc` package for running survey-weighted Bayesian LCA. If no outcome information is necessary when clustering, use the unsupervised weighted OLCA, implemented in the `wolca()` function ([Section 2.2.1](#wolca)). If clustering is to be informed by a binary outcome so that latent classes are found that specifically drive the outcome of interest, use the supervised weighted OLCA, implemented in the `swolca()` function ([Section 2.2.3](#swolca)). 
 
 ### Use `wolca()` and `wolca_var_adjust()` to derive dietary exposure clusters {#wolca}
-We use the `wolca()` function to run an unsupervised weighted overfitted latent class analysis and obtain pattern profiles. The `wolca_var_adjust()` function is used after to apply a post-processing adjustment that allows for correct estimation of the variability of the parameter estimates. If this adjustment is not applied, the estimated variances will be too small. We run the sampler for 100 iterations as an example, with a total runtime of around 5 minutes for `wolca()` and `wolca_var_adjust()`. Typically, at least 20000 iterations should be used for `wolca()`, corresponding to a runtime of around 2 hours.
+We use the `wolca()` function to run an unsupervised weighted overfitted latent class analysis and obtain pattern profiles. The `wolca_var_adjust()` function is used after to apply a post-processing adjustment that allows for correct estimation of the variability of the parameter estimates. If this adjustment is not applied, the estimated variances will be too small. We run the sampler for 300 iterations as an example, with a total runtime of around 5 minutes for `wolca()` and `wolca_var_adjust()`. Typically, at least 20000 iterations should be used for `wolca()`, corresponding to a runtime of around 2 hours.
 
 When running the model, there are two samplers that can be run: an adaptive sampler and a fixed sampler. The adaptive sampler is used to determine the number of latent classes using a data-driven process with a sparsity-inducing Dirichlet prior. Once the number of latent classes is determined, the fixed sampler is run using the set number of classes and produces output for estimation and inference. Note that the final number of classes determined by the fixed sampler may be smaller than the number of classes obtained from the adaptive sampler. 
 
@@ -162,7 +162,7 @@ Parameters used for `wolca()`:
 - `stratum_id`: nx1 vector of stratum indicators.
 - `run_sampler = "both"`: Run both the adaptive and fixed sampler (default). Other options are `"adapt"` for only the adaptive sampler, or `"fixed"` for only the fixed sampler when the number of latent classes is known a priori.
 - `K_max = 30`: The maximum number of latent classes is set to 30 (default). Typically, the true number will be much smaller.
-- `adapt_seed = 888`: Random seed for adaptive sampler, set to 888 for this example but with default `NULL`. 
+- `adapt_seed = 999`: Random seed for adaptive sampler, set to 999 for this example but with default `NULL`. 
 - `class_cutoff = 0.05`: The minimum size of each latent class, with default set to 5\% of the population.
 - `n_runs = 300`: Number of MCMC sampler iterations to run. Set to 300 for this example but with default 20000. *Typically, at least 20000 iterations should be used to allow the sampler to converge.* 
 - `burn = 150`: Number of iterations for burn-in. Set to 150 for this example but with default 10000. 
@@ -173,13 +173,13 @@ Parameters used for `wolca()`:
 Parameters used for `wolca_var_adjust()`: 
 
 - `res = res_wolca_unadj`: Results from calling `wolca()`.
-- `adjust_seed = 888`: Random seed for the adjustment procedure, set to 888 for this example but with default `NULL`.
+- `adjust_seed = 999`: Random seed for the adjustment procedure, set to 999 for this example but with default `NULL`.
 - `num_reps = 100`: Use 100 bootstrap replicates (default) to estimate variability in the sampling process.
 - `save_res = FALSE`: Results do not need to be saved. If `save_res = TRUE` (default), `save_path` must also be specified and include both the desired directory and the beginning of the file name for the results. 
 
 Additional parameters are available for prior specification and other customization and are described in the documentation help pages for the functions.
 
-Users can ignore the following warning messages: "the design is sampled with replacement and only the first stage is used: and "the number of chains being less than 1 and sampling not done." Messages about negative variances and large (>1) eigenvalue differences to the nearest positive definite matrix indicate instability in the variance adjustment matrix inversions. Methods to address this issue include running the sampler for more iterations or reducing the number of additional covariate terms in the outcome regression. One could also choose to forgo the variance adjustment and simply use the posterior distributions produced by `wolca()`, acknowledging that estimated variances will be slight underestimates. 
+Users can ignore the following warning messages: "the design is sampled with replacement and only the first stage is used" and "the number of chains being less than 1 and sampling not done." Messages about negative variances and large (>1) eigenvalue differences to the nearest positive definite matrix indicate instability in the variance adjustment matrix inversions. Methods to address this issue include running the sampler for more iterations or reducing the number of additional covariate terms in the outcome regression. One could also choose to forgo the variance adjustment and simply use the posterior distributions produced by `wolca()`, acknowledging that estimated variances will be slight underestimates. 
 
 ### Use `wolca_svyglm()` to implement two-step approach relating pattern profiles to a binary hypertension outcome {#wolca_svyglm}
 After the pattern profiles have been created, if interest lies in relating these pattern profiles to a binary outcome, such as presence or absence of hypertension (i.e., high blood pressure), then a crude approach is to apply a two-step approach, also known as the “classify-analyze” paradigm. Step 1 involves an unsupervised clustering as described in [Section 2.2.1](#wolca). Step 2 involves a survey-weighted regression model using the `svyglm()` function in the `survey` package [@lumley2023survey]. One word of caution: this approach can result in imprecise estimates and estimates that are attenuated due to the measurement error in the first classification step that is unaccounted for. See @nylund2019prediction for more discussion of this issue. 
@@ -249,7 +249,7 @@ Parameters used for `swolca_var_adjust()`:
 
 Additional parameters are available for prior specification and other customization and are described in the documentation help pages for the functions.
 
-When running the `swolca_var_adjust()` variance adjustment, some warning messages may arise to indicate instability in the variance adjustment matrix inversions. Possible solutions include running the sampler for more iterations or reducing the number of additional covariate terms in the outcome regression. If continuous covariates are included in the probit regression model, these errors may also be due to the variance of the covariate being too large. In such cases, it is recommended to reduce the variable of the covariate, either by standardizing the variable to have mean 0 and standard deviation 1, or by transforming the variable into a categorical variable. One could also choose to forgo the variance adjustment and simply use the posterior distributions produced by `swolca()`, acknowledging that estimated variances will be slight underestimates.
+When running the `swolca_var_adjust()` variance adjustment, some warning messages may arise to indicate instability in the variance adjustment matrix inversions. Possible solutions include running the sampler for more iterations or reducing the number of additional covariate terms in the outcome regression. If continuous covariates are included in the probit regression model, these errors may also be due to the variance of the covariate being too large. In such cases, it is recommended to reduce the variance of the covariate, either by standardizing the variable to have mean 0 and standard deviation 1, or by transforming the variable into a categorical variable. One could also choose to forgo the variance adjustment and simply use the posterior distributions produced by `swolca()`, acknowledging that estimated variances will be slight underestimates.
 
 
 ### Option to adapt `wolca()` and `swolca()` for unweighted analyses when no survey weights are available
@@ -452,7 +452,7 @@ print(p + ggplot2::theme(axis.text.x = ggplot2::element_text(size = 9)))
 
 
 ## Obtain performance diagnostics and additional output {#diagnostics}
-Total runtime and the deviance information criteria (DIC) goodness-of-fit measure for model selection are available within the package using the following functions: , a list of the raw point and interval estimates for all parameters, and 
+Total runtime and the deviance information criteria (DIC) goodness-of-fit measure for model selection are available within the package using the following functions. 
 
 ```{r}
 # Runtime
