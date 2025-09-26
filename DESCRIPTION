@@ -54,6 +54,7 @@ Suggests:
     devtools,
     knitr,
     rmarkdown,
+    markdown,
     rstantools (>= 2.3.1.1),
     SimCorMultRes,
     stringr,
