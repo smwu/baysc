@@ -1,7 +1,7 @@
 # **baysc**: BAYesian Survey Clustering
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/smwu/baysc/actions/workflows/R-CMD-check.yaml/badge.svg?branch=joss-paper)](https://github.com/smwu/baysc/actions/workflows/R-CMD-check.yaml?query=branch%3Ajoss-paper)
+[![R-CMD-check](https://github.com/smwu/baysc/actions/workflows/R-CMD-check.yaml/badge.svg?branch=main)](https://github.com/smwu/baysc/actions/workflows/R-CMD-check.yaml?query=branch%3Amain)
 <!-- badges: end -->
 
 An R package for running Bayesian supervised and unsupervised clustering methods on survey data.
