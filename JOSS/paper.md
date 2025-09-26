@@ -54,7 +54,7 @@ The `baysc` package implements a weighted pseudo-likelihood approach proposed in
 
 # Usage
 
-## Package Installation
+## 1. Package Installation
 
 The `baysc` package can be installed from GitHub.
 
@@ -76,7 +76,7 @@ During installation, the following errors may arise:
 -   *No package called 'rstantools'*: Please install the `rstantools` package using `install.packages("rstantools")`.
 -   *Library 'gfortran' not found*: This is a compiler configuration issue that can arise when using Rcpp on Mac computers with Apple silicon (e.g., M1, M2, M3). Users may need to install Xcode, GNU Fortran, and OpenMP, and edit the `~/.R/Makevars` file. More details are provided in the GitHub README file.
 
-## Data preparation
+## 2. Data preparation
 
 `baysc` applies Bayesian latent class analysis using the following input data:
 
@@ -154,7 +154,7 @@ V_data <- data_nhanes %>% select(age_cat, racethnic, smoker, physactive)
 glm_form <- "~ age_cat + racethnic + smoker + physactive"
 ```
 
-## Model fitting
+## 3. Model fitting
 
 Two options exist for running a survey-weighted Bayesian clustering analysis: 1) use just the categorical variables to perform unsupervised clustering, then decide later on whether these will be related to other variables (e.g., a binary outcome) via a regression model; 2) use a supervised clustering model that jointly models the categorical variables and a binary outcome to perform outcome-informed clustering while characterizing the cluster-outcome association simultaneously. The first model is called a Weighted Overfitted Latent Class Analysis (WOLCA), and the second option is called a Supervised Weighted Overfitted Latent Class Analysis (SWOLCA). See @wu2024derivation for statistical details of the models.
 
@@ -252,7 +252,7 @@ res_swolca_adjust <- swolca_var_adjust(res = res_swolca, adjust_seed = 222,
                                        num_reps = 100, save_res = FALSE)
 ```
 
-## Visualization
+## 4. Visualization
 
 We demonstrate plotting and summarization functions for SWOLCA (option 2) using the `res_swolca_adjust` results from running `swolca()` and `swolca_var_adjust()`. The same functions can also be used for summarizing output for WOLCA (option 1) using the results from `wolca()`, `wolca_var_adjust()`, and `wolca_svyglm()`.
 
@@ -535,7 +535,7 @@ print(p + ggplot2::theme(axis.text.x = ggplot2::element_text(size = 9)))
 
 ![](plot_outcome_probs_two.png){width="100%"}
 
-## Obtain performance diagnostics and additional output {#diagnostics}
+## 5. Performance diagnostics {#diagnostics}
 
 Total model runtime and the deviance information criteria (DIC) goodness-of-fit measure for model selection are available within the package using the following functions. Smaller values of DIC indicate better fit. See function documentation for more information.
 
