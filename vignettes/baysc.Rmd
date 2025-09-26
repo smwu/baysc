@@ -8,7 +8,7 @@ output:
     df_print: "paged"
 vignette: >
   %\VignetteIndexEntry{An introduction to the baysc package}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 bibliography: baysc.bib
 ---

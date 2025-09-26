@@ -3,6 +3,9 @@
 ^data-raw$
 ^JOSS$
 ^vignettes/baysc_joss\.Rmd$
+^vignettes/baysc\.pdf$
+^vignettes/baysc\.Rmd\.orig$
+^vignettes/baysc\.html$
 ^vignettes/cache$
 ^vignettes/figure$
 ^\.github$
