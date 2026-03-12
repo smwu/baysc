@@ -6,11 +6,19 @@
 
 An R package for running Bayesian supervised and unsupervised clustering methods on survey data.
 
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.08382/status.svg)](https://doi.org/10.21105/joss.08382)
+
 **Maintainer**: Stephanie M. Wu ([stephanie.wu@ucl.ac.uk](mailto:stephanie.wu@ucl.ac.uk))
 
 **Contributors**: Matthew R. Williams ([mrwilliams\@rti.org](mailto:mrwilliams@rti.org)); Terrance D. Savitsky ([savitsky.terrance\@bls.gov](mailto:savitsky.terrance@bls.gov)); Briana J.K. Stephenson ([bstephenson\@hsph.harvard.edu](mailto:bstephenson@hsph.harvard.edu))
 
 **Citation**: Wu S, Williams M, Savitsky T, Stephenson B (2025). *baysc: BAYesian Survey Clustering*. R package version 0.1.0, <https://github.com/smwu/baysc>.
+
+|       | Citation     | Paper 
+| -------------  | -------------  | -------------  |
+| Method    | Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. (2024). Derivation of outcome-dependent dietary patterns for low-income women obtained from survey data using a supervised weighted overfitted latent class analysis. _Biometrics, 80_(4), ujae122.   | [Link](https://pmc.ncbi.nlm.nih.gov/articles/PMC11518851/)| 
+| Software    | Wu, S. M., Williams, M. R., Savitsky, T. D., & Stephenson, B. J. k. (2026). baysc: An R package for Bayesian survey clustering. _Journal of Open Source Software, 11_(119), 8382. doi:10.21105/joss.08382 | [Link](https://joss.theoj.org/papers/10.21105/joss.08382)| 
+
 
 ## Table of contents
 
